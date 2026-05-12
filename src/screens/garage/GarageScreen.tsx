@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, FlatList,
   TouchableOpacity, ActivityIndicator
@@ -21,9 +22,11 @@ export default function GarageScreen({ navigation }: any) {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchVehiculos();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchVehiculos();
+    }, [])
+  );
 
   async function fetchVehiculos() {
     const { data } = await supabase
