@@ -6,6 +6,8 @@ import { useAuth } from '../context/AuthContext';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import CheckEmailScreen from '../screens/auth/CheckEmailScreen';
+import GarageScreen from '../screens/garage/GarageScreen';
+import AgregarVehiculoScreen from '../screens/garage/AgregarVehiculoScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -17,6 +19,15 @@ const PlaceholderScreen = ({ name }: { name: string }) => (
   </View>
 );
 
+function GarageStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="GarageHome" component={GarageScreen} />
+      <Stack.Screen name="AgregarVehiculo" component={AgregarVehiculoScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function AppTabs() {
   return (
     <Tab.Navigator
@@ -27,7 +38,7 @@ function AppTabs() {
         tabBarInactiveTintColor: '#555',
       }}
     >
-      <Tab.Screen name="Garage" children={() => <PlaceholderScreen name="Mi Garage" />} />
+      <Tab.Screen name="Garage" component={GarageStack} />
       <Tab.Screen name="Historial" children={() => <PlaceholderScreen name="Historial" />} />
       <Tab.Screen name="Servicios" children={() => <PlaceholderScreen name="Servicios" />} />
       <Tab.Screen name="Comunidad" children={() => <PlaceholderScreen name="Comunidad" />} />
