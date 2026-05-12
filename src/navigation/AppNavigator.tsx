@@ -8,6 +8,7 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import CheckEmailScreen from '../screens/auth/CheckEmailScreen';
 import GarageScreen from '../screens/garage/GarageScreen';
 import AgregarVehiculoScreen from '../screens/garage/AgregarVehiculoScreen';
+import DetalleVehiculoScreen from '../screens/garage/DetalleVehiculoScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -24,6 +25,7 @@ function GarageStack() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="GarageHome" component={GarageScreen} />
       <Stack.Screen name="AgregarVehiculo" component={AgregarVehiculoScreen} />
+      <Stack.Screen name="DetalleVehiculo" component={DetalleVehiculoScreen} />
     </Stack.Navigator>
   );
 }
