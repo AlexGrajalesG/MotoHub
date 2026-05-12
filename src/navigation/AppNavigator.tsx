@@ -9,6 +9,7 @@ import CheckEmailScreen from '../screens/auth/CheckEmailScreen';
 import GarageScreen from '../screens/garage/GarageScreen';
 import AgregarVehiculoScreen from '../screens/garage/AgregarVehiculoScreen';
 import DetalleVehiculoScreen from '../screens/garage/DetalleVehiculoScreen';
+import PerfilScreen from '../screens/PerfilScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -44,7 +45,7 @@ function AppTabs() {
       <Tab.Screen name="Historial" children={() => <PlaceholderScreen name="Historial" />} />
       <Tab.Screen name="Servicios" children={() => <PlaceholderScreen name="Servicios" />} />
       <Tab.Screen name="Comunidad" children={() => <PlaceholderScreen name="Comunidad" />} />
-      <Tab.Screen name="Perfil" children={() => <PlaceholderScreen name="Perfil" />} />
+      <Tab.Screen name="Perfil" component={PerfilScreen} />
     </Tab.Navigator>
   );
 }
