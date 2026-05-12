@@ -45,7 +45,7 @@ export default function RegisterScreen({ navigation }: any) {
     }
 
     setLoading(false);
-    Alert.alert('Listo', 'Cuenta creada. Revisa tu correo para confirmar.');
+    navigation.navigate('CheckEmail', { email });
   }
 
   return (
