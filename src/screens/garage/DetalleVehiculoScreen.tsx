@@ -55,7 +55,10 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
           <Text style={styles.accionEmoji}>🔧</Text>
           <Text style={styles.accionTexto}>Servicio</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.accion}>
+        <TouchableOpacity
+          style={styles.accion}
+          onPress={() => navigation.navigate('Documentos', { vehiculo })}
+        >
           <Text style={styles.accionEmoji}>📄</Text>
           <Text style={styles.accionTexto}>Documentos</Text>
         </TouchableOpacity>
