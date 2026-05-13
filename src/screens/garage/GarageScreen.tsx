@@ -29,15 +29,21 @@ export default function GarageScreen({ navigation }: any) {
   );
 
   async function fetchVehiculos() {
-    const { data } = await supabase
-      .from('vehiculos')
-      .select('id, marca, modelo, anio, placa, tipo, kilometraje')
-      .eq('propietario_id', session?.user.id)
-      .eq('activo', true)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('vehiculos')
+        .select('id, marca, modelo, anio, placa, tipo, kilometraje')
+        .eq('propietario_id', session?.user.id)
+        .eq('activo', true)
+        .order('created_at', { ascending: false });
 
-    setVehiculos(data ?? []);
-    setLoading(false);
+      if (error) console.error('Error cargando vehiculos:', error.message);
+      setVehiculos(data ?? []);
+    } catch (e) {
+      console.error('fetchVehiculos exception:', e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function tipoEmoji(tipo: string) {
