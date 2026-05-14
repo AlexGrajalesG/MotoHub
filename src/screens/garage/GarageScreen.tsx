@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, FlatList,
   TouchableOpacity, ActivityIndicator
 } from 'react-native';
+import { Image } from 'expo-image';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -15,6 +16,7 @@ type Vehiculo = {
   placa: string;
   tipo: string;
   kilometraje: number;
+  fotos: string[];
 };
 
 export default function GarageScreen({ navigation }: any) {
@@ -32,7 +34,7 @@ export default function GarageScreen({ navigation }: any) {
     try {
       const { data, error } = await supabase
         .from('vehiculos')
-        .select('id, marca, modelo, anio, placa, tipo, kilometraje')
+        .select('id, marca, modelo, anio, placa, tipo, kilometraje, fotos')
         .eq('propietario_id', session?.user.id)
         .eq('activo', true)
         .order('created_at', { ascending: false });
@@ -95,7 +97,17 @@ export default function GarageScreen({ navigation }: any) {
               style={styles.card}
               onPress={() => navigation.navigate('DetalleVehiculo', { vehiculo: item })}
             >
-              <Text style={styles.cardEmoji}>{tipoEmoji(item.tipo)}</Text>
+              {item.fotos?.[0] ? (
+                <Image
+                  source={item.fotos[0]}
+                  style={styles.cardFoto}
+                  contentFit="cover"
+                />
+              ) : (
+                <View style={styles.cardEmojiContainer}>
+                  <Text style={styles.cardEmoji}>{tipoEmoji(item.tipo)}</Text>
+                </View>
+              )}
               <View style={styles.cardInfo}>
                 <Text style={styles.cardNombre}>{item.marca} {item.modelo}</Text>
                 <Text style={styles.cardDetalle}>{item.anio} · {item.placa.toUpperCase()}</Text>
@@ -132,18 +144,29 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#1a1a1a',
     borderRadius: 16,
-    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#2a2a2a',
+    overflow: 'hidden',
   },
-  cardEmoji: { fontSize: 36, marginRight: 16 },
-  cardInfo: { flex: 1 },
-  cardNombre: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
+  cardFoto: {
+    width: 80,
+    height: 80,
+  },
+  cardEmojiContainer: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#242424',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardEmoji: { fontSize: 32 },
+  cardInfo: { flex: 1, padding: 16 },
+  cardNombre: { fontSize: 17, fontWeight: 'bold', color: '#fff' },
   cardDetalle: { fontSize: 13, color: '#888', marginTop: 2 },
   cardKm: { fontSize: 13, color: '#ff6b00', marginTop: 4 },
-  cardArrow: { fontSize: 24, color: '#444' },
+  cardArrow: { fontSize: 24, color: '#444', paddingRight: 16 },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   emptyIcon: { fontSize: 72, marginBottom: 16 },
   emptyTitle: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 8 },

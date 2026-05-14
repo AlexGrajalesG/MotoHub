@@ -1,8 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, ScrollView, Linking
 } from 'react-native';
+import { Image } from 'expo-image';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
@@ -15,6 +16,8 @@ type Documento = {
   nombre: string;
   archivo_url: string;
   fecha_vencimiento: string | null;
+  created_at?: string;
+  signedUrl?: string;
 };
 
 const TIPOS = [
@@ -23,6 +26,14 @@ const TIPOS = [
   { key: 'tecnomecanica', label: 'Tecnomecanica', emoji: '🔧' },
   { key: 'otro', label: 'Otro', emoji: '📄' },
 ];
+
+function extraerPath(urlOrPath: string): string {
+  if (!urlOrPath.startsWith('http')) return urlOrPath;
+  const marker = '/object/public/documentos/';
+  const idx = urlOrPath.indexOf(marker);
+  if (idx !== -1) return urlOrPath.slice(idx + marker.length);
+  return urlOrPath;
+}
 
 export default function DocumentosScreen({ route, navigation }: any) {
   const { vehiculo } = route.params;
@@ -38,73 +49,87 @@ export default function DocumentosScreen({ route, navigation }: any) {
   );
 
   async function fetchDocumentos() {
-    const { data } = await supabase
-      .from('documentos')
-      .select('*')
-      .eq('vehiculo_id', vehiculo.id)
-      .order('created_at', { ascending: false });
-    setDocumentos(data ?? []);
-    setLoading(false);
+    try {
+      const { data } = await supabase
+        .from('documentos')
+        .select('*')
+        .eq('vehiculo_id', vehiculo.id)
+        .order('created_at', { ascending: false });
+
+      if (!data) { setDocumentos([]); return; }
+
+      const docsConUrl = await Promise.all(
+        data.map(async (doc) => {
+          const path = extraerPath(doc.archivo_url);
+          const { data: signed, error: signError } = await supabase.storage
+            .from('documentos')
+            .createSignedUrl(path, 3600);
+          if (signError) console.error('[Docs] createSignedUrl error:', signError.message, '| path:', path);
+          else console.log('[Docs] signed URL ok para:', path);
+          return { ...doc, signedUrl: signed?.signedUrl };
+        })
+      );
+
+      setDocumentos(docsConUrl);
+    } catch (e) {
+      console.error('fetchDocumentos error:', e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleSubir(tipo: string) {
     Alert.alert('Subir documento', 'Elige el tipo de archivo', [
-      {
-        text: 'Foto / Imagen',
-        onPress: () => subirImagen(tipo),
-      },
-      {
-        text: 'PDF',
-        onPress: () => subirPDF(tipo),
-      },
+      { text: 'Foto / Imagen', onPress: () => subirImagen(tipo) },
+      { text: 'PDF', onPress: () => subirPDF(tipo) },
       { text: 'Cancelar', style: 'cancel' },
     ]);
   }
 
   async function subirImagen(tipo: string) {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       quality: 0.8,
     });
     if (result.canceled) return;
     const asset = result.assets[0];
-    const ext = asset.uri.split('.').pop();
-    await subirArchivo(tipo, asset.uri, `image/${ext}`);
+    const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const ext = ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(rawExt) ? rawExt : 'jpg';
+    await subirArchivo(tipo, asset.uri, `image/${ext}`, ext);
   }
 
   async function subirPDF(tipo: string) {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: 'application/pdf',
-    });
+    const result = await DocumentPicker.getDocumentAsync({ type: 'application/pdf' });
     if (result.canceled) return;
     const asset = result.assets[0];
-    await subirArchivo(tipo, asset.uri, 'application/pdf');
+    await subirArchivo(tipo, asset.uri, 'application/pdf', 'pdf');
   }
 
-  async function subirArchivo(tipo: string, uri: string, mimeType: string) {
+  async function subirArchivo(tipo: string, uri: string, mimeType: string, ext: string) {
     setUploading(tipo);
     try {
-      const ext = mimeType === 'application/pdf' ? 'pdf' : 'jpg';
       const path = `${session?.user.id}/${vehiculo.id}/${tipo}_${Date.now()}.${ext}`;
 
       const response = await fetch(uri);
-      const blob = await response.blob();
+      const arrayBuffer = await response.arrayBuffer();
+
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error('No se pudo leer el archivo. Intenta de nuevo.');
+      }
+
+      console.log('[Upload]', tipo, arrayBuffer.byteLength, 'bytes');
 
       const { error: uploadError } = await supabase.storage
         .from('documentos')
-        .upload(path, blob, { contentType: mimeType });
+        .upload(path, arrayBuffer, { contentType: mimeType });
 
       if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('documentos')
-        .getPublicUrl(path);
 
       await supabase.from('documentos').insert({
         vehiculo_id: vehiculo.id,
         tipo,
         nombre: `${tipo}_${Date.now()}`,
-        archivo_url: publicUrl,
+        archivo_url: path,
       });
 
       await fetchDocumentos();
@@ -123,6 +148,8 @@ export default function DocumentosScreen({ route, navigation }: any) {
         text: 'Eliminar',
         style: 'destructive',
         onPress: async () => {
+          const path = extraerPath(doc.archivo_url);
+          await supabase.storage.from('documentos').remove([path]);
           await supabase.from('documentos').delete().eq('id', doc.id);
           await fetchDocumentos();
         },
@@ -176,24 +203,49 @@ export default function DocumentosScreen({ route, navigation }: any) {
             {docs.length === 0 ? (
               <Text style={styles.vacio}>Sin documentos</Text>
             ) : (
-              docs.map((doc) => (
-                <View key={doc.id} style={styles.docCard}>
+              docs.map((doc) => {
+                const esPDF = extraerPath(doc.archivo_url).endsWith('.pdf');
+                return (
                   <TouchableOpacity
-                    style={styles.docInfo}
-                    onPress={() => Linking.openURL(doc.archivo_url)}
+                    key={doc.id}
+                    style={styles.docCard}
+                    onPress={() => doc.signedUrl && Linking.openURL(doc.signedUrl)}
                   >
-                    <Text style={styles.docNombre}>
-                      {doc.archivo_url.endsWith('.pdf') ? '📄' : '🖼️'} Ver documento
-                    </Text>
-                    <Text style={styles.docFecha}>
-                      {new Date(doc.created_at ?? '').toLocaleDateString('es-CO')}
-                    </Text>
+                    {esPDF ? (
+                      <View style={styles.pdfPreview}>
+                        <Text style={styles.pdfIcon}>PDF</Text>
+                      </View>
+                    ) : doc.signedUrl ? (
+                      <Image
+                        source={doc.signedUrl}
+                        style={styles.imgPreview}
+                        contentFit="cover"
+                        onError={(e) => console.error('[Docs] Image load error:', e, '| url:', doc.signedUrl?.slice(0, 80))}
+                      />
+                    ) : (
+                      <View style={styles.pdfPreview}>
+                        <Text style={styles.pdfIcon}>🖼️</Text>
+                      </View>
+                    )}
+                    <View style={styles.docMeta}>
+                      <Text style={styles.docNombre}>
+                        {esPDF ? 'Ver PDF' : 'Ver imagen'}
+                      </Text>
+                      <Text style={styles.docFecha}>
+                        {doc.created_at
+                          ? new Date(doc.created_at).toLocaleDateString('es-CO')
+                          : ''}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.eliminarBtn}
+                      onPress={() => handleEliminar(doc)}
+                    >
+                      <Text style={styles.eliminar}>🗑️</Text>
+                    </TouchableOpacity>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleEliminar(doc)}>
-                    <Text style={styles.eliminar}>🗑️</Text>
-                  </TouchableOpacity>
-                </View>
-              ))
+                );
+              })
             )}
           </View>
         );
@@ -241,11 +293,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#242424',
     borderRadius: 10,
-    padding: 12,
+    padding: 10,
     marginTop: 8,
+    gap: 12,
   },
-  docInfo: { flex: 1 },
+  imgPreview: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    backgroundColor: '#333',
+  },
+  pdfPreview: {
+    width: 56,
+    height: 56,
+    borderRadius: 8,
+    backgroundColor: '#2a1a1a',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pdfIcon: { color: '#ff6b00', fontWeight: 'bold', fontSize: 12 },
+  docMeta: { flex: 1 },
   docNombre: { color: '#fff', fontSize: 14 },
   docFecha: { color: '#666', fontSize: 12, marginTop: 2 },
-  eliminar: { fontSize: 18, paddingLeft: 12 },
+  eliminarBtn: { padding: 4 },
+  eliminar: { fontSize: 18 },
 });

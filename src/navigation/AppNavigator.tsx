@@ -10,6 +10,9 @@ import GarageScreen from '../screens/garage/GarageScreen';
 import AgregarVehiculoScreen from '../screens/garage/AgregarVehiculoScreen';
 import DetalleVehiculoScreen from '../screens/garage/DetalleVehiculoScreen';
 import DocumentosScreen from '../screens/garage/DocumentosScreen';
+import EditarVehiculoScreen from '../screens/garage/EditarVehiculoScreen';
+import RecordatoriosScreen from '../screens/garage/RecordatoriosScreen';
+import CrearRecordatorioScreen from '../screens/garage/CrearRecordatorioScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 
 const Tab = createBottomTabNavigator();
@@ -29,6 +32,9 @@ function GarageStack() {
       <Stack.Screen name="AgregarVehiculo" component={AgregarVehiculoScreen} />
       <Stack.Screen name="DetalleVehiculo" component={DetalleVehiculoScreen} />
       <Stack.Screen name="Documentos" component={DocumentosScreen} />
+      <Stack.Screen name="EditarVehiculo" component={EditarVehiculoScreen} />
+      <Stack.Screen name="Recordatorios" component={RecordatoriosScreen} />
+      <Stack.Screen name="CrearRecordatorio" component={CrearRecordatorioScreen} />
     </Stack.Navigator>
   );
 }
