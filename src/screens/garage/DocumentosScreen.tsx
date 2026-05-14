@@ -164,7 +164,7 @@ export default function DocumentosScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#ff6b00" size="large" />
+        <ActivityIndicator color="#e8522a" size="large" />
       </View>
     );
   }
@@ -255,20 +255,20 @@ export default function DocumentosScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f0f' },
+  container: { flex: 1, backgroundColor: '#111318' },
   content: { padding: 24, paddingTop: 56 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0f0f' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111318' },
   header: { marginBottom: 32 },
-  back: { color: '#ff6b00', fontSize: 16, marginBottom: 8 },
+  back: { color: '#e8522a', fontSize: 16, marginBottom: 8 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
   subtitle: { fontSize: 14, color: '#666', marginTop: 4 },
   seccion: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
   },
   seccionHeader: {
     flexDirection: 'row',
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   seccionEmoji: { fontSize: 20, marginRight: 8 },
   seccionLabel: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#fff' },
   subirBtn: {
-    backgroundColor: '#ff6b00',
+    backgroundColor: '#e8522a',
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  pdfIcon: { color: '#ff6b00', fontWeight: 'bold', fontSize: 12 },
+  pdfIcon: { color: '#e8522a', fontWeight: 'bold', fontSize: 12 },
   docMeta: { flex: 1 },
   docNombre: { color: '#fff', fontSize: 14 },
   docFecha: { color: '#666', fontSize: 12, marginTop: 2 },

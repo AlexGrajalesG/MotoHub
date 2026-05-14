@@ -25,11 +25,11 @@ export default function PerfilScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f0f', padding: 24, paddingTop: 56 },
+  container: { flex: 1, backgroundColor: '#111318', padding: 24, paddingTop: 56 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
   email: { fontSize: 14, color: '#666', marginBottom: 48 },
   button: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',

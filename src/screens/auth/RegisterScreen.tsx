@@ -116,22 +116,22 @@ export default function RegisterScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f0f' },
+  container: { flex: 1, backgroundColor: '#111318' },
   content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 48 },
-  logo: { fontSize: 42, fontWeight: 'bold', color: '#ff6b00', textAlign: 'center', marginBottom: 8 },
+  logo: { fontSize: 42, fontWeight: 'bold', color: '#e8522a', textAlign: 'center', marginBottom: 8 },
   tagline: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 48 },
   form: { gap: 12, marginBottom: 32 },
   input: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 12,
     padding: 16,
     color: '#fff',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
   },
   button: {
-    backgroundColor: '#ff6b00',
+    backgroundColor: '#e8522a',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -140,5 +140,5 @@ const styles = StyleSheet.create({
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   link: { color: '#666', textAlign: 'center', fontSize: 14 },
-  linkBold: { color: '#ff6b00', fontWeight: 'bold' },
+  linkBold: { color: '#e8522a', fontWeight: 'bold' },
 });

@@ -13,14 +13,17 @@ import DocumentosScreen from '../screens/garage/DocumentosScreen';
 import EditarVehiculoScreen from '../screens/garage/EditarVehiculoScreen';
 import RecordatoriosScreen from '../screens/garage/RecordatoriosScreen';
 import CrearRecordatorioScreen from '../screens/garage/CrearRecordatorioScreen';
+import HistorialScreen from '../screens/historial/HistorialScreen';
+import HistorialVehiculoScreen from '../screens/historial/HistorialVehiculoScreen';
+import AgregarHistorialScreen from '../screens/historial/AgregarHistorialScreen';
 import PerfilScreen from '../screens/PerfilScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const PlaceholderScreen = ({ name }: { name: string }) => (
-  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0f0f' }}>
-    <Text style={{ color: '#ff6b00', fontSize: 24, fontWeight: 'bold' }}>{name}</Text>
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111318' }}>
+    <Text style={{ color: '#e8522a', fontSize: 24, fontWeight: 'bold' }}>{name}</Text>
     <Text style={{ color: '#888', marginTop: 8 }}>Proximamente</Text>
   </View>
 );
@@ -39,18 +42,28 @@ function GarageStack() {
   );
 }
 
+function HistorialStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="HistorialHome" component={HistorialScreen} />
+      <Stack.Screen name="HistorialVehiculo" component={HistorialVehiculoScreen} />
+      <Stack.Screen name="AgregarHistorial" component={AgregarHistorialScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function AppTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: '#1a1a1a', borderTopColor: '#2a2a2a' },
-        tabBarActiveTintColor: '#ff6b00',
+        tabBarStyle: { backgroundColor: '#1c1f27', borderTopColor: '#2a2d38' },
+        tabBarActiveTintColor: '#e8522a',
         tabBarInactiveTintColor: '#555',
       }}
     >
       <Tab.Screen name="Garage" component={GarageStack} />
-      <Tab.Screen name="Historial" children={() => <PlaceholderScreen name="Historial" />} />
+      <Tab.Screen name="Historial" component={HistorialStack} />
       <Tab.Screen name="Servicios" children={() => <PlaceholderScreen name="Servicios" />} />
       <Tab.Screen name="Comunidad" children={() => <PlaceholderScreen name="Comunidad" />} />
       <Tab.Screen name="Perfil" component={PerfilScreen} />
@@ -73,8 +86,8 @@ export default function AppNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0f0f' }}>
-        <ActivityIndicator color="#ff6b00" size="large" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111318' }}>
+        <ActivityIndicator color="#e8522a" size="large" />
       </View>
     );
   }

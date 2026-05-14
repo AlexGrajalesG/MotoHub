@@ -58,7 +58,7 @@ export default function GarageScreen({ navigation }: any) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#ff6b00" size="large" />
+        <ActivityIndicator color="#e8522a" size="large" />
       </View>
     );
   }
@@ -123,8 +123,8 @@ export default function GarageScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f0f' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0f0f' },
+  container: { flex: 1, backgroundColor: '#111318' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111318' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
   addButton: {
-    backgroundColor: '#ff6b00',
+    backgroundColor: '#e8522a',
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
   addButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   list: { padding: 16, gap: 12 },
   card: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
     overflow: 'hidden',
   },
   cardFoto: {
@@ -165,14 +165,14 @@ const styles = StyleSheet.create({
   cardInfo: { flex: 1, padding: 16 },
   cardNombre: { fontSize: 17, fontWeight: 'bold', color: '#fff' },
   cardDetalle: { fontSize: 13, color: '#888', marginTop: 2 },
-  cardKm: { fontSize: 13, color: '#ff6b00', marginTop: 4 },
+  cardKm: { fontSize: 13, color: '#e8522a', marginTop: 4 },
   cardArrow: { fontSize: 24, color: '#444', paddingRight: 16 },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32 },
   emptyIcon: { fontSize: 72, marginBottom: 16 },
   emptyTitle: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 8 },
   emptySubtitle: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 32 },
   emptyButton: {
-    backgroundColor: '#ff6b00',
+    backgroundColor: '#e8522a',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 32,

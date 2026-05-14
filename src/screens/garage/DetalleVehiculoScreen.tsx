@@ -190,7 +190,7 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
               disabled={subiendo}
             >
               {subiendo
-                ? <ActivityIndicator color="#ff6b00" />
+                ? <ActivityIndicator color="#e8522a" />
                 : <>
                     <Text style={styles.addFotoIcon}>+</Text>
                     <Text style={styles.addFotoTexto}>
@@ -270,7 +270,7 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f0f' },
+  container: { flex: 1, backgroundColor: '#111318' },
   content: { paddingBottom: 40 },
 
   galeriaWrapper: { paddingTop: 56, paddingBottom: 8 },
@@ -292,14 +292,14 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
     borderStyle: 'dashed',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     gap: 8,
   },
-  addFotoIcon: { fontSize: 32, color: '#ff6b00' },
+  addFotoIcon: { fontSize: 32, color: '#e8522a' },
   addFotoTexto: { fontSize: 13, color: '#666' },
   galeriaHint: { textAlign: 'center', color: '#444', fontSize: 11, marginTop: 8 },
 
@@ -307,24 +307,24 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   nombre: { fontSize: 26, fontWeight: 'bold', color: '#fff', flex: 1 },
   editarBtn: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
   },
-  editarText: { color: '#ff6b00', fontSize: 13, fontWeight: 'bold' },
-  placa: { fontSize: 15, color: '#ff6b00', marginTop: 4, fontWeight: 'bold', letterSpacing: 2 },
+  editarText: { color: '#e8522a', fontSize: 13, fontWeight: 'bold' },
+  placa: { fontSize: 15, color: '#e8522a', marginTop: 4, fontWeight: 'bold', letterSpacing: 2 },
 
   card: {
     marginHorizontal: 24,
     marginTop: 16,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 16,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
     marginBottom: 24,
   },
   fila: {
@@ -333,24 +333,24 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#2a2a2a',
+    borderBottomColor: '#2a2d38',
   },
   filaUltima: { borderBottomWidth: 0 },
   filaLabel: { color: '#666', fontSize: 14 },
   filaDerechaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   filaValor: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  filaValorEditable: { color: '#ff6b00' },
-  filaEditIcon: { color: '#ff6b00', fontSize: 13 },
+  filaValorEditable: { color: '#e8522a' },
+  filaEditIcon: { color: '#e8522a', fontSize: 13 },
 
   acciones: { flexDirection: 'row', marginHorizontal: 24, gap: 10 },
   accion: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 14,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
   },
   accionEmoji: { fontSize: 24, marginBottom: 6 },
   accionTexto: { color: '#888', fontSize: 10, textAlign: 'center' },

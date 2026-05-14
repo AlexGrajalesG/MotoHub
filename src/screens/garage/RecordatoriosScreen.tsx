@@ -132,7 +132,7 @@ export default function RecordatoriosScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#ff6b00" size="large" />
+        <ActivityIndicator color="#e8522a" size="large" />
       </View>
     );
   }
@@ -185,15 +185,15 @@ export default function RecordatoriosScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f0f' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0f0f' },
+  container: { flex: 1, backgroundColor: '#111318' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111318' },
   header: { padding: 24, paddingTop: 56 },
-  back: { color: '#ff6b00', fontSize: 16, marginBottom: 12 },
+  back: { color: '#e8522a', fontSize: 16, marginBottom: 12 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontWeight: 'bold', color: '#fff' },
   subtitle: { fontSize: 13, color: '#666', marginTop: 2 },
   nuevoBtn: {
-    backgroundColor: '#ff6b00',
+    backgroundColor: '#e8522a',
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -201,13 +201,13 @@ const styles = StyleSheet.create({
   nuevoBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
   lista: { padding: 16, gap: 10, paddingBottom: 40 },
   card: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
     gap: 12,
   },
   cardVencido: { borderColor: '#ff3b30', backgroundColor: '#1f1212' },
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   },
   cardAcciones: { gap: 10, alignItems: 'center' },
   checkBtn: {
-    backgroundColor: '#ff6b00',
+    backgroundColor: '#e8522a',
     borderRadius: 16,
     width: 32,
     height: 32,

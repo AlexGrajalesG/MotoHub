@@ -84,7 +84,7 @@ export default function EditarVehiculoScreen({ route, navigation }: any) {
   if (cargando) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#ff6b00" size="large" />
+        <ActivityIndicator color="#e8522a" size="large" />
       </View>
     );
   }
@@ -231,21 +231,21 @@ export default function EditarVehiculoScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0f0f0f' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f0f0f' },
+  container: { flex: 1, backgroundColor: '#111318' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111318' },
   content: { padding: 24, paddingTop: 56 },
   header: { marginBottom: 32 },
-  back: { color: '#ff6b00', fontSize: 16, marginBottom: 8 },
+  back: { color: '#e8522a', fontSize: 16, marginBottom: 8 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
   label: { color: '#888', fontSize: 13, marginBottom: 8, marginTop: 16 },
   input: {
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderRadius: 12,
     padding: 16,
     color: '#fff',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
   },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   rowInputs: { flexDirection: 'row', gap: 12 },
@@ -254,15 +254,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1c1f27',
     borderWidth: 1,
-    borderColor: '#2a2a2a',
+    borderColor: '#2a2d38',
   },
-  chipActive: { backgroundColor: '#ff6b00', borderColor: '#ff6b00' },
+  chipActive: { backgroundColor: '#e8522a', borderColor: '#e8522a' },
   chipText: { color: '#666', fontSize: 13 },
   chipTextActive: { color: '#fff', fontWeight: 'bold' },
   button: {
-    backgroundColor: '#ff6b00',
+    backgroundColor: '#e8522a',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
