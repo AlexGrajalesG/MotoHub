@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, Alert,
-  ScrollView, KeyboardAvoidingView, Platform
+  ScrollView, KeyboardAvoidingView, Platform, TextInput as TextInputType
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { tokens } from '../../lib/tokens';
+
+const { colors, spacing, radius } = tokens;
 
 const TIPOS = ['moto', 'carro', 'camioneta', 'otro'];
 const SUBTIPOS_MOTO = ['naked', 'sport', 'scooter', 'doble proposito', 'otro'];
@@ -23,9 +26,21 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
   const [kilometraje, setKilometraje] = useState('0');
   const [loading, setLoading] = useState(false);
 
+  const modeloRef = useRef<TextInputType>(null);
+  const anioRef = useRef<TextInputType>(null);
+  const colorRef = useRef<TextInputType>(null);
+  const placaRef = useRef<TextInputType>(null);
+  const cilindrajeRef = useRef<TextInputType>(null);
+  const kmRef = useRef<TextInputType>(null);
+
   async function handleGuardar() {
     if (!marca || !modelo || !anio || !placa) {
-      Alert.alert('Error', 'Marca, modelo, anio y placa son obligatorios');
+      Alert.alert('Campos requeridos', 'Completa marca, modelo, año y placa');
+      return;
+    }
+    const anioNum = parseInt(anio);
+    if (isNaN(anioNum) || anioNum < 1900 || anioNum > new Date().getFullYear() + 1) {
+      Alert.alert('Año inválido', 'Ingresa un año válido');
       return;
     }
 
@@ -36,7 +51,7 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
       subtipo: tipo === 'moto' ? subtipo : null,
       marca,
       modelo,
-      anio: parseInt(anio),
+      anio: anioNum,
       color,
       placa: placa.toUpperCase(),
       cilindraje: cilindraje ? parseInt(cilindraje) : null,
@@ -55,17 +70,23 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
     >
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
+          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
             <Text style={styles.back}>‹ Volver</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Agregar vehiculo</Text>
+          <Text style={styles.title}>Agregar vehículo</Text>
         </View>
 
-        <Text style={styles.label}>Tipo de vehiculo</Text>
-        <View style={styles.row}>
+        {/* Tipo */}
+        <Text style={styles.label}>Tipo de vehículo</Text>
+        <View style={styles.chipRow}>
           {TIPOS.map((t) => (
             <TouchableOpacity
               key={t}
@@ -79,10 +100,11 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
           ))}
         </View>
 
+        {/* Subtipo moto */}
         {tipo === 'moto' && (
           <>
             <Text style={styles.label}>Tipo de moto</Text>
-            <View style={styles.row}>
+            <View style={styles.chipRow}>
               {SUBTIPOS_MOTO.map((s) => (
                 <TouchableOpacity
                   key={s}
@@ -98,83 +120,109 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
           </>
         )}
 
+        {/* Marca */}
         <Text style={styles.label}>Marca *</Text>
         <TextInput
           style={styles.input}
           placeholder="Ej: Yamaha, Honda, Chevrolet"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.textTertiary}
           value={marca}
           onChangeText={setMarca}
+          returnKeyType="next"
+          onSubmitEditing={() => modeloRef.current?.focus()}
+          blurOnSubmit={false}
         />
 
+        {/* Modelo */}
         <Text style={styles.label}>Modelo *</Text>
         <TextInput
+          ref={modeloRef}
           style={styles.input}
           placeholder="Ej: MT-07, CB500, Spark"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.textTertiary}
           value={modelo}
           onChangeText={setModelo}
+          returnKeyType="next"
+          onSubmitEditing={() => anioRef.current?.focus()}
+          blurOnSubmit={false}
         />
 
-        <View style={styles.rowInputs}>
-          <View style={styles.halfInput}>
-            <Text style={styles.label}>Año *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="2022"
-              placeholderTextColor="#666"
-              value={anio}
-              onChangeText={setAnio}
-              keyboardType="numeric"
-              maxLength={4}
-            />
-          </View>
-          <View style={styles.halfInput}>
-            <Text style={styles.label}>Color</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Negro"
-              placeholderTextColor="#666"
-              value={color}
-              onChangeText={setColor}
-            />
-          </View>
-        </View>
+        {/* Año — campo individual para evitar conflicto de teclado */}
+        <Text style={styles.label}>Año *</Text>
+        <TextInput
+          ref={anioRef}
+          style={styles.input}
+          placeholder="Ej: 2022"
+          placeholderTextColor={colors.textTertiary}
+          value={anio}
+          onChangeText={setAnio}
+          keyboardType="number-pad"
+          maxLength={4}
+          returnKeyType="next"
+          onSubmitEditing={() => colorRef.current?.focus()}
+          blurOnSubmit={false}
+        />
 
+        {/* Color — campo individual para evitar conflicto de teclado */}
+        <Text style={styles.label}>Color</Text>
+        <TextInput
+          ref={colorRef}
+          style={styles.input}
+          placeholder="Ej: Negro, Rojo, Blanco"
+          placeholderTextColor={colors.textTertiary}
+          value={color}
+          onChangeText={setColor}
+          returnKeyType="next"
+          onSubmitEditing={() => placaRef.current?.focus()}
+          blurOnSubmit={false}
+        />
+
+        {/* Placa y Cilindraje en fila — tipos de teclado iguales (ambos no-numeric o ambos numeric) */}
         <View style={styles.rowInputs}>
           <View style={styles.halfInput}>
             <Text style={styles.label}>Placa *</Text>
             <TextInput
+              ref={placaRef}
               style={styles.input}
               placeholder="ABC123"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.textTertiary}
               value={placa}
               onChangeText={(t) => setPlaca(t.toUpperCase())}
               autoCapitalize="characters"
               maxLength={6}
+              returnKeyType="next"
+              onSubmitEditing={() => cilindrajeRef.current?.focus()}
+              blurOnSubmit={false}
             />
           </View>
           <View style={styles.halfInput}>
             <Text style={styles.label}>Cilindraje (cc)</Text>
             <TextInput
+              ref={cilindrajeRef}
               style={styles.input}
               placeholder="700"
-              placeholderTextColor="#666"
+              placeholderTextColor={colors.textTertiary}
               value={cilindraje}
               onChangeText={setCilindraje}
-              keyboardType="numeric"
+              keyboardType="number-pad"
+              returnKeyType="next"
+              onSubmitEditing={() => kmRef.current?.focus()}
+              blurOnSubmit={false}
             />
           </View>
         </View>
 
+        {/* Kilometraje */}
         <Text style={styles.label}>Kilometraje actual</Text>
         <TextInput
+          ref={kmRef}
           style={styles.input}
           placeholder="0"
-          placeholderTextColor="#666"
+          placeholderTextColor={colors.textTertiary}
           value={kilometraje}
           onChangeText={setKilometraje}
-          keyboardType="numeric"
+          keyboardType="number-pad"
+          returnKeyType="done"
         />
 
         <TouchableOpacity
@@ -184,7 +232,7 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
         >
           {loading
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.buttonText}>Guardar vehiculo</Text>
+            : <Text style={styles.buttonText}>Guardar vehículo</Text>
           }
         </TouchableOpacity>
       </ScrollView>
@@ -193,43 +241,58 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111318' },
-  content: { padding: 24, paddingTop: 56 },
-  header: { marginBottom: 32 },
-  back: { color: '#e8522a', fontSize: 16, marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
-  label: { color: '#888', fontSize: 13, marginBottom: 8, marginTop: 16 },
+  container: { flex: 1, backgroundColor: colors.bgPrimary },
+  content: { padding: spacing.xl, paddingTop: 56, paddingBottom: 40 },
+  header: { marginBottom: spacing.xxl },
+  back: { color: colors.accent, fontSize: 16, marginBottom: spacing.sm },
+  title: { fontSize: 28, fontWeight: '700', color: colors.textPrimary, letterSpacing: -0.5 },
+
+  label: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    marginBottom: 6,
+    marginTop: spacing.lg,
+    fontWeight: '500',
+  },
   input: {
-    backgroundColor: '#1c1f27',
-    borderRadius: 12,
-    padding: 16,
-    color: '#fff',
+    backgroundColor: colors.bgCard,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 14,
+    color: colors.textPrimary,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: colors.bgSurface,
+    minHeight: 48,
   },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: {
+    borderRadius: radius.pill,
+    paddingVertical: 8,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.bgCard,
+    borderWidth: 1,
+    borderColor: colors.bgSurface,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipText: { color: colors.textSecondary, fontSize: 13 },
+  chipTextActive: { color: '#fff', fontWeight: '700' },
+
   rowInputs: { flexDirection: 'row', gap: 12 },
   halfInput: { flex: 1 },
-  chip: {
-    borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#1c1f27',
-    borderWidth: 1,
-    borderColor: '#2a2d38',
-  },
-  chipActive: { backgroundColor: '#e8522a', borderColor: '#e8522a' },
-  chipText: { color: '#666', fontSize: 13 },
-  chipTextActive: { color: '#fff', fontWeight: 'bold' },
+
   button: {
-    backgroundColor: '#e8522a',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 32,
-    marginBottom: 16,
+    marginTop: spacing.xxl,
+    minHeight: 52,
+    justifyContent: 'center',
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });

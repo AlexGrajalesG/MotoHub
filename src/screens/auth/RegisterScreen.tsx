@@ -54,7 +54,7 @@ export default function RegisterScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Text style={styles.logo}>MotorHub</Text>
+        <Text style={styles.logo}>Rodix</Text>
         <Text style={styles.tagline}>Crea tu cuenta gratis</Text>
 
         <View style={styles.form}>

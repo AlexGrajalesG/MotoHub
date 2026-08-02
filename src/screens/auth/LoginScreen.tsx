@@ -2,14 +2,19 @@ import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
-  Platform, Alert
+  Platform, Alert,
 } from 'react-native';
+import { IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { tokens } from '../../lib/tokens';
+
+const { colors, spacing, radius, fonts } = tokens;
 
 export default function LoginScreen({ navigation }: any) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [verPassword, setVerPassword] = useState(false);
+  const [loading, setLoading]   = useState(false);
 
   async function handleLogin() {
     if (!email || !password) {
@@ -28,27 +33,65 @@ export default function LoginScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
-        <Text style={styles.logo}>MotorHub</Text>
-        <Text style={styles.tagline}>Tu vehiculo, tu historial, tu comunidad</Text>
 
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Correo electronico"
-            placeholderTextColor="#666"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Contrasena"
-            placeholderTextColor="#666"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+        {/* Wordmark Rodix */}
+        <View style={styles.logoWrap}>
+          <View style={styles.logoIcon}>
+            <Text style={styles.logoIconText}>R</Text>
+          </View>
+          <View style={styles.wordmark}>
+            <View style={styles.wordmarkRow}>
+              <Text style={styles.logoRodi}>Rodi</Text>
+              <Text style={styles.logoX}>x</Text>
+            </View>
+            <Text style={styles.superApp}>SUPER-APP</Text>
+          </View>
+        </View>
+
+        <Text style={styles.tagline}>Roda diferente.</Text>
+
+        {/* Formulario */}
+        <View style={styles.card}>
+          <View style={styles.field}>
+            <Text style={styles.label}>Correo electrónico</Text>
+            <View style={styles.inputRow}>
+              <IconMail size={18} color={colors.textTertiary} />
+              <TextInput
+                style={styles.input}
+                placeholder="tu@email.com"
+                placeholderTextColor={colors.textTertiary}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                returnKeyType="next"
+              />
+            </View>
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Contraseña</Text>
+            <View style={styles.inputRow}>
+              <IconLock size={18} color={colors.textTertiary} />
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor={colors.textTertiary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!verPassword}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+              />
+              <TouchableOpacity onPress={() => setVerPassword(v => !v)} hitSlop={8}>
+                {verPassword
+                  ? <IconEyeOff size={18} color={colors.textTertiary} />
+                  : <IconEye size={18} color={colors.textTertiary} />
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+
           <TouchableOpacity
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleLogin}
@@ -63,8 +106,8 @@ export default function LoginScreen({ navigation }: any) {
 
         <TouchableOpacity onPress={() => navigation.navigate('Register')}>
           <Text style={styles.link}>
-            No tienes cuenta?{' '}
-            <Text style={styles.linkBold}>Registrate</Text>
+            ¿No tienes cuenta?{' '}
+            <Text style={styles.linkBold}>Regístrate</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -73,29 +116,104 @@ export default function LoginScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111318' },
-  content: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  logo: { fontSize: 42, fontWeight: 'bold', color: '#e8522a', textAlign: 'center', marginBottom: 8 },
-  tagline: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 48 },
-  form: { gap: 12, marginBottom: 32 },
-  input: {
-    backgroundColor: '#1c1f27',
-    borderRadius: 12,
-    padding: 16,
+  container: { flex: 1, backgroundColor: colors.bgPrimary },
+  content:   { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.xl },
+
+  /* ── Wordmark ── */
+  logoWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  logoIcon: {
+    width: 52,
+    height: 52,
+    backgroundColor: colors.accent,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoIconText: {
+    fontFamily: fonts.display,
+    fontSize: 28,
     color: '#fff',
-    fontSize: 16,
+    lineHeight: 32,
+  },
+  wordmark: { gap: 1 },
+  wordmarkRow: { flexDirection: 'row', alignItems: 'baseline' },
+  logoRodi: {
+    fontFamily: fonts.display,
+    fontSize: 36,
+    color: colors.textPrimary,
+    letterSpacing: -1,
+  },
+  logoX: {
+    fontFamily: fonts.display,
+    fontSize: 36,
+    color: colors.accent,
+    letterSpacing: -1,
+  },
+  superApp: {
+    fontFamily: fonts.bold,
+    fontSize: 10,
+    color: colors.textTertiary,
+    letterSpacing: 3,
+  },
+
+  tagline: {
+    fontFamily: fonts.body,
+    fontSize: 15,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.xxl + spacing.lg,
+  },
+
+  /* ── Form card ── */
+  card: {
+    backgroundColor: colors.bgCard,
+    borderRadius: radius.xl,
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: colors.bgSurface,
+    padding: spacing.xl,
+    gap: spacing.lg,
+    marginBottom: spacing.xxl,
+  },
+  field: { gap: spacing.xs },
+  label: {
+    fontFamily: fonts.heading, fontSize: 11, color: colors.textSecondary,
+    textTransform: 'uppercase', letterSpacing: 0.8,
+  },
+  inputRow: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    backgroundColor: colors.bgSurface,
+    borderRadius: radius.md,
+    paddingHorizontal: spacing.md,
+    minHeight: 52,
+  },
+  input: {
+    flex: 1,
+    color: colors.textPrimary,
+    fontFamily: fonts.body,
+    fontSize: 16,
+    paddingVertical: 14,
   },
   button: {
-    backgroundColor: '#e8522a',
-    borderRadius: 12,
-    padding: 16,
+    backgroundColor: colors.accent,
+    borderRadius: radius.md,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: spacing.xs,
+    minHeight: 52,
+    justifyContent: 'center',
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  link: { color: '#666', textAlign: 'center', fontSize: 14 },
-  linkBold: { color: '#e8522a', fontWeight: 'bold' },
+  buttonText: {
+    fontFamily: fonts.bold, color: '#fff', fontSize: 14,
+    textTransform: 'uppercase', letterSpacing: 1.5,
+  },
+
+  link:     { fontFamily: fonts.body, color: colors.textSecondary, textAlign: 'center', fontSize: 14 },
+  linkBold: { fontFamily: fonts.bold, color: colors.accent },
 });

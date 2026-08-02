@@ -39,18 +39,34 @@ Escribir en Obsidian con sintaxis correcta:
 ```
 AppTabs
   ├── GarageStack
-  │     ├── GarageScreen
+  │     ├── GarageScreen             — doc-badges (SOAT/Tarjeta/Tecno) en cada card
   │     ├── AgregarVehiculoScreen
-  │     ├── DetalleVehiculoScreen
-  │     └── DocumentosScreen
-  ├── HistorialScreen (pendiente)
-  ├── ServiciosScreen (pendiente)
-  ├── ComunidadScreen (pendiente)
-  └── PerfilScreen
+  │     ├── DetalleVehiculoScreen    — DocumentosInline embebido (sin redireccion)
+  │     ├── DocumentosScreen
+  │     ├── EditarVehiculoScreen
+  │     ├── RecordatoriosScreen
+  │     └── CrearRecordatorioScreen
+  ├── HistorialStack
+  │     ├── HistorialScreen
+  │     ├── HistorialVehiculoScreen
+  │     └── AgregarHistorialScreen
+  ├── ServiciosStack                 — Fase 2
+  │     ├── ServiciosScreen          — listado con filtros tipo/vehiculo
+  │     └── NegocioDetalleScreen     — horario, contacto, servicios por categoria
+  ├── ComunidadScreen (placeholder)
+  └── PerfilScreen                   — foto, nombre, telefono, ciudad
 ```
 
+## Perfil
+- Tabla: `usuarios` (NOT `profiles`) — columnas: `nombre, foto_url, ciudad, telefono`
+- Foto: bucket `fotos`, path `perfiles/{uid}/avatar.{ext}`, upsert: true
+- Trigger `on_auth_user_created` garantiza que siempre existe un row en `usuarios`
+
 ## Supabase
-- 16 tablas con RLS completo
+- 20 tablas con RLS (17 Fase 1 + negocios, servicios, mecanicos Fase 2)
 - Trigger `on_auth_user_created` → inserta en tabla `usuarios` automaticamente
 - Storage bucket `documentos` privado, path: `{user_id}/{vehiculo_id}/{tipo}_{timestamp}.{ext}`
-- Politicas de storage necesarias: INSERT + SELECT + DELETE en `storage.objects`
+- Storage bucket `fotos` publico — fotos vehiculos + fotos perfil (`perfiles/` prefix) + fotos historial (`{uid}/historial/{vehiculo_id}/`)
+- SQL pendiente ejecutar en dashboard:
+  - `supabase/fase2_servicios.sql` — negocios, servicios, mecanicos con seed data
+  - `supabase/fase2_historial.sql` — 6 columnas nuevas en historial_mantenimiento
