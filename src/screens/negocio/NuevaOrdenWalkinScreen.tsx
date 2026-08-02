@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, KeyboardAvoidingView, Platform,
+  ActivityIndicator, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import {
   IconArrowLeft, IconSearch, IconUserPlus, IconBike, IconCheck,
@@ -43,7 +43,10 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
     setCreando(true);
     const citaId = await crearOrdenWalkin(negocioId, cliente.id, vehiculoId, estado);
     setCreando(false);
-    if (!citaId) return;
+    if (!citaId) {
+      Alert.alert('No se pudo crear la orden', 'Intenta de nuevo. Si el problema sigue, revisa tu conexión.');
+      return;
+    }
     navigation.replace('ChatCita', { citaId });
   }
 
@@ -231,16 +234,17 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: colors.bgCard, borderRadius: radius.pill,
     borderWidth: 1, borderColor: colors.bgSurface,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md, minHeight: 44,
   },
   vehiculoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(232,82,42,0.1)' },
   vehiculoChipText: { fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary },
   vehiculoChipTextActive: { color: colors.accent },
 
   estadoChip: {
+    justifyContent: 'center',
     backgroundColor: colors.bgCard, borderRadius: radius.pill,
     borderWidth: 1, borderColor: colors.bgSurface,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md, minHeight: 44,
   },
   estadoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(232,82,42,0.1)' },
   estadoChipText: { fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary },
