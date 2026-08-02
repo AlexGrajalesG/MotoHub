@@ -33,13 +33,13 @@ export async function fetchMiMecanico(usuarioId: string): Promise<{ id: string; 
 }
 
 export async function buscarUsuarioPorTelefono(telefono: string): Promise<{ id: string; nombre: string } | null> {
+  // RPC (security definer): una consulta directa a `usuarios` no encuentra a nadie
+  // fuera de uno mismo o clientes con una cita previa (RLS), y aqui buscamos gente nueva.
   const { data, error } = await supabase
-    .from('usuarios')
-    .select('id, nombre')
-    .eq('telefono', telefono.trim())
+    .rpc('buscar_usuario_por_telefono', { p_telefono: telefono.trim() })
     .maybeSingle();
   if (error || !data) return null;
-  return data;
+  return { id: (data as any).id, nombre: (data as any).nombre };
 }
 
 export async function agregarMecanico(usuarioId: string, negocioId: string) {
