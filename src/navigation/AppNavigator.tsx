@@ -47,6 +47,7 @@ import DetalleCitaNegocioScreen from '../screens/negocio/DetalleCitaNegocioScree
 import MiEquipoScreen          from '../screens/negocio/MiEquipoScreen';
 import MisProductosScreen      from '../screens/negocio/MisProductosScreen';
 import EditarProductoScreen    from '../screens/negocio/EditarProductoScreen';
+import NuevaOrdenWalkinScreen  from '../screens/negocio/NuevaOrdenWalkinScreen';
 
 import CitasMecanicoScreen     from '../screens/mecanico/CitasMecanicoScreen';
 
@@ -129,6 +130,7 @@ function NegocioStack() {
       <NegocioNav.Screen name="CitasNegocio"        component={CitasNegocioScreen} />
       <NegocioNav.Screen name="DetalleCitaNegocio"  component={DetalleCitaNegocioScreen} />
       <NegocioNav.Screen name="MiEquipo"        component={MiEquipoScreen} />
+      <NegocioNav.Screen name="NuevaOrdenWalkin" component={NuevaOrdenWalkinScreen} />
       <NegocioNav.Screen name="MisProductos"    component={MisProductosScreen} />
       <NegocioNav.Screen name="EditarProducto"  component={EditarProductoScreen} />
       <NegocioNav.Screen name="Notificaciones"  component={NotificacionesScreen} />

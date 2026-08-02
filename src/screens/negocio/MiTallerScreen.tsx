@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import {
   IconBuildingStore, IconPencil, IconTools,
-  IconEye, IconEyeOff, IconCalendar, IconBell, IconUsers, IconPackage,
+  IconEye, IconEyeOff, IconCalendar, IconBell, IconUsers, IconPackage, IconUserPlus,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -31,10 +31,10 @@ type Negocio = {
 type CitaProxima = {
   id: string;
   fecha: string;
-  hora: string;
+  hora: string | null;
   estado: string;
   vehiculo: { placa: string; marca: string; modelo: string } | null;
-  cliente: { nombre: string } | null;
+  cliente: { nombre: string | null } | null;
 };
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
@@ -50,7 +50,8 @@ function estaAbierto(horario: Negocio['horario']): boolean {
   return mins >= ah * 60 + am && mins < ch * 60 + cm;
 }
 
-function formatHora(hora: string): { time: string; meridiem: string } {
+function formatHora(hora: string | null): { time: string; meridiem: string } {
+  if (!hora) return { time: '--:--', meridiem: '' };
   const [h, m] = hora.split(':').map(Number);
   return {
     time: `${String(h % 12 || 12).padStart(2, '0')}:${String(m).padStart(2, '0')}`,
@@ -87,7 +88,7 @@ export default function MiTallerScreen({ navigation }: any) {
     setNegocio((data as Negocio) ?? null);
 
     if (data) {
-      const [{ count }, { count: citasCount }, { data: proximas }] = await Promise.all([
+      const [{ count }, { count: citasCount }, { data: proximasRaw }] = await Promise.all([
         supabase
           .from('servicios')
           .select('*', { count: 'exact', head: true })
@@ -99,17 +100,32 @@ export default function MiTallerScreen({ navigation }: any) {
           .eq('estado', 'pendiente'),
         supabase
           .from('citas')
-          .select('id, fecha, hora, estado, vehiculo:vehiculos(placa, marca, modelo), cliente:profiles(nombre)')
+          .select('id, usuario_id, fecha_solicitada, hora_solicitada, estado, vehiculo:vehiculos(placa, marca, modelo)')
           .eq('negocio_id', data.id)
           .in('estado', ['pendiente', 'confirmada'])
-          .gte('fecha', new Date().toISOString().split('T')[0])
-          .order('fecha', { ascending: true })
-          .order('hora', { ascending: true })
+          .gte('fecha_solicitada', new Date().toISOString().split('T')[0])
+          .order('fecha_solicitada', { ascending: true })
+          .order('hora_solicitada', { ascending: true })
           .limit(3),
       ]);
       setServiciosCount(count ?? 0);
       setCitasPendientes(citasCount ?? 0);
-      setCitasProximas((proximas as unknown as CitaProxima[]) ?? []);
+
+      const filas = (proximasRaw as any[]) ?? [];
+      const usuarioIds = [...new Set(filas.map(c => c.usuario_id))];
+      let usuariosMap: Record<string, { nombre: string | null }> = {};
+      if (usuarioIds.length > 0) {
+        const { data: usuarios } = await supabase.from('usuarios').select('id, nombre').in('id', usuarioIds);
+        (usuarios ?? []).forEach((u: any) => { usuariosMap[u.id] = { nombre: u.nombre }; });
+      }
+      setCitasProximas(filas.map(c => ({
+        id: c.id,
+        fecha: c.fecha_solicitada,
+        hora: c.hora_solicitada,
+        estado: c.estado,
+        vehiculo: c.vehiculo ?? null,
+        cliente: usuariosMap[c.usuario_id] ?? null,
+      })));
     }
     setLoading(false);
   }
@@ -272,6 +288,15 @@ export default function MiTallerScreen({ navigation }: any) {
           onPress={() => navigation.navigate('CitasNegocio', { negocioId: negocio.id })}
         >
           <Text style={s.agendaBtnText}>Ver agenda completa</Text>
+        </Pressable>
+
+        {/* Nueva orden sin cita previa (walk-in) — secundaria, no compite con las citas reales */}
+        <Pressable
+          style={({ pressed }) => [s.walkinBtn, pressed && { opacity: 0.85 }]}
+          onPress={() => navigation.navigate('NuevaOrdenWalkin', { negocioId: negocio.id })}
+        >
+          <IconUserPlus size={18} color={colors.textSecondary} />
+          <Text style={s.walkinBtnText}>Nueva orden (sin cita)</Text>
         </Pressable>
 
         {/* Quick actions (2 columnas) */}
@@ -470,6 +495,14 @@ const s = StyleSheet.create({
     fontFamily: fonts.bold, fontSize: 13, color: '#fff',
     textTransform: 'uppercase', letterSpacing: 1.5,
   },
+
+  walkinBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+    backgroundColor: colors.bgCard, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.bgSurface,
+    minHeight: 48, marginBottom: spacing.lg,
+  },
+  walkinBtnText: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
 
   /* ── Quick actions ── */
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.md },

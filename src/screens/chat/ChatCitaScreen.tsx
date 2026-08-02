@@ -31,6 +31,7 @@ type CitaInfo = {
   estado: string;
   vehiculo_id: string;
   negocio_id: string;
+  origen: string;
   negocio: { nombre: string; propietario_id: string } | null;
   vehiculo: { marca: string; modelo: string; placa: string } | null;
 };
@@ -66,7 +67,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     const { data, error } = await supabase
       .from('citas')
       .select(`
-        id, usuario_id, estado, vehiculo_id, negocio_id,
+        id, usuario_id, estado, vehiculo_id, negocio_id, origen,
         negocio:negocios ( nombre, propietario_id ),
         vehiculo:vehiculos ( marca, modelo, placa )
       `)
@@ -246,6 +247,11 @@ export default function ChatCitaScreen({ route, navigation }: any) {
           <Text style={s.headerSubtitle} numberOfLines={1}>
             {cita.vehiculo ? `${cita.vehiculo.placa} · ${cita.vehiculo.modelo}` : ''}
           </Text>
+          {cita.origen === 'walk_in' && (
+            <View style={s.walkinBadge}>
+              <Text style={s.walkinBadgeText}>Sin cita previa</Text>
+            </View>
+          )}
         </View>
         <View style={[s.estadoBadge, { backgroundColor: `${ESTADO_COLORS[cita.estado]}22` }]}>
           <View style={[s.estadoDot, { backgroundColor: ESTADO_COLORS[cita.estado] }]} />
@@ -411,6 +417,11 @@ const s = StyleSheet.create({
   headerCenter:  { flex: 1 },
   headerTitle:   { fontFamily: fonts.bold, fontSize: 16, color: colors.textPrimary },
   headerSubtitle:{ fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: 1 },
+  walkinBadge: {
+    alignSelf: 'flex-start', backgroundColor: colors.bgCard, borderRadius: radius.sm,
+    paddingHorizontal: 6, paddingVertical: 2, marginTop: 3,
+  },
+  walkinBadgeText: { fontFamily: fonts.heading, fontSize: 10, color: colors.textTertiary },
   estadoBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 4,
