@@ -11,6 +11,8 @@ type MiMecanico = { id: string; negocio_id: string; negocio_nombre: string };
 
 type ModoContextType = {
   tieneNegocio: boolean;
+  negocioId: string | null;
+  citasPendientes: number;
   modoTaller: boolean;
   esMecanico: boolean;
   miMecanico: MiMecanico | null;
@@ -20,10 +22,13 @@ type ModoContextType = {
   setModoMecanico: (v: boolean) => void;
   refreshTieneNegocio: () => Promise<void>;
   refreshEsMecanico: () => Promise<void>;
+  refreshCitasPendientes: () => Promise<void>;
 };
 
 const ModoContext = createContext<ModoContextType>({
   tieneNegocio: false,
+  negocioId: null,
+  citasPendientes: 0,
   modoTaller: false,
   esMecanico: false,
   miMecanico: null,
@@ -33,25 +38,40 @@ const ModoContext = createContext<ModoContextType>({
   setModoMecanico: () => {},
   refreshTieneNegocio: async () => {},
   refreshEsMecanico: async () => {},
+  refreshCitasPendientes: async () => {},
 });
 
 export function ModoProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [tieneNegocio, setTieneNegocio] = useState(false);
+  const [negocioId, setNegocioId] = useState<string | null>(null);
+  const [citasPendientes, setCitasPendientes] = useState(0);
   const [modoTaller, setModoTallerState] = useState(false);
   const [miMecanico, setMiMecanico] = useState<MiMecanico | null>(null);
   const [modoMecanico, setModoMecanicoState] = useState(false);
   const [loadingModo, setLoadingModo] = useState(true);
 
   const refreshTieneNegocio = useCallback(async () => {
-    if (!session?.user.id) { setTieneNegocio(false); return; }
-    const { data } = await supabase
-      .from('usuarios')
-      .select('roles')
-      .eq('id', session.user.id)
-      .maybeSingle();
-    setTieneNegocio(((data?.roles as string[]) ?? []).includes('negocio'));
+    if (!session?.user.id) { setTieneNegocio(false); setNegocioId(null); return; }
+    const [{ data: usuario }, { data: negocio }] = await Promise.all([
+      supabase.from('usuarios').select('roles').eq('id', session.user.id).maybeSingle(),
+      supabase.from('negocios').select('id').eq('propietario_id', session.user.id).maybeSingle(),
+    ]);
+    setTieneNegocio(((usuario?.roles as string[]) ?? []).includes('negocio'));
+    setNegocioId(negocio?.id ?? null);
   }, [session?.user.id]);
+
+  const refreshCitasPendientes = useCallback(async () => {
+    if (!negocioId) { setCitasPendientes(0); return; }
+    const { count } = await supabase
+      .from('citas')
+      .select('*', { count: 'exact', head: true })
+      .eq('negocio_id', negocioId)
+      .eq('estado', 'pendiente');
+    setCitasPendientes(count ?? 0);
+  }, [negocioId]);
+
+  useEffect(() => { refreshCitasPendientes(); }, [refreshCitasPendientes]);
 
   const refreshEsMecanico = useCallback(async () => {
     if (!session?.user.id) { setMiMecanico(null); return; }
@@ -101,8 +121,8 @@ export function ModoProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ModoContext.Provider value={{
-      tieneNegocio, modoTaller, esMecanico: !!miMecanico, miMecanico, modoMecanico, loadingModo,
-      setModoTaller, setModoMecanico, refreshTieneNegocio, refreshEsMecanico,
+      tieneNegocio, negocioId, citasPendientes, modoTaller, esMecanico: !!miMecanico, miMecanico, modoMecanico, loadingModo,
+      setModoTaller, setModoMecanico, refreshTieneNegocio, refreshEsMecanico, refreshCitasPendientes,
     }}>
       {children}
     </ModoContext.Provider>

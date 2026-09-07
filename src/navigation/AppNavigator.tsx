@@ -194,9 +194,10 @@ const tabBarOptions = {
 
 function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
   const { session } = useAuth();
+  const { citasPendientes, refreshCitasPendientes } = useModo();
   const [recordBadge, setRecordBadge] = useState<number | undefined>(undefined);
   const [docBadge, setDocBadge]       = useState<number>(0);
-  const [citasBadge, setCitasBadge]   = useState<number | undefined>(undefined);
+  const citasBadge = citasPendientes > 0 ? citasPendientes : undefined;
 
   useEffect(() => {
     if (!session?.user.id) return;
@@ -206,25 +207,8 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
 
   useEffect(() => {
     if (!session?.user.id || modo !== 'taller') return;
-    fetchCitasBadge();
+    refreshCitasPendientes();
   }, [session?.user.id, modo]);
-
-  async function fetchCitasBadge() {
-    const { data: negocio } = await supabase
-      .from('negocios')
-      .select('id')
-      .eq('propietario_id', session!.user.id)
-      .maybeSingle();
-    if (!negocio) return;
-
-    const { count } = await supabase
-      .from('citas')
-      .select('*', { count: 'exact', head: true })
-      .eq('negocio_id', negocio.id)
-      .eq('estado', 'pendiente');
-
-    setCitasBadge(count && count > 0 ? count : undefined);
-  }
 
   async function fetchBadge() {
     const hoy = new Date().toISOString().split('T')[0];

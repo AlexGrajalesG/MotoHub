@@ -10,6 +10,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
+import { useModo } from '../../context/ModoContext';
 import { tokens } from '../../lib/tokens';
 
 const { colors, spacing, radius, fonts } = tokens;
@@ -67,14 +68,14 @@ function getInitials(nombre: string | null | undefined): string {
 export default function MiTallerScreen({ navigation }: any) {
   const { session } = useAuth();
   const { unreadCount } = useNotificaciones();
+  const { citasPendientes, refreshCitasPendientes } = useModo();
   const [negocio,         setNegocio]         = useState<Negocio | null>(null);
   const [serviciosCount,  setServiciosCount]  = useState(0);
-  const [citasPendientes, setCitasPendientes] = useState(0);
   const [citasProximas,   setCitasProximas]   = useState<CitaProxima[]>([]);
   const [loading,         setLoading]         = useState(true);
   const [actualizando,    setActualizando]    = useState(false);
 
-  useFocusEffect(useCallback(() => { fetchNegocio(); }, []));
+  useFocusEffect(useCallback(() => { fetchNegocio(); refreshCitasPendientes(); }, []));
 
   async function fetchNegocio() {
     setLoading(true);
@@ -88,16 +89,11 @@ export default function MiTallerScreen({ navigation }: any) {
     setNegocio((data as Negocio) ?? null);
 
     if (data) {
-      const [{ count }, { count: citasCount }, { data: proximasRaw }] = await Promise.all([
+      const [{ count }, { data: proximasRaw }] = await Promise.all([
         supabase
           .from('servicios')
           .select('*', { count: 'exact', head: true })
           .eq('negocio_id', data.id),
-        supabase
-          .from('citas')
-          .select('*', { count: 'exact', head: true })
-          .eq('negocio_id', data.id)
-          .eq('estado', 'pendiente'),
         supabase
           .from('citas')
           .select('id, usuario_id, fecha_solicitada, hora_solicitada, estado, vehiculo:vehiculos(placa, marca, modelo)')
@@ -109,7 +105,6 @@ export default function MiTallerScreen({ navigation }: any) {
           .limit(3),
       ]);
       setServiciosCount(count ?? 0);
-      setCitasPendientes(citasCount ?? 0);
 
       const filas = (proximasRaw as any[]) ?? [];
       const usuarioIds = [...new Set(filas.map(c => c.usuario_id))];

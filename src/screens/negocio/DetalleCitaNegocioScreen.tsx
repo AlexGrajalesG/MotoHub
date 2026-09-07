@@ -18,6 +18,7 @@ import { fetchMecanicosDeNegocio, type Mecanico } from '../../lib/mecanicos';
 import {
   fetchMensajes, enviarMensajeTexto, uploadAdjuntoCita,
 } from '../../lib/mensajesCita';
+import { formatCOP } from '../../lib/precio';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -49,6 +50,7 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
   const [loading, setLoading]   = useState(true);
   const [busy, setBusy]         = useState(false);
   const [notas, setNotas]       = useState('');
+  const [precio, setPrecio]     = useState('');
   const [mecanicos, setMecanicos] = useState<Mecanico[]>([]);
   const [fotos, setFotos]       = useState<string[]>([]);
   const [subiendo, setSubiendo] = useState(false);
@@ -88,6 +90,7 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
     };
     setCita(c);
     setNotas(c.notas_negocio ?? '');
+    setPrecio(c.precio_acordado != null ? String(c.precio_acordado) : '');
     fetchMecanicosDeNegocio(c.negocio_id).then(setMecanicos);
     setLoading(false);
   }
@@ -119,6 +122,20 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
     setBusy(false);
     if (error) { Alert.alert('Error', error.message); return; }
     setCita(prev => prev && { ...prev, notas_negocio: valor || null });
+  }
+
+  async function guardarPrecio() {
+    if (!cita) return;
+    const valor = precio.trim() === '' ? null : parseFloat(precio);
+    if (valor != null && (Number.isNaN(valor) || valor < 0)) {
+      Alert.alert('Precio inválido', 'Ingresa un número válido.');
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.from('citas').update({ precio_acordado: valor }).eq('id', cita.id);
+    setBusy(false);
+    if (error) { Alert.alert('Error', error.message); return; }
+    setCita(prev => prev && { ...prev, precio_acordado: valor });
   }
 
   async function asignarMecanico(mecanicoId: string | null) {
@@ -260,6 +277,32 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
           )}
 
           <View style={{ gap: 6 }}>
+            <Text style={s.fieldLabel}>PRECIO ACORDADO</Text>
+            <View style={s.precioRow}>
+              <Text style={s.precioSimbolo}>$</Text>
+              <TextInput
+                style={s.precioInput}
+                placeholder="Ej: 85000"
+                placeholderTextColor={colors.textTertiary}
+                value={precio}
+                onChangeText={setPrecio}
+                keyboardType="decimal-pad"
+              />
+              {precio !== (cita.precio_acordado != null ? String(cita.precio_acordado) : '') && (
+                <Pressable style={({ pressed }) => [s.precioSaveBtn, pressed && { opacity: 0.8 }]} onPress={guardarPrecio} disabled={busy}>
+                  {busy
+                    ? <ActivityIndicator size="small" color="#fff" />
+                    : <IconDeviceFloppy size={16} color="#fff" />
+                  }
+                </Pressable>
+              )}
+            </View>
+            {cita.precio_acordado != null && (
+              <Text style={s.precioActualText}>Actual: {formatCOP(cita.precio_acordado)}</Text>
+            )}
+          </View>
+
+          <View style={{ gap: 6 }}>
             <Text style={s.fieldLabel}>COMENTARIOS ADICIONALES</Text>
             <TextInput
               style={s.notasInput}
@@ -392,6 +435,18 @@ const s = StyleSheet.create({
   mecChipOn: { backgroundColor: 'rgba(232,82,42,0.15)', borderColor: colors.accent },
   mecChipText: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary },
   mecChipTextOn: { color: colors.accent, fontFamily: fonts.heading },
+  precioRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  precioSimbolo: { fontFamily: fonts.bold, fontSize: 16, color: colors.textSecondary },
+  precioInput: {
+    flex: 1, backgroundColor: colors.bgSurface, borderRadius: radius.lg,
+    paddingHorizontal: spacing.md, minHeight: 44,
+    fontFamily: fonts.body, fontSize: 14, color: colors.textPrimary,
+  },
+  precioSaveBtn: {
+    width: 40, height: 40, borderRadius: radius.md,
+    backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center',
+  },
+  precioActualText: { fontFamily: fonts.body, fontSize: 11, color: colors.textTertiary },
   notasInput: {
     backgroundColor: colors.bgSurface, borderRadius: radius.lg,
     padding: spacing.md, minHeight: 100, textAlignVertical: 'top',
