@@ -11,8 +11,10 @@ import {
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { useModo } from '../../context/ModoContext';
 import { tokens } from '../../lib/tokens';
 import { type TipoPrecio } from '../../lib/precio';
+import { fetchCitasNoLeidas } from '../../lib/lecturas';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -55,14 +57,15 @@ function getInitials(nombre: string | null | undefined): string {
 export default function CitasNegocioScreen({ route, navigation }: any) {
   const negocioIdParam = route.params?.negocioId as string | undefined;
   const { session } = useAuth();
+  const { citasPendientes, refreshCitasPendientes } = useModo();
 
   const [negocioId, setNegocioId] = useState<string | undefined>(negocioIdParam);
   const [tab, setTab]           = useState<Tab>('pendientes');
   const [busqueda, setBusqueda] = useState('');
   const [citas, setCitas]       = useState<Cita[]>([]);
+  const [noLeidas, setNoLeidas] = useState<Set<string>>(new Set());
   const [loading, setLoading]   = useState(true);
   const [busy, setBusy]         = useState<string | null>(null);
-  const [pendientesCount, setPendientesCount] = useState(0);
 
   useFocusEffect(useCallback(() => {
     if (negocioId) return;
@@ -73,17 +76,8 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
   useFocusEffect(useCallback(() => {
     if (!negocioId) return;
     fetchCitas();
-    fetchPendientesCount();
+    refreshCitasPendientes();
   }, [tab, negocioId]));
-
-  async function fetchPendientesCount() {
-    const { count } = await supabase
-      .from('citas')
-      .select('*', { count: 'exact', head: true })
-      .eq('negocio_id', negocioId)
-      .eq('estado', 'pendiente');
-    setPendientesCount(count ?? 0);
-  }
 
   async function fetchCitas() {
     setLoading(true);
@@ -124,6 +118,7 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
 
     setCitas(lista);
     setLoading(false);
+    fetchCitasNoLeidas(lista.map(c => c.id), session!.user.id).then(setNoLeidas);
   }
 
   async function cambiarEstado(cita: Cita, nuevo: Estado, confirmMsg?: { title: string; body: string }) {
@@ -133,7 +128,7 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
       setBusy(null);
       if (error) { Alert.alert('Error', error.message); return; }
       setCitas(prev => prev.filter(c => c.id !== cita.id));
-      if (cita.estado === 'pendiente') setPendientesCount(n => Math.max(0, n - 1));
+      if (cita.estado === 'pendiente') refreshCitasPendientes();
     };
     if (confirmMsg) {
       Alert.alert(confirmMsg.title, confirmMsg.body, [
@@ -189,8 +184,8 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
           return (
             <Pressable key={t.key} style={[s.tab, activo && s.tabOn]} onPress={() => setTab(t.key)}>
               <Text style={[s.tabText, activo && s.tabTextOn]}>{t.label}</Text>
-              {t.key === 'pendientes' && pendientesCount > 0 && (
-                <View style={s.tabBadge}><Text style={s.tabBadgeText}>{pendientesCount}</Text></View>
+              {t.key === 'pendientes' && citasPendientes > 0 && (
+                <View style={s.tabBadge}><Text style={s.tabBadgeText}>{citasPendientes}</Text></View>
               )}
             </Pressable>
           );
@@ -228,7 +223,10 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
                       }
                     </View>
                     <View>
-                      <Text style={s.cliente} numberOfLines={1}>{nombre}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Text style={s.cliente} numberOfLines={1}>{nombre}</Text>
+                        {noLeidas.has(item.id) && <View style={s.noLeidoDot} />}
+                      </View>
                       <Text style={s.vehiculoText} numberOfLines={1}>
                         {item.vehiculo ? `${item.vehiculo.marca} ${item.vehiculo.modelo}` : 'Vehículo'}
                         {item.vehiculo?.placa ? <Text style={s.placaInline}> • {item.vehiculo.placa}</Text> : null}
@@ -363,6 +361,7 @@ const s = StyleSheet.create({
   avatarText: { fontFamily: fonts.bold, fontSize: 15, color: colors.accent },
 
   cliente: { fontFamily: fonts.bold, fontSize: 14, color: colors.textPrimary },
+  noLeidoDot: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.accent },
   vehiculoText: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary, marginTop: 1 },
   placaInline: { color: colors.accent },
 

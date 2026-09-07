@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { formatPrecioServicio, formatCOP, type TipoPrecio } from '../../lib/precio';
+import { fetchCitasNoLeidas } from '../../lib/lecturas';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -56,11 +57,11 @@ function formatFecha(iso: string): string {
 }
 
 const CitaCard = memo(function CitaCard({
-  item, index, reduceMotion, busy, onCancelar, onChat, onCalificar, calificada,
+  item, index, reduceMotion, busy, onCancelar, onChat, onCalificar, calificada, noLeida,
 }: {
   item: Cita; index: number; reduceMotion: boolean; busy: string | null;
   onCancelar: (cita: Cita) => void; onChat: (cita: Cita) => void;
-  onCalificar: (cita: Cita) => void; calificada: boolean;
+  onCalificar: (cita: Cita) => void; calificada: boolean; noLeida: boolean;
 }) {
   const opacity    = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
   const translateY = useRef(new Animated.Value(reduceMotion ? 0 : 12)).current;
@@ -98,6 +99,7 @@ const CitaCard = memo(function CitaCard({
         <View style={s.infoRow}>
           <IconBuildingStore size={14} color={colors.accent} />
           <Text style={[s.infoText, s.negocioNombre]}>{item.negocio.nombre}</Text>
+          {noLeida && <View style={s.noLeidoDot} />}
         </View>
       )}
 
@@ -171,6 +173,7 @@ export default function MisCitasScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [busy,    setBusy]    = useState<string | null>(null);
   const [calificadas, setCalificadas] = useState<Set<string>>(new Set());
+  const [noLeidas, setNoLeidas] = useState<Set<string>>(new Set());
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
@@ -212,6 +215,7 @@ export default function MisCitasScreen({ navigation }: any) {
 
     setCitas(lista);
     setLoading(false);
+    fetchCitasNoLeidas(lista.map(c => c.id), session!.user.id).then(setNoLeidas);
 
     const completadas = lista.filter(c => c.estado === 'completada').map(c => c.id);
     if (completadas.length > 0) {
@@ -302,6 +306,7 @@ export default function MisCitasScreen({ navigation }: any) {
               onChat={cita => navigation.navigate('ChatCita', { citaId: cita.id })}
               onCalificar={cita => navigation.navigate('CalificarCita', { citaId: cita.id })}
               calificada={calificadas.has(item.id)}
+              noLeida={noLeidas.has(item.id)}
             />
           )}
         />
@@ -356,6 +361,7 @@ const s = StyleSheet.create({
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   infoText: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, flex: 1 },
   negocioNombre: { fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary },
+  noLeidoDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent, marginLeft: 4 },
   descripcion: { color: colors.textSecondary, lineHeight: 18 },
 
   servicioRow: {

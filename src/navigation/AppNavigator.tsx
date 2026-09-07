@@ -169,6 +169,7 @@ function MecanicoStack() {
       <MecanicoNav.Screen name="Notificaciones"    component={NotificacionesScreen} />
       <MecanicoNav.Screen name="ChatCita"          component={ChatCitaScreen} />
       <MecanicoNav.Screen name="RegistrarServicio" component={RegistrarServicioScreen} />
+      <MecanicoNav.Screen name="CalificarCita"     component={CalificarCitaScreen} />
     </MecanicoNav.Navigator>
   );
 }

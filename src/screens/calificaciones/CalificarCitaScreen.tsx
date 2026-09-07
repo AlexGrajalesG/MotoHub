@@ -36,7 +36,7 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
         id, usuario_id, negocio_id, mecanico_id, estado,
         negocio:negocios ( nombre, propietario_id ),
         usuario:usuarios ( nombre ),
-        mecanico:mecanicos ( id, usuario:usuarios ( nombre ) )
+        mecanico:mecanicos ( id, usuario_id, usuario:usuarios ( nombre ) )
       `)
       .eq('id', citaId)
       .single();
@@ -45,7 +45,8 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
 
     const c = data as any;
     const esNegocio = c.negocio?.propietario_id === session?.user.id;
-    const rol: AutorRol = esNegocio ? 'negocio' : 'propietario';
+    const esMecanicoAsignado = c.mecanico?.usuario_id === session?.user.id;
+    const rol: AutorRol = esNegocio ? 'negocio' : esMecanicoAsignado ? 'mecanico' : 'propietario';
     setRolPropio(rol);
 
     const lista: Destino[] = rol === 'propietario'

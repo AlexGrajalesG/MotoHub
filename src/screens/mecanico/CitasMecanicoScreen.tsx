@@ -4,12 +4,13 @@ import {
   View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert,
 } from 'react-native';
 import {
-  IconCalendar, IconClock, IconBike, IconMessageCircle, IconCheck, IconUserPlus,
+  IconCalendar, IconClock, IconBike, IconMessageCircle, IconCheck, IconUserPlus, IconStar,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useModo } from '../../context/ModoContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
+import { fetchCitasNoLeidas } from '../../lib/lecturas';
 import { tokens } from '../../lib/tokens';
 
 const { colors, spacing, radius, fonts } = tokens;
@@ -49,6 +50,7 @@ export default function CitasMecanicoScreen({ navigation }: any) {
 
   const [filtro, setFiltro]   = useState<Estado | 'todas'>('confirmada');
   const [citas, setCitas]     = useState<Cita[]>([]);
+  const [noLeidas, setNoLeidas] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy]       = useState<string | null>(null);
 
@@ -73,11 +75,13 @@ export default function CitasMecanicoScreen({ navigation }: any) {
     const { data, error } = await query;
     if (error) { console.error(error.message); setLoading(false); return; }
 
-    setCitas((data ?? []).map((c: any) => ({
+    const lista = (data ?? []).map((c: any) => ({
       id: c.id, fecha_solicitada: c.fecha_solicitada, hora_solicitada: c.hora_solicitada,
       estado: c.estado, mecanico_id: c.mecanico_id,
       vehiculo: c.vehiculos ?? null, servicio: c.servicios ?? null, usuario: c.usuario ?? null,
-    })));
+    }));
+    setCitas(lista);
+    if (session?.user.id) setNoLeidas(await fetchCitasNoLeidas(lista.map(c => c.id), session.user.id));
     setLoading(false);
   }
 
@@ -149,7 +153,10 @@ export default function CitasMecanicoScreen({ navigation }: any) {
           renderItem={({ item }) => (
             <View style={s.card}>
               <View style={s.cardTop}>
-                <Text style={s.cliente}>{item.usuario?.nombre ?? 'Cliente'}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  {noLeidas.has(item.id) && <View style={s.noLeidoDot} />}
+                  <Text style={s.cliente}>{item.usuario?.nombre ?? 'Cliente'}</Text>
+                </View>
                 <View style={s.fechaRow}>
                   <IconCalendar size={13} color={colors.textTertiary} />
                   <Text style={s.fechaText}>{formatFecha(item.fecha_solicitada)}</Text>
@@ -191,6 +198,15 @@ export default function CitasMecanicoScreen({ navigation }: any) {
                     disabled={busy === item.id}
                   >
                     {busy === item.id ? <ActivityIndicator size="small" color="#fff" /> : <><IconCheck size={15} color="#fff" /><Text style={s.actionTextPrimary}>Completar</Text></>}
+                  </Pressable>
+                )}
+                {item.estado === 'completada' && item.mecanico_id === miMecanico?.id && (
+                  <Pressable
+                    style={({ pressed }) => [s.actionBtn, s.actionBtnOutline, pressed && { opacity: 0.85 }]}
+                    onPress={() => navigation.navigate('CalificarCita', { citaId: item.id })}
+                  >
+                    <IconStar size={15} color={colors.accent} />
+                    <Text style={s.actionTextOutline}>Calificar</Text>
                   </Pressable>
                 )}
               </View>
@@ -240,6 +256,7 @@ const s = StyleSheet.create({
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cliente: { fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary },
+  noLeidoDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent },
   fechaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   fechaText: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },

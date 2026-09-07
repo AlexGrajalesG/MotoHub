@@ -20,6 +20,7 @@ import {
   resolverRegistroServicio, type MensajeCita, type RolAutor, type Adjunto,
 } from '../../lib/mensajesCita';
 import { fetchPromedio, type Promedio } from '../../lib/calificaciones';
+import { marcarCitaLeida } from '../../lib/lecturas';
 import { openUrl } from '../../lib/openUrl';
 import EstrellasDisplay from '../../components/EstrellasDisplay';
 
@@ -103,6 +104,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
   useFocusEffect(useCallback(() => {
     setLoading(true);
     Promise.all([cargarCita(), cargarMensajes()]).finally(() => setLoading(false));
+    if (session?.user.id) marcarCitaLeida(citaId, session.user.id);
   }, [citaId]));
 
   useEffect(() => {

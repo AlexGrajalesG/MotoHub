@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 
 export type DestinoTipo = 'negocio' | 'mecanico' | 'usuario';
-export type AutorRol = 'propietario' | 'negocio';
+export type AutorRol = 'propietario' | 'negocio' | 'mecanico';
 
 export type Promedio = { promedio: number; total: number };
 
