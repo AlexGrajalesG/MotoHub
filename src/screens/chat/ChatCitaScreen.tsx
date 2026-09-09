@@ -123,9 +123,29 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     if (!valor || !session) return;
     setEnviando(true);
     setTexto('');
+
+    const tempId = `temp-${Date.now()}`;
+    const optimista: MensajeCita = {
+      id: tempId,
+      cita_id: citaId,
+      autor_id: session.user.id,
+      rol_autor: rolPropio,
+      tipo_mensaje: 'texto',
+      texto: valor,
+      adjuntos: [],
+      historial_id: null,
+      created_at: new Date().toISOString(),
+      historial: null,
+    };
+    setMensajes(prev => [...prev, optimista]);
+
     const { error } = await enviarMensajeTexto(citaId, session.user.id, rolPropio, valor);
     setEnviando(false);
-    if (error) Alert.alert('Error', error.message);
+    if (error) {
+      setMensajes(prev => prev.filter(m => m.id !== tempId));
+      setTexto(valor);
+      Alert.alert('Error', error.message);
+    }
   }
 
   async function handleAdjuntar() {
