@@ -77,7 +77,17 @@ export default function RecordatoriosScreen({ route, navigation }: any) {
 
   function esVencido(r: Recordatorio): boolean {
     if (r.estado !== 'pendiente') return false;
-    if (r.fecha_limite && new Date(r.fecha_limite) < new Date()) return true;
+    if (r.fecha_limite) {
+      // new Date('YYYY-MM-DD') parsea como medianoche UTC -- comparado
+      // contra new Date() (instante real) marcaba "vencido" desde la noche
+      // anterior en timezones detras de UTC (Colombia -5). Comparar fechas
+      // locales, no instantes.
+      const [y, m, d] = r.fecha_limite.split('-').map(Number);
+      const limite = new Date(y, m - 1, d);
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      if (limite < hoy) return true;
+    }
     if (r.km_limite && r.km_limite <= vehiculo.kilometraje) return true;
     return false;
   }

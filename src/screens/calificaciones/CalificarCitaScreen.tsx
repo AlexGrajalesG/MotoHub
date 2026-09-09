@@ -9,6 +9,7 @@ import { tokens } from '../../lib/tokens';
 import {
   fetchMisCalificacionesDeCita, enviarCalificacion, type DestinoTipo, type AutorRol,
 } from '../../lib/calificaciones';
+import { determinarRolParaCalificar } from '../../lib/roles';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -51,12 +52,12 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
       .maybeSingle();
 
     const c = { ...data, usuario: usuarioData ?? null } as any;
-    const esCliente = c.usuario_id === session?.user.id;
-    const esNegocio = !esCliente && c.negocio?.propietario_id === session?.user.id;
-    const esMecanicoAsignado = !esCliente && !esNegocio && c.mecanico?.usuario_id === session?.user.id;
-    // Quien pidio esta cita especifica es el cliente de ESTE chat, incluso
-    // si tambien es dueno del negocio (self-servicio en su propio taller).
-    const rol: AutorRol = esCliente ? 'propietario' : esNegocio ? 'negocio' : esMecanicoAsignado ? 'mecanico' : 'propietario';
+    const rol: AutorRol = determinarRolParaCalificar({
+      usuarioIdCita: c.usuario_id,
+      miUsuarioId: session?.user.id,
+      negocioPropietarioId: c.negocio?.propietario_id,
+      mecanicoAsignadoUsuarioId: c.mecanico?.usuario_id,
+    });
     setRolPropio(rol);
 
     const lista: Destino[] = rol === 'propietario'

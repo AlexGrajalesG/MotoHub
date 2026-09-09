@@ -21,6 +21,7 @@ import {
 } from '../../lib/mensajesCita';
 import { fetchPromedio, type Promedio } from '../../lib/calificaciones';
 import { marcarCitaLeida } from '../../lib/lecturas';
+import { determinarRolEnChatCita } from '../../lib/roles';
 import { openUrl } from '../../lib/openUrl';
 import EstrellasDisplay from '../../components/EstrellasDisplay';
 
@@ -109,14 +110,8 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     } as CitaInfo;
     setCita(c);
 
-    let rol: RolAutor;
-    if (c.usuario_id === session?.user.id) {
-      // Quien pidio esta cita especifica es el cliente de ESTE chat, incluso
-      // si tambien es dueno del negocio (self-servicio en su propio taller).
-      rol = 'propietario';
-    } else if (c.negocio?.propietario_id === session?.user.id) {
-      rol = 'negocio';
-    } else {
+    let esMecanicoActivo = false;
+    if (c.usuario_id !== session?.user.id && c.negocio?.propietario_id !== session?.user.id) {
       const { data: mec } = await supabase
         .from('mecanicos')
         .select('id')
@@ -124,8 +119,14 @@ export default function ChatCitaScreen({ route, navigation }: any) {
         .eq('usuario_id', session?.user.id)
         .eq('activo', true)
         .maybeSingle();
-      rol = mec ? 'mecanico' : 'propietario';
+      esMecanicoActivo = !!mec;
     }
+    const rol = determinarRolEnChatCita({
+      usuarioIdCita: c.usuario_id,
+      miUsuarioId: session?.user.id,
+      negocioPropietarioId: c.negocio?.propietario_id,
+      esMecanicoActivoDelNegocio: esMecanicoActivo,
+    });
     setRolPropio(rol);
     setPromedioOtro(await fetchPromedio(rol === 'propietario' ? 'negocio' : 'usuario', rol === 'propietario' ? c.negocio_id : c.usuario_id));
   }
