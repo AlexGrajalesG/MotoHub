@@ -86,10 +86,12 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     setCita(c);
 
     let rol: RolAutor;
-    if (c.negocio?.propietario_id === session?.user.id) {
-      rol = 'negocio';
-    } else if (c.usuario_id === session?.user.id) {
+    if (c.usuario_id === session?.user.id) {
+      // Quien pidio esta cita especifica es el cliente de ESTE chat, incluso
+      // si tambien es dueno del negocio (self-servicio en su propio taller).
       rol = 'propietario';
+    } else if (c.negocio?.propietario_id === session?.user.id) {
+      rol = 'negocio';
     } else {
       const { data: mec } = await supabase
         .from('mecanicos')

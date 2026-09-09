@@ -44,9 +44,12 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
     if (error || !data) { Alert.alert('Error', 'No se pudo cargar la cita'); navigation.goBack(); return; }
 
     const c = data as any;
-    const esNegocio = c.negocio?.propietario_id === session?.user.id;
-    const esMecanicoAsignado = c.mecanico?.usuario_id === session?.user.id;
-    const rol: AutorRol = esNegocio ? 'negocio' : esMecanicoAsignado ? 'mecanico' : 'propietario';
+    const esCliente = c.usuario_id === session?.user.id;
+    const esNegocio = !esCliente && c.negocio?.propietario_id === session?.user.id;
+    const esMecanicoAsignado = !esCliente && !esNegocio && c.mecanico?.usuario_id === session?.user.id;
+    // Quien pidio esta cita especifica es el cliente de ESTE chat, incluso
+    // si tambien es dueno del negocio (self-servicio en su propio taller).
+    const rol: AutorRol = esCliente ? 'propietario' : esNegocio ? 'negocio' : esMecanicoAsignado ? 'mecanico' : 'propietario';
     setRolPropio(rol);
 
     const lista: Destino[] = rol === 'propietario'
