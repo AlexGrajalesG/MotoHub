@@ -37,6 +37,13 @@ type CitaInfo = {
   vehiculo: { marca: string; modelo: string; placa: string } | null;
 };
 
+const ROL_LABEL: Record<RolAutor, string> = {
+  propietario: 'Cliente', negocio: 'Taller', mecanico: 'Mecánico',
+};
+const ROL_COLOR: Record<RolAutor, string> = {
+  propietario: '#5ac8fa', negocio: colors.accent, mecanico: '#34c759',
+};
+
 const ESTADO_LABELS: Record<string, string> = {
   pendiente: 'Pendiente', confirmada: 'Confirmada',
   completada: 'Completada', cancelada: 'Cancelada',
@@ -224,7 +231,11 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     const isMine = item.autor_id === session?.user.id;
     return (
       <View style={[s.bubbleRow, isMine ? s.bubbleRowMine : s.bubbleRowOther]}>
-        <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleOther]}>
+        <View style={{ maxWidth: '78%' }}>
+          <Text style={[s.rolLabel, { color: ROL_COLOR[item.rol_autor], textAlign: isMine ? 'right' : 'left' }]}>
+            {ROL_LABEL[item.rol_autor]}
+          </Text>
+          <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleOther]}>
           {item.adjuntos?.map((a, i) => (
             a.tipo === 'foto'
               ? <Image key={i} source={{ uri: a.url }} style={s.adjuntoFoto} resizeMode="cover" />
@@ -239,6 +250,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
           ))}
           {item.texto && <Text style={[s.bubbleText, isMine && s.bubbleTextMine]}>{item.texto}</Text>}
           <Text style={[s.bubbleHora, isMine && s.bubbleHoraMine]}>{formatHora(item.created_at)}</Text>
+          </View>
         </View>
       </View>
     );
@@ -462,8 +474,9 @@ const s = StyleSheet.create({
   bubbleRow:      { flexDirection: 'row' },
   bubbleRowMine:  { justifyContent: 'flex-end' },
   bubbleRowOther: { justifyContent: 'flex-start' },
+  rolLabel: { fontFamily: fonts.bold, fontSize: 10, marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.4 },
   bubble: {
-    maxWidth: '78%', borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: 4,
+    borderRadius: radius.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: 4,
   },
   bubbleMine:  { backgroundColor: colors.accent, borderBottomRightRadius: 4 },
   bubbleOther: { backgroundColor: colors.bgCard, borderBottomLeftRadius: 4 },
