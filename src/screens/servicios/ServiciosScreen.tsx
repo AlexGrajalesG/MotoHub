@@ -186,7 +186,11 @@ export default function ServiciosScreen({ navigation }: any) {
     <View style={s.container}>
 
       {/* ── Barra RODIX ── */}
-      <TopBar unreadCount={unreadCount} onPressBell={() => navigation.navigate('Notificaciones')} />
+      <TopBar
+        unreadCount={unreadCount}
+        onPressBell={() => navigation.navigate('Notificaciones')}
+        onPressMisCitas={() => navigation.navigate('MisCitas')}
+      />
 
       {/* ── Búsqueda ── */}
       <View style={s.searchSection}>

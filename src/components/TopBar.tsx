@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { IconBell } from '@tabler/icons-react-native';
+import { IconBell, IconCalendarEvent } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
 import IconButton from './IconButton';
 
@@ -9,20 +9,28 @@ type Props = {
   title?: string;
   unreadCount: number;
   onPressBell: () => void;
+  onPressMisCitas?: () => void;
 };
 
-export default function TopBar({ title = 'RODIX', unreadCount, onPressBell }: Props) {
+export default function TopBar({ title = 'RODIX', unreadCount, onPressBell, onPressMisCitas }: Props) {
   return (
     <View style={s.topBar}>
       <Text style={s.brand}>{title}</Text>
-      <IconButton style={s.bellBtn} onPress={onPressBell} accessibilityLabel="Notificaciones">
-        <IconBell size={18} color={colors.textPrimary} />
-        {unreadCount > 0 && (
-          <View style={s.bellBadge}>
-            <Text style={s.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
-          </View>
+      <View style={s.actions}>
+        {onPressMisCitas && (
+          <IconButton style={s.bellBtn} onPress={onPressMisCitas} accessibilityLabel="Mis citas">
+            <IconCalendarEvent size={18} color={colors.textPrimary} />
+          </IconButton>
         )}
-      </IconButton>
+        <IconButton style={s.bellBtn} onPress={onPressBell} accessibilityLabel="Notificaciones">
+          <IconBell size={18} color={colors.textPrimary} />
+          {unreadCount > 0 && (
+            <View style={s.bellBadge}>
+              <Text style={s.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+            </View>
+          )}
+        </IconButton>
+      </View>
     </View>
   );
 }
@@ -36,6 +44,7 @@ const s = StyleSheet.create({
     fontFamily: fonts.display, fontSize: 20, color: colors.accent,
     textTransform: 'uppercase', letterSpacing: -0.5,
   },
+  actions: { flexDirection: 'row', gap: spacing.sm },
   bellBtn: {
     borderWidth: 1, borderColor: colors.bgSurface, backgroundColor: colors.bgCard,
   },
