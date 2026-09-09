@@ -33,9 +33,19 @@ type CitaInfo = {
   vehiculo_id: string;
   negocio_id: string;
   origen: string;
+  fecha_solicitada: string;
+  hora_solicitada: string | null;
   negocio: { nombre: string; propietario_id: string } | null;
   vehiculo: { marca: string; modelo: string; placa: string } | null;
+  usuario: { nombre: string | null } | null;
 };
+
+function formatFechaCorta(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const fecha = new Date(y, m - 1, d);
+  const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  return `${d} ${MESES[m - 1]}`;
+}
 
 const ROL_LABEL: Record<RolAutor, string> = {
   propietario: 'Cliente', negocio: 'Taller', mecanico: 'Mecánico',
@@ -75,14 +85,20 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     const { data, error } = await supabase
       .from('citas')
       .select(`
-        id, usuario_id, estado, vehiculo_id, negocio_id, origen,
+        id, usuario_id, estado, vehiculo_id, negocio_id, origen, fecha_solicitada, hora_solicitada,
         negocio:negocios ( nombre, propietario_id ),
-        vehiculo:vehiculos ( marca, modelo, placa )
+        vehiculo:vehiculos ( marca, modelo, placa ),
+        usuario:usuarios ( nombre )
       `)
       .eq('id', citaId)
       .single();
     if (error) { console.error(error.message); return; }
-    const c = { ...data, negocio: (data as any).negocio ?? null, vehiculo: (data as any).vehiculo ?? null } as CitaInfo;
+    const c = {
+      ...data,
+      negocio: (data as any).negocio ?? null,
+      vehiculo: (data as any).vehiculo ?? null,
+      usuario: (data as any).usuario ?? null,
+    } as CitaInfo;
     setCita(c);
 
     let rol: RolAutor;
@@ -276,12 +292,14 @@ export default function ChatCitaScreen({ route, navigation }: any) {
         <View style={s.headerCenter}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
             <Text style={s.headerTitle} numberOfLines={1}>
-              {rolPropio !== 'propietario' ? 'Cliente' : (cita.negocio?.nombre ?? 'Negocio')}
+              {rolPropio === 'propietario' ? (cita.negocio?.nombre ?? 'Negocio') : (cita.usuario?.nombre ?? 'Cliente')}
             </Text>
             {promedioOtro.total > 0 && <EstrellasDisplay promedio={promedioOtro.promedio} total={promedioOtro.total} size={12} />}
           </View>
           <Text style={s.headerSubtitle} numberOfLines={1}>
-            {cita.vehiculo ? `${cita.vehiculo.placa} · ${cita.vehiculo.modelo}` : ''}
+            {rolPropio === 'propietario'
+              ? `${formatFechaCorta(cita.fecha_solicitada)}${cita.hora_solicitada ? ` · ${cita.hora_solicitada.slice(0, 5)}` : ''}`
+              : (cita.vehiculo ? `${cita.vehiculo.marca} ${cita.vehiculo.modelo}` : '')}
           </Text>
           {cita.origen === 'walk_in' && (
             <View style={s.walkinBadge}>
