@@ -62,10 +62,9 @@ export default function CitasMecanicoScreen({ navigation }: any) {
     let query = supabase
       .from('citas')
       .select(`
-        id, fecha_solicitada, hora_solicitada, estado, mecanico_id,
+        id, usuario_id, fecha_solicitada, hora_solicitada, estado, mecanico_id,
         vehiculos ( marca, modelo, placa ),
-        servicios ( nombre ),
-        usuario:usuarios ( nombre )
+        servicios ( nombre )
       `)
       .eq('negocio_id', miMecanico.negocio_id)
       .order('fecha_solicitada', { ascending: true });
@@ -75,10 +74,20 @@ export default function CitasMecanicoScreen({ navigation }: any) {
     const { data, error } = await query;
     if (error) { console.error(error.message); setLoading(false); return; }
 
-    const lista = (data ?? []).map((c: any) => ({
+    const filas = (data ?? []) as any[];
+    // usuarios.id referencia auth.users, no hay FK directa citas->usuarios
+    // para que Postgrest pueda hacer el join embebido, por eso va aparte.
+    const usuarioIds = [...new Set(filas.map(c => c.usuario_id))];
+    let usuariosMap: Record<string, { nombre: string | null }> = {};
+    if (usuarioIds.length > 0) {
+      const { data: usuarios } = await supabase.from('usuarios').select('id, nombre').in('id', usuarioIds);
+      (usuarios ?? []).forEach((u: any) => { usuariosMap[u.id] = { nombre: u.nombre }; });
+    }
+
+    const lista = filas.map((c: any) => ({
       id: c.id, fecha_solicitada: c.fecha_solicitada, hora_solicitada: c.hora_solicitada,
       estado: c.estado, mecanico_id: c.mecanico_id,
-      vehiculo: c.vehiculos ?? null, servicio: c.servicios ?? null, usuario: c.usuario ?? null,
+      vehiculo: c.vehiculos ?? null, servicio: c.servicios ?? null, usuario: usuariosMap[c.usuario_id] ?? null,
     }));
     setCitas(lista);
     if (session?.user.id) setNoLeidas(await fetchCitasNoLeidas(lista.map(c => c.id), session.user.id));

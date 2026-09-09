@@ -35,7 +35,6 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
       .select(`
         id, usuario_id, negocio_id, mecanico_id, estado,
         negocio:negocios ( nombre, propietario_id ),
-        usuario:usuarios ( nombre ),
         mecanico:mecanicos ( id, usuario_id, usuario:usuarios ( nombre ) )
       `)
       .eq('id', citaId)
@@ -43,7 +42,15 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
 
     if (error || !data) { Alert.alert('Error', 'No se pudo cargar la cita'); navigation.goBack(); return; }
 
-    const c = data as any;
+    // usuarios.id referencia auth.users, no hay FK directa citas->usuarios
+    // para que Postgrest pueda hacer el join embebido, por eso va aparte.
+    const { data: usuarioData } = await supabase
+      .from('usuarios')
+      .select('nombre')
+      .eq('id', (data as any).usuario_id)
+      .maybeSingle();
+
+    const c = { ...data, usuario: usuarioData ?? null } as any;
     const esCliente = c.usuario_id === session?.user.id;
     const esNegocio = !esCliente && c.negocio?.propietario_id === session?.user.id;
     const esMecanicoAsignado = !esCliente && !esNegocio && c.mecanico?.usuario_id === session?.user.id;

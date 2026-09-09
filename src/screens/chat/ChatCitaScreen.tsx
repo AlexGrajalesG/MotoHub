@@ -87,17 +87,25 @@ export default function ChatCitaScreen({ route, navigation }: any) {
       .select(`
         id, usuario_id, estado, vehiculo_id, negocio_id, origen, fecha_solicitada, hora_solicitada,
         negocio:negocios ( nombre, propietario_id ),
-        vehiculo:vehiculos ( marca, modelo, placa ),
-        usuario:usuarios ( nombre )
+        vehiculo:vehiculos ( marca, modelo, placa )
       `)
       .eq('id', citaId)
       .single();
     if (error) { console.error(error.message); return; }
+
+    // usuarios.id referencia auth.users, no hay FK directa citas->usuarios
+    // para que Postgrest pueda hacer el join embebido, por eso va aparte.
+    const { data: usuarioData } = await supabase
+      .from('usuarios')
+      .select('nombre')
+      .eq('id', (data as any).usuario_id)
+      .maybeSingle();
+
     const c = {
       ...data,
       negocio: (data as any).negocio ?? null,
       vehiculo: (data as any).vehiculo ?? null,
-      usuario: (data as any).usuario ?? null,
+      usuario: usuarioData ?? null,
     } as CitaInfo;
     setCita(c);
 
