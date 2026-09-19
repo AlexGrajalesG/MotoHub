@@ -7,7 +7,7 @@ import {
 import { Image } from 'expo-image';
 import {
   IconArrowLeft, IconCalendarEvent, IconTool, IconCar,
-  IconSearch, IconHistoryOff,
+  IconSearch, IconHistoryOff, IconAlertTriangle,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -19,7 +19,7 @@ import { fetchCitasNoLeidas } from '../../lib/lecturas';
 const { colors, spacing, radius, fonts } = tokens;
 
 type Estado = 'pendiente' | 'confirmada' | 'cancelada' | 'completada';
-type Tab = 'pendientes' | 'proximas' | 'historial';
+type Tab = 'pendientes' | 'proximas' | 'revisar' | 'historial';
 
 type Cita = {
   id: string;
@@ -32,11 +32,29 @@ type Cita = {
   usuario: { nombre: string | null; foto_url: string | null } | null;
 };
 
-const TABS: { key: Tab; label: string; estados: Estado[]; asc: boolean }[] = [
-  { key: 'pendientes', label: 'Pendientes', estados: ['pendiente'], asc: true },
-  { key: 'proximas',   label: 'Próximas',   estados: ['confirmada'], asc: true },
-  { key: 'historial',  label: 'Historial',  estados: ['completada', 'cancelada'], asc: false },
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'pendientes', label: 'Pendientes' },
+  { key: 'proximas',   label: 'Próximas' },
+  { key: 'revisar',    label: 'Revisar' },
+  { key: 'historial',  label: 'Historial' },
 ];
+
+function hoyISO(): string {
+  const hoy = new Date();
+  const y = hoy.getFullYear();
+  const m = String(hoy.getMonth() + 1).padStart(2, '0');
+  const d = String(hoy.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Cuantos dias pasaron desde fecha_solicitada — parseo con componentes locales
+// (mismo cuidado que en lib/documentos.ts) para no correrse un dia en Colombia (UTC-5).
+function diasDeAtraso(fechaISO: string): number {
+  const [y, m, d] = fechaISO.split('-').map(Number);
+  const fecha = new Date(y, m - 1, d);
+  const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+  return Math.round((hoy.getTime() - fecha.getTime()) / (1000 * 60 * 60 * 24));
+}
 
 function formatFechaCorta(iso: string): string {
   const [y, m, d] = iso.split('-').map(Number);
@@ -66,6 +84,7 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
   const [noLeidas, setNoLeidas] = useState<Set<string>>(new Set());
   const [loading, setLoading]   = useState(true);
   const [busy, setBusy]         = useState<string | null>(null);
+  const [revisarCount, setRevisarCount] = useState(0);
 
   useFocusEffect(useCallback(() => {
     if (negocioId) return;
@@ -77,22 +96,47 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
     if (!negocioId) return;
     fetchCitas();
     refreshCitasPendientes();
+    fetchRevisarCount();
   }, [tab, negocioId]));
+
+  async function fetchRevisarCount() {
+    if (!negocioId) return;
+    const { count } = await supabase
+      .from('citas')
+      .select('*', { count: 'exact', head: true })
+      .eq('negocio_id', negocioId)
+      .eq('estado', 'confirmada')
+      .lt('fecha_solicitada', hoyISO());
+    setRevisarCount(count ?? 0);
+  }
 
   async function fetchCitas() {
     setLoading(true);
-    const tabDef = TABS.find(t => t.key === tab)!;
-    const { data, error } = await supabase
+    const hoy = hoyISO();
+    let query = supabase
       .from('citas')
       .select(`
         id, usuario_id, fecha_solicitada, hora_solicitada, estado,
         vehiculos ( marca, modelo, placa ),
         servicios ( nombre, tipo_precio, precio_base )
       `)
-      .eq('negocio_id', negocioId)
-      .in('estado', tabDef.estados)
-      .order('fecha_solicitada', { ascending: tabDef.asc })
-      .order('hora_solicitada', { ascending: tabDef.asc, nullsFirst: false });
+      .eq('negocio_id', negocioId);
+
+    let asc = true;
+    if (tab === 'pendientes') {
+      query = query.eq('estado', 'pendiente');
+    } else if (tab === 'proximas') {
+      query = query.eq('estado', 'confirmada').gte('fecha_solicitada', hoy);
+    } else if (tab === 'revisar') {
+      query = query.eq('estado', 'confirmada').lt('fecha_solicitada', hoy);
+    } else {
+      query = query.in('estado', ['completada', 'cancelada']);
+      asc = false;
+    }
+
+    const { data, error } = await query
+      .order('fecha_solicitada', { ascending: asc })
+      .order('hora_solicitada', { ascending: asc, nullsFirst: false });
 
     if (error) { console.error(error.message); setLoading(false); return; }
 
@@ -129,6 +173,7 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
       if (error) { Alert.alert('Error', error.message); return; }
       setCitas(prev => prev.filter(c => c.id !== cita.id));
       if (cita.estado === 'pendiente') refreshCitasPendientes();
+      if (tab === 'revisar') fetchRevisarCount();
     };
     if (confirmMsg) {
       Alert.alert(confirmMsg.title, confirmMsg.body, [
@@ -187,6 +232,9 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
               {t.key === 'pendientes' && citasPendientes > 0 && (
                 <View style={s.tabBadge}><Text style={s.tabBadgeText}>{citasPendientes}</Text></View>
               )}
+              {t.key === 'revisar' && revisarCount > 0 && (
+                <View style={s.tabBadgeAlerta}><Text style={s.tabBadgeText}>{revisarCount}</Text></View>
+              )}
             </Pressable>
           );
         })}
@@ -198,7 +246,10 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
         <View style={s.empty}>
           <IconHistoryOff size={48} color={colors.textTertiary} style={{ opacity: 0.6 }} />
           <Text style={s.emptyTitle}>
-            {tab === 'pendientes' ? 'Sin citas pendientes' : tab === 'proximas' ? 'Sin citas próximas' : 'No hay citas pasadas registradas'}
+            {tab === 'pendientes' ? 'Sin citas pendientes'
+              : tab === 'proximas'  ? 'Sin citas próximas'
+              : tab === 'revisar'   ? 'Todo al día, nada por revisar'
+              : 'No hay citas pasadas registradas'}
           </Text>
         </View>
       ) : (
@@ -241,6 +292,15 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
                   )}
                   {tab !== 'proximas' && <IconCar size={18} color={colors.accent} />}
                 </View>
+
+                {tab === 'revisar' && (
+                  <View style={s.alertaBanner}>
+                    <IconAlertTriangle size={16} color={colors.dangerAction} />
+                    <Text style={s.alertaText}>
+                      Venció hace {diasDeAtraso(item.fecha_solicitada)} día{diasDeAtraso(item.fecha_solicitada) === 1 ? '' : 's'} — sin cerrar
+                    </Text>
+                  </View>
+                )}
 
                 {tab === 'proximas' ? (
                   <View style={s.statsRow}>
@@ -299,6 +359,31 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
                     </Pressable>
                   </View>
                 )}
+
+                {tab === 'revisar' && (
+                  <View style={s.actions}>
+                    <Pressable
+                      style={({ pressed }) => [s.confirmarBtn, pressed && { opacity: 0.9 }]}
+                      onPress={() => cambiarEstado(item, 'completada')}
+                      disabled={busy === item.id}
+                    >
+                      {busy === item.id
+                        ? <ActivityIndicator size="small" color="#fff" />
+                        : <Text style={s.confirmarText}>COMPLETADA</Text>
+                      }
+                    </Pressable>
+                    <Pressable
+                      style={({ pressed }) => [s.rechazarBtn, pressed && { opacity: 0.8 }]}
+                      onPress={() => cambiarEstado(item, 'cancelada', {
+                        title: 'Marcar como no realizada',
+                        body: '¿Seguro que esta cita no se realizó? Se marcará como cancelada.',
+                      })}
+                      disabled={busy === item.id}
+                    >
+                      <Text style={s.rechazarText}>NO SE REALIZÓ</Text>
+                    </Pressable>
+                  </View>
+                )}
               </Pressable>
             );
           }}
@@ -341,6 +426,10 @@ const s = StyleSheet.create({
     minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.accent,
     justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
   },
+  tabBadgeAlerta: {
+    minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.dangerAction,
+    justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
+  },
   tabBadgeText: { fontFamily: fonts.bold, color: '#fff', fontSize: 10 },
 
   list: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: 32, gap: spacing.md },
@@ -370,6 +459,13 @@ const s = StyleSheet.create({
     paddingHorizontal: 8, paddingVertical: 2,
   },
   confirmadaBadgeText: { fontFamily: fonts.bold, fontSize: 10, color: colors.success, textTransform: 'uppercase' },
+
+  alertaBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: colors.dangerActionBg, borderRadius: radius.md,
+    paddingHorizontal: spacing.sm, paddingVertical: 8,
+  },
+  alertaText: { fontFamily: fonts.bold, fontSize: 12, color: colors.dangerAction, flexShrink: 1 },
 
   metaRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.lg,
