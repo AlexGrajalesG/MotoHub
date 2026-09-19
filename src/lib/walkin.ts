@@ -1,11 +1,11 @@
 import { supabase } from './supabase';
 
 export type VehiculoWalkin = { id: string; placa: string; marca: string; modelo: string };
-export type ClienteWalkin = { id: string; nombre: string; vehiculos: VehiculoWalkin[] };
+export type ClienteWalkin = { id: string; nombre: string; nombre_usuario: string; vehiculos: VehiculoWalkin[] };
 
-export async function buscarClientePorTelefono(telefono: string): Promise<ClienteWalkin | null> {
+export async function buscarClientePorNombreUsuario(nombreUsuario: string): Promise<ClienteWalkin | null> {
   const { data, error } = await supabase
-    .rpc('buscar_usuario_por_telefono', { p_telefono: telefono.trim() })
+    .rpc('buscar_usuario_por_nombre_usuario', { p_nombre_usuario: nombreUsuario, p_incluir_vehiculos: true })
     .maybeSingle();
   if (error || !data) return null;
   return data as unknown as ClienteWalkin;

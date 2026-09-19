@@ -1,14 +1,14 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert,
+  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert, Modal, TextInput,
 } from 'react-native';
 import {
   IconArrowLeft, IconUserPlus, IconUsers, IconPhone, IconTrash, IconEye, IconEyeOff,
 } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import {
-  fetchMecanicosDeNegocio, buscarUsuarioPorTelefono, agregarMecanico,
+  fetchMecanicosDeNegocio, buscarUsuarioPorNombreUsuario, agregarMecanico,
   toggleMecanicoActivo, quitarMecanico, type Mecanico,
 } from '../../lib/mecanicos';
 
@@ -21,6 +21,10 @@ export default function MiEquipoScreen({ route, navigation }: any) {
   const [loading, setLoading]     = useState(true);
   const [busy, setBusy]           = useState<string | null>(null);
 
+  const [agregando, setAgregando]       = useState(false);
+  const [usuarioInput, setUsuarioInput] = useState('');
+  const [buscando, setBuscando]         = useState(false);
+
   useFocusEffect(useCallback(() => { cargar(); }, [negocioId]));
 
   async function cargar() {
@@ -30,28 +34,28 @@ export default function MiEquipoScreen({ route, navigation }: any) {
   }
 
   function handleAgregar() {
-    Alert.prompt(
-      'Agregar mecánico',
-      'Ingresa el teléfono con el que el mecánico tiene su cuenta en Rodix',
-      async (telefono) => {
-        if (!telefono?.trim()) return;
-        const usuario = await buscarUsuarioPorTelefono(telefono);
-        if (!usuario) {
-          Alert.alert('No encontrado', 'Ningún usuario de Rodix tiene registrado ese teléfono. Debe crear su cuenta primero.');
-          return;
-        }
-        if (mecanicos.some(m => m.usuario_id === usuario.id)) {
-          Alert.alert('Ya está en tu equipo', `${usuario.nombre} ya es mecánico de tu taller.`);
-          return;
-        }
-        const { error } = await agregarMecanico(usuario.id, negocioId);
-        if (error) { Alert.alert('Error', error.message); return; }
-        cargar();
-      },
-      'plain-text',
-      '',
-      'phone-pad'
-    );
+    setUsuarioInput('');
+    setAgregando(true);
+  }
+
+  async function confirmarAgregar() {
+    const handle = usuarioInput.trim();
+    if (!handle) return;
+    setBuscando(true);
+    const usuario = await buscarUsuarioPorNombreUsuario(handle);
+    setBuscando(false);
+    if (!usuario) {
+      Alert.alert('No encontrado', 'Ningún usuario de Rodix tiene ese nombre de usuario. Revisa que esté bien escrito o pídele que cree su cuenta primero.');
+      return;
+    }
+    if (mecanicos.some(m => m.usuario_id === usuario.id)) {
+      Alert.alert('Ya está en tu equipo', `${usuario.nombre} ya es mecánico de tu taller.`);
+      return;
+    }
+    const { error } = await agregarMecanico(usuario.id, negocioId);
+    if (error) { Alert.alert('Error', error.message); return; }
+    setAgregando(false);
+    cargar();
   }
 
   async function handleToggle(m: Mecanico) {
@@ -106,7 +110,7 @@ export default function MiEquipoScreen({ route, navigation }: any) {
         <View style={s.empty}>
           <IconUsers size={40} color={colors.bgSurface} />
           <Text style={s.emptyTitle}>Sin mecánicos</Text>
-          <Text style={s.emptySubtitle}>Agrega a tu equipo por teléfono — deben tener cuenta en Rodix</Text>
+          <Text style={s.emptySubtitle}>Agrega a tu equipo por su @usuario — deben tener cuenta en Rodix</Text>
         </View>
       ) : (
         <FlatList
@@ -149,6 +153,36 @@ export default function MiEquipoScreen({ route, navigation }: any) {
           )}
         />
       )}
+
+      <Modal visible={agregando} transparent animationType="fade" onRequestClose={() => setAgregando(false)}>
+        <View style={s.modalBg}>
+          <View style={s.modalCard}>
+            <Text style={s.modalTitle}>Agregar mecánico</Text>
+            <Text style={s.modalSubtitle}>Ingresa el @usuario del mecánico en Rodix</Text>
+            <TextInput
+              style={s.modalInput}
+              value={usuarioInput}
+              onChangeText={setUsuarioInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="@usuario"
+              placeholderTextColor={colors.textTertiary}
+              autoFocus
+            />
+            <View style={s.modalBtns}>
+              <Pressable style={s.modalBtnCancelar} onPress={() => setAgregando(false)} disabled={buscando}>
+                <Text style={s.modalBtnCancelarText}>Cancelar</Text>
+              </Pressable>
+              <Pressable style={s.modalBtnGuardar} onPress={confirmarAgregar} disabled={buscando}>
+                {buscando
+                  ? <ActivityIndicator size="small" color="#fff" />
+                  : <Text style={s.modalBtnGuardarText}>Agregar</Text>
+                }
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -189,4 +223,28 @@ const s = StyleSheet.create({
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl, gap: spacing.sm },
   emptyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, letterSpacing: -0.3, textAlign: 'center', marginTop: spacing.sm },
   emptySubtitle: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
+
+  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl },
+  modalCard: {
+    width: '100%', backgroundColor: colors.bgCard, borderRadius: radius.xl,
+    borderWidth: 1, borderColor: colors.bgSurface, padding: spacing.lg,
+  },
+  modalTitle: { fontFamily: fonts.bold, fontSize: 16, color: colors.textPrimary },
+  modalSubtitle: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 4, marginBottom: spacing.md },
+  modalInput: {
+    backgroundColor: colors.bgSurface, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.accent, color: colors.textPrimary,
+    fontFamily: fonts.heading, fontSize: 15, paddingVertical: 12, paddingHorizontal: spacing.md,
+  },
+  modalBtns: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  modalBtnCancelar: {
+    flex: 1, paddingVertical: 12, borderRadius: radius.md,
+    alignItems: 'center', backgroundColor: colors.bgSurface,
+  },
+  modalBtnCancelarText: { fontFamily: fonts.heading, color: colors.textSecondary, fontSize: 14 },
+  modalBtnGuardar: {
+    flex: 1, paddingVertical: 12, borderRadius: radius.md,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent,
+  },
+  modalBtnGuardarText: { fontFamily: fonts.heading, color: '#fff', fontSize: 14 },
 });

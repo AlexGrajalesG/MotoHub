@@ -32,14 +32,14 @@ export async function fetchMiMecanico(usuarioId: string): Promise<{ id: string; 
   return { id: data.id, negocio_id: data.negocio_id, negocio_nombre: (data as any).negocio?.nombre ?? 'Taller' };
 }
 
-export async function buscarUsuarioPorTelefono(telefono: string): Promise<{ id: string; nombre: string } | null> {
+export async function buscarUsuarioPorNombreUsuario(nombreUsuario: string): Promise<{ id: string; nombre: string; nombre_usuario: string } | null> {
   // RPC (security definer): una consulta directa a `usuarios` no encuentra a nadie
   // fuera de uno mismo o clientes con una cita previa (RLS), y aqui buscamos gente nueva.
   const { data, error } = await supabase
-    .rpc('buscar_usuario_por_telefono', { p_telefono: telefono.trim() })
+    .rpc('buscar_usuario_por_nombre_usuario', { p_nombre_usuario: nombreUsuario })
     .maybeSingle();
   if (error || !data) return null;
-  return { id: (data as any).id, nombre: (data as any).nombre };
+  return { id: (data as any).id, nombre: (data as any).nombre, nombre_usuario: (data as any).nombre_usuario };
 }
 
 export async function agregarMecanico(usuarioId: string, negocioId: string) {

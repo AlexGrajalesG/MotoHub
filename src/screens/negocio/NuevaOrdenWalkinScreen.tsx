@@ -7,14 +7,14 @@ import {
   IconArrowLeft, IconSearch, IconUserPlus, IconBike, IconCheck,
 } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
-import { buscarClientePorTelefono, crearOrdenWalkin, type ClienteWalkin } from '../../lib/walkin';
+import { buscarClientePorNombreUsuario, crearOrdenWalkin, type ClienteWalkin } from '../../lib/walkin';
 
 const { colors, spacing, radius, fonts } = tokens;
 
 export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
   const { negocioId } = route.params as { negocioId: string };
 
-  const [telefono, setTelefono] = useState('');
+  const [usuario, setUsuario] = useState('');
   const [buscando, setBuscando] = useState(false);
   const [buscado, setBuscado] = useState(false);
   const [cliente, setCliente] = useState<ClienteWalkin | null>(null);
@@ -23,9 +23,9 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
   const [creando, setCreando] = useState(false);
 
   async function handleBuscar() {
-    if (!telefono.trim()) return;
+    if (!usuario.trim()) return;
     setBuscando(true);
-    const encontrado = await buscarClientePorTelefono(telefono);
+    const encontrado = await buscarClientePorNombreUsuario(usuario);
     setCliente(encontrado);
     setVehiculoId(encontrado?.vehiculos[0]?.id ?? null);
     setBuscado(true);
@@ -35,7 +35,7 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
   function handleReintentar() {
     setCliente(null);
     setBuscado(false);
-    setTelefono('');
+    setUsuario('');
   }
 
   async function handleCrear() {
@@ -66,21 +66,23 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
 
       {!buscado && (
         <View style={s.body}>
-          <Text style={s.label}>Teléfono del cliente</Text>
+          <Text style={s.label}>Usuario del cliente</Text>
           <View style={s.searchRow}>
             <TextInput
               style={s.input}
-              placeholder="Ej: 3001234567"
+              placeholder="@usuario"
               placeholderTextColor={colors.textTertiary}
-              keyboardType="number-pad"
-              value={telefono}
-              onChangeText={setTelefono}
+              autoCapitalize="none"
+              autoCorrect={false}
+              value={usuario}
+              onChangeText={setUsuario}
+              onSubmitEditing={handleBuscar}
               autoFocus
             />
             <Pressable
-              style={({ pressed }) => [s.searchBtn, (!telefono.trim() || buscando) && s.searchBtnDisabled, pressed && { opacity: 0.85 }]}
+              style={({ pressed }) => [s.searchBtn, (!usuario.trim() || buscando) && s.searchBtnDisabled, pressed && { opacity: 0.85 }]}
               onPress={handleBuscar}
-              disabled={!telefono.trim() || buscando}
+              disabled={!usuario.trim() || buscando}
             >
               {buscando ? <ActivityIndicator size="small" color="#fff" /> : <IconSearch size={18} color="#fff" />}
             </Pressable>
@@ -91,16 +93,16 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
       {buscado && !cliente && (
         <View style={s.body}>
           <View style={s.notFoundCard}>
-            <Text style={s.notFoundTitle}>No encontramos una cuenta con ese número</Text>
+            <Text style={s.notFoundTitle}>No encontramos una cuenta con ese usuario</Text>
             <Text style={s.notFoundText}>
-              Pídele que se registre en Rodix para que este servicio quede en su historial.
+              Revisa que esté escrito igual que en su perfil, o pídele que se registre en Rodix para que este servicio quede en su historial.
             </Text>
           </View>
           <Pressable
             style={({ pressed }) => [s.secondaryBtn, pressed && { opacity: 0.85 }]}
             onPress={handleReintentar}
           >
-            <Text style={s.secondaryBtnText}>Intentar otro número</Text>
+            <Text style={s.secondaryBtnText}>Intentar otro usuario</Text>
           </Pressable>
         </View>
       )}
@@ -111,7 +113,10 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
             <View style={s.clienteAvatar}>
               <Text style={s.clienteAvatarText}>{cliente.nombre.trim()[0]?.toUpperCase() ?? '?'}</Text>
             </View>
-            <Text style={s.clienteNombre}>{cliente.nombre}</Text>
+            <View>
+              <Text style={s.clienteNombre}>{cliente.nombre}</Text>
+              <Text style={s.clienteUsuario}>@{cliente.nombre_usuario}</Text>
+            </View>
           </View>
 
           {cliente.vehiculos.length > 0 ? (
@@ -226,6 +231,7 @@ const s = StyleSheet.create({
   },
   clienteAvatarText: { fontFamily: fonts.bold, fontSize: 17, color: colors.accent },
   clienteNombre: { fontFamily: fonts.bold, fontSize: 16, color: colors.textPrimary },
+  clienteUsuario: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: 2 },
 
   sinVehiculos: { fontFamily: fonts.body, fontSize: 13, color: colors.textTertiary, lineHeight: 19 },
 
