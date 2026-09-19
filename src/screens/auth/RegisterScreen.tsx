@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
@@ -6,16 +6,53 @@ import {
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
 
+const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
+
+type EstadoUsername = 'vacio' | 'formato_invalido' | 'verificando' | 'disponible' | 'tomado' | 'error';
+
 export default function RegisterScreen({ navigation }: any) {
   const [nombre, setNombre] = useState('');
+  const [nombreUsuario, setNombreUsuario] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [estadoUsername, setEstadoUsername] = useState<EstadoUsername>('vacio');
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const limpio = nombreUsuario.trim().toLowerCase();
+
+    if (!limpio) { setEstadoUsername('vacio'); return; }
+    if (!USERNAME_REGEX.test(limpio)) { setEstadoUsername('formato_invalido'); return; }
+
+    setEstadoUsername('verificando');
+    debounceRef.current = setTimeout(async () => {
+      const { data, error } = await supabase.rpc('nombre_usuario_disponible', { p_nombre_usuario: limpio });
+      if (error) { setEstadoUsername('error'); return; }
+      setEstadoUsername(data ? 'disponible' : 'tomado');
+    }, 500);
+
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [nombreUsuario]);
+
+  const USERNAME_HINTS: Record<EstadoUsername, string | null> = {
+    vacio: null,
+    formato_invalido: 'Solo minúsculas, números y guion bajo (3-20 caracteres)',
+    verificando: 'Verificando disponibilidad...',
+    disponible: 'Disponible',
+    tomado: 'Ese nombre de usuario ya está en uso',
+    error: 'No se pudo verificar, intenta de nuevo',
+  };
 
   async function handleRegister() {
-    if (!nombre || !email || !password || !confirmPassword) {
+    if (!nombre || !nombreUsuario || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'Completa todos los campos');
+      return;
+    }
+    if (estadoUsername !== 'disponible') {
+      Alert.alert('Error', 'Elige un nombre de usuario válido y disponible');
       return;
     }
     if (password !== confirmPassword) {
@@ -28,20 +65,16 @@ export default function RegisterScreen({ navigation }: any) {
     }
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { nombre, nombre_usuario: nombreUsuario.trim().toLowerCase() } },
+    });
 
     if (error) {
       Alert.alert('Error', error.message);
       setLoading(false);
       return;
-    }
-
-    if (data.user) {
-      await supabase.from('usuarios').insert({
-        id: data.user.id,
-        nombre,
-        roles: ['propietario'],
-      });
     }
 
     setLoading(false);
@@ -66,6 +99,26 @@ export default function RegisterScreen({ navigation }: any) {
             onChangeText={setNombre}
             autoCapitalize="words"
           />
+          <View>
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre de usuario"
+              placeholderTextColor="#666"
+              value={nombreUsuario}
+              onChangeText={t => setNombreUsuario(t.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+              autoCapitalize="none"
+              maxLength={20}
+            />
+            {USERNAME_HINTS[estadoUsername] && (
+              <Text style={[
+                styles.usernameHint,
+                estadoUsername === 'disponible' && styles.usernameHintOk,
+                (estadoUsername === 'tomado' || estadoUsername === 'formato_invalido' || estadoUsername === 'error') && styles.usernameHintError,
+              ]}>
+                {USERNAME_HINTS[estadoUsername]}
+              </Text>
+            )}
+          </View>
           <TextInput
             style={styles.input}
             placeholder="Correo electronico"
@@ -138,6 +191,9 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   buttonDisabled: { opacity: 0.6 },
+  usernameHint: { fontSize: 12, marginTop: 4, marginLeft: 4, color: '#666' },
+  usernameHintOk: { color: '#34c759' },
+  usernameHintError: { color: '#ff453a' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   link: { color: '#666', textAlign: 'center', fontSize: 14 },
   linkBold: { color: '#e8522a', fontWeight: 'bold' },
