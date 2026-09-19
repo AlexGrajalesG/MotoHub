@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, Modal, Pressable, Dimensions, Linking,
-  Animated, AccessibilityInfo,
+  Animated, AccessibilityInfo, TextInput,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -99,6 +99,10 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
   /* Historial preview */
   const [historialPreview, setHistorialPreview] = useState<RegistroHistorial[]>([]);
 
+  /* Actualizar kilometraje */
+  const [editandoKm, setEditandoKm] = useState(false);
+  const [kmInput, setKmInput]       = useState('');
+
   /* Animaciones */
   const docSectionOp = useRef(new Animated.Value(0)).current;
   const activeDotOp  = useRef(new Animated.Value(1)).current;
@@ -191,22 +195,21 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
     setVehiculo(v => ({ ...v, fotos: nuevas }));
   }
 
-  async function handleActualizarKm() {
-    Alert.prompt(
-      'Actualizar kilometraje',
-      `Actual: ${vehiculo.kilometraje.toLocaleString()} km`,
-      async (valor) => {
-        const nuevoKm = parseInt(valor);
-        if (isNaN(nuevoKm) || nuevoKm < vehiculo.kilometraje) {
-          Alert.alert('Error', `El valor debe ser ≥ ${vehiculo.kilometraje.toLocaleString()} km`); return;
-        }
-        const { error } = await supabase.from('vehiculos').update({ kilometraje: nuevoKm }).eq('id', vehiculo.id);
-        if (error) { Alert.alert('Error', error.message); return; }
-        setVehiculo(v => ({ ...v, kilometraje: nuevoKm }));
-        await verificarRecordatoriosKm(vehiculo.id, `${vehiculo.marca} ${vehiculo.modelo}`, nuevoKm);
-      },
-      'plain-text', String(vehiculo.kilometraje)
-    );
+  function handleActualizarKm() {
+    setKmInput(String(vehiculo.kilometraje));
+    setEditandoKm(true);
+  }
+
+  async function confirmarKm() {
+    const nuevoKm = parseInt(kmInput);
+    if (isNaN(nuevoKm) || nuevoKm < vehiculo.kilometraje) {
+      Alert.alert('Error', `El valor debe ser ≥ ${vehiculo.kilometraje.toLocaleString()} km`); return;
+    }
+    setEditandoKm(false);
+    const { error } = await supabase.from('vehiculos').update({ kilometraje: nuevoKm }).eq('id', vehiculo.id);
+    if (error) { Alert.alert('Error', error.message); return; }
+    setVehiculo(v => ({ ...v, kilometraje: nuevoKm }));
+    await verificarRecordatoriosKm(vehiculo.id, `${vehiculo.marca} ${vehiculo.modelo}`, nuevoKm);
   }
 
   /* ── Documentos ── */
@@ -429,9 +432,12 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
             <IconBell size={22} color={colors.iconInactive} />
             <Text style={s.accionTexto}>Recordatorios</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[s.accion, s.accionDisabled]}>
-            <IconTool size={22} color={colors.textTertiary} />
-            <Text style={[s.accionTexto, { color: colors.textTertiary }]}>Servicio</Text>
+          <TouchableOpacity
+            style={s.accion}
+            onPress={() => navigation.navigate('AgregarHistorial', { vehiculo })}
+          >
+            <IconTool size={22} color={colors.iconInactive} />
+            <Text style={s.accionTexto}>Servicio</Text>
           </TouchableOpacity>
         </View>
 
@@ -467,6 +473,32 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
             <IconX size={20} color="#fff" />
           </TouchableOpacity>
         </Pressable>
+      </Modal>
+
+      {/* ── Modal actualizar kilometraje ── */}
+      <Modal visible={editandoKm} transparent animationType="fade" onRequestClose={() => setEditandoKm(false)}>
+        <View style={s.modalBg}>
+          <View style={s.fechaCard}>
+            <Text style={s.fechaTitle}>Actualizar kilometraje</Text>
+            <Text style={s.fechaSubtitle}>Actual: {vehiculo.kilometraje.toLocaleString()} km</Text>
+            <TextInput
+              style={s.kmInput}
+              value={kmInput}
+              onChangeText={setKmInput}
+              keyboardType="number-pad"
+              autoFocus
+              selectTextOnFocus
+            />
+            <View style={s.fechaBtns}>
+              <TouchableOpacity style={s.fechaBtnCancelar} onPress={() => setEditandoKm(false)}>
+                <Text style={s.fechaBtnCancelarText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={s.fechaBtnGuardar} onPress={confirmarKm}>
+                <Text style={s.fechaBtnGuardarText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* ── Modal fecha de vencimiento ── */}
@@ -812,6 +844,12 @@ const s = StyleSheet.create({
   },
   fechaTitle:    { fontFamily: fonts.bold, fontSize: 16, color: colors.textPrimary },
   fechaSubtitle: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 2, marginBottom: spacing.sm },
+  kmInput: {
+    width: '100%', backgroundColor: colors.bgSurface, borderRadius: radius.md,
+    borderWidth: 1, borderColor: colors.accent, color: colors.textPrimary,
+    fontFamily: fonts.heading, fontSize: 16, textAlign: 'center',
+    paddingVertical: 12, marginTop: spacing.sm,
+  },
   fechaBtns: {
     flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, width: '100%',
   },

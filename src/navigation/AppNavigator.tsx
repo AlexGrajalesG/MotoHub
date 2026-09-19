@@ -89,6 +89,9 @@ function GarageStack() {
       <GarageNav.Screen name="Recordatorios"     component={RecordatoriosScreen} />
       <GarageNav.Screen name="CrearRecordatorio" component={CrearRecordatorioScreen} />
       <GarageNav.Screen name="Notificaciones"    component={NotificacionesScreen} />
+      <GarageNav.Screen name="HistorialVehiculo" component={HistorialVehiculoScreen} />
+      <GarageNav.Screen name="AgregarHistorial"  component={AgregarHistorialScreen} />
+      <GarageNav.Screen name="DetalleHistorial"  component={DetalleHistorialScreen} />
     </GarageNav.Navigator>
   );
 }
