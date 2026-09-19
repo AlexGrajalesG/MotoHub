@@ -24,11 +24,20 @@
       "expo-secure-store",
       "expo-font",
       "@react-native-community/datetimepicker",
-      ["expo-splash-screen", {
-        "image": "./assets/splash-icon.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#ffffff"
-      }]
-    ]
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "51ef42aa-f06e-44b5-acf3-7d52c5158426"
+      }
+    },
+    "owner": "alexandergraja"
   }
 }
