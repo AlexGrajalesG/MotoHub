@@ -53,6 +53,7 @@ import CitasMecanicoScreen     from '../screens/mecanico/CitasMecanicoScreen';
 
 import PerfilScreen           from '../screens/PerfilScreen';
 import NotificacionesScreen   from '../screens/NotificacionesScreen';
+import InvitacionesEquipoScreen from '../screens/InvitacionesEquipoScreen';
 
 import ChatCitaScreen          from '../screens/chat/ChatCitaScreen';
 import RegistrarServicioScreen from '../screens/chat/RegistrarServicioScreen';
@@ -182,6 +183,7 @@ function PerfilStack() {
     <PerfilNav.Navigator screenOptions={{ headerShown: false }}>
       <PerfilNav.Screen name="PerfilHome"       component={PerfilScreen} />
       <PerfilNav.Screen name="RegistrarNegocio" component={RegistrarNegocioScreen} />
+      <PerfilNav.Screen name="InvitacionesEquipo" component={InvitacionesEquipoScreen} />
     </PerfilNav.Navigator>
   );
 }

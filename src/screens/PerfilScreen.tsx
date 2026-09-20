@@ -8,9 +8,10 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import {
   IconPencil, IconCheck, IconLogout, IconPhone,
-  IconMapPin, IconCamera, IconTools, IconBuildingStore, IconChevronRight, IconCar, IconTool,
+  IconMapPin, IconCamera, IconTools, IconBuildingStore, IconChevronRight, IconCar, IconTool, IconUserPlus,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
+import { contarInvitacionesRecibidas } from '../lib/invitaciones';
 import { useAuth } from '../context/AuthContext';
 import { useModo } from '../context/ModoContext';
 import { tokens } from '../lib/tokens';
@@ -29,6 +30,8 @@ export default function PerfilScreen({ navigation }: any) {
   const { tieneNegocio, modoTaller, setModoTaller, esMecanico, miMecanico, modoMecanico, setModoMecanico, loadingModo } = useModo();
   const [perfil, setPerfil]             = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
   const [perfilOriginal, setPerfilOriginal] = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
+  const [nombreUsuario, setNombreUsuario] = useState('');
+  const [invitacionesPendientes, setInvitacionesPendientes] = useState(0);
   const [editando, setEditando]         = useState(false);
   const [loading, setLoading]           = useState(true);
   const [guardando, setGuardando]       = useState(false);
@@ -48,13 +51,15 @@ export default function PerfilScreen({ navigation }: any) {
   useFocusEffect(useCallback(() => { fetchPerfil(); }, []));
 
   async function fetchPerfil() {
+    if (session?.user.id) contarInvitacionesRecibidas(session.user.id).then(setInvitacionesPendientes);
     const { data } = await supabase
       .from('usuarios')
-      .select('nombre, telefono, ciudad, foto_url')
+      .select('nombre, nombre_usuario, telefono, ciudad, foto_url')
       .eq('id', session?.user.id)
       .maybeSingle();
 
     if (data) {
+      setNombreUsuario(data.nombre_usuario ?? '');
       const cargado = {
         nombre:   data.nombre   ?? '',
         telefono: data.telefono ?? '',
@@ -191,6 +196,7 @@ export default function PerfilScreen({ navigation }: any) {
           </View>
         </TouchableOpacity>
         <Text style={s.nombreText}>{perfil.nombre || 'Sin nombre'}</Text>
+        {!!nombreUsuario && <Text style={s.usuarioText} selectable>@{nombreUsuario}</Text>}
         <Text style={s.emailText}>{session?.user.email}</Text>
       </Animated.View>
 
@@ -222,6 +228,27 @@ export default function PerfilScreen({ navigation }: any) {
           onChange={v => setPerfil(p => ({ ...p, ciudad: v }))}
         />
       </Animated.View>
+
+      {/* ── Invitaciones de talleres (solo si hay pendientes) ── */}
+      {invitacionesPendientes > 0 && (
+        <Animated.View style={{ opacity: contentOp }}>
+          <Pressable
+            style={({ pressed }) => [s.modoCard, s.invitacionCard, pressed && { opacity: 0.85 }]}
+            onPress={() => navigation.navigate('InvitacionesEquipo')}
+          >
+            <View style={s.modoIconWrap}>
+              <IconUserPlus size={20} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.modoTitleAccent}>
+                {invitacionesPendientes === 1 ? 'Tienes 1 invitación de un taller' : `Tienes ${invitacionesPendientes} invitaciones de talleres`}
+              </Text>
+              <Text style={s.modoSubDim}>Acepta o rechaza unirte como mecánico</Text>
+            </View>
+            <IconChevronRight size={17} color={colors.textTertiary} />
+          </Pressable>
+        </Animated.View>
+      )}
 
       {/* ── Negocio / Modo Taller ── */}
       {!loadingModo && (
@@ -398,6 +425,7 @@ const s = StyleSheet.create({
     borderWidth: 2.5, borderColor: colors.bgPrimary,
   },
   nombreText: { fontFamily: fonts.bold,  fontSize: 20, color: colors.textPrimary, letterSpacing: -0.3 },
+  usuarioText: { fontFamily: fonts.heading, fontSize: 14, color: colors.accent },
   emailText:  { fontFamily: fonts.body,  fontSize: 13, color: colors.textSecondary },
 
   card: {
@@ -413,6 +441,7 @@ const s = StyleSheet.create({
     padding: spacing.md, minHeight: 64,
     marginHorizontal: spacing.xl, marginBottom: spacing.md,
   },
+  invitacionCard: { borderColor: colors.accent },
   modoIconWrap: {
     width: 44, height: 44, borderRadius: radius.md,
     backgroundColor: 'rgba(232,82,42,0.12)',

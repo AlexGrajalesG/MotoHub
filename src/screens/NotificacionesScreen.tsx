@@ -5,7 +5,7 @@ import {
   Animated, Easing, AccessibilityInfo,
 } from 'react-native';
 import {
-  IconArrowLeft, IconCalendarPlus, IconCalendarCheck, IconChecks, IconBellOff, IconTool,
+  IconArrowLeft, IconCalendarPlus, IconCalendarCheck, IconChecks, IconBellOff, IconTool, IconUserPlus,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -55,6 +55,8 @@ const NotificacionCard = memo(function NotificacionCard({
             ? <IconCalendarPlus size={18} color={colors.accent} />
             : item.tipo === 'registro_servicio_nuevo' || item.tipo === 'registro_servicio_resuelto'
             ? <IconTool size={18} color={colors.accent} />
+            : item.tipo === 'invitacion_equipo' || item.tipo === 'invitacion_respuesta'
+            ? <IconUserPlus size={18} color={colors.accent} />
             : <IconCalendarCheck size={18} color={colors.accent} />
           }
         </View>
@@ -106,6 +108,21 @@ export default function NotificacionesScreen({ navigation }: any) {
 
     if (item.tipo === 'cita_estado') {
       navigation.navigate('Servicios', { screen: 'MisCitas' });
+      return;
+    }
+
+    if (item.tipo === 'invitacion_equipo') {
+      navigation.navigate('Perfil', { screen: 'InvitacionesEquipo' });
+      return;
+    }
+
+    if (item.tipo === 'invitacion_respuesta') {
+      const { data: miNegocio } = await supabase
+        .from('negocios')
+        .select('id')
+        .eq('propietario_id', session!.user.id)
+        .maybeSingle();
+      if (miNegocio) navigation.navigate('MiEquipo', { negocioId: miNegocio.id });
       return;
     }
 

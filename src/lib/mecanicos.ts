@@ -42,10 +42,6 @@ export async function buscarUsuarioPorNombreUsuario(nombreUsuario: string): Prom
   return { id: (data as any).id, nombre: (data as any).nombre, nombre_usuario: (data as any).nombre_usuario };
 }
 
-export async function agregarMecanico(usuarioId: string, negocioId: string) {
-  return supabase.from('mecanicos').insert({ usuario_id: usuarioId, negocio_id: negocioId });
-}
-
 export async function toggleMecanicoActivo(mecanicoId: string, activo: boolean) {
   return supabase.from('mecanicos').update({ activo }).eq('id', mecanicoId);
 }

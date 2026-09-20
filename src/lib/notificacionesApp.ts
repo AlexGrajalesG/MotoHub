@@ -1,6 +1,8 @@
 import { supabase } from './supabase';
 
-export type TipoNotificacion = 'cita_nueva' | 'cita_estado' | 'registro_servicio_nuevo' | 'registro_servicio_resuelto';
+export type TipoNotificacion =
+  | 'cita_nueva' | 'cita_estado' | 'registro_servicio_nuevo' | 'registro_servicio_resuelto'
+  | 'invitacion_equipo' | 'invitacion_respuesta';
 
 export type Notificacion = {
   id: string;

@@ -4,13 +4,16 @@ import {
   View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert, Modal, TextInput,
 } from 'react-native';
 import {
-  IconArrowLeft, IconUserPlus, IconUsers, IconPhone, IconTrash, IconEye, IconEyeOff,
+  IconArrowLeft, IconUserPlus, IconUsers, IconPhone, IconTrash, IconEye, IconEyeOff, IconClock, IconX,
 } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import {
-  fetchMecanicosDeNegocio, buscarUsuarioPorNombreUsuario, agregarMecanico,
+  fetchMecanicosDeNegocio, buscarUsuarioPorNombreUsuario,
   toggleMecanicoActivo, quitarMecanico, type Mecanico,
 } from '../../lib/mecanicos';
+import {
+  invitarMecanico, cancelarInvitacion, fetchInvitacionesEnviadas, type InvitacionEnviada,
+} from '../../lib/invitaciones';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -18,6 +21,7 @@ export default function MiEquipoScreen({ route, navigation }: any) {
   const { negocioId } = route.params as { negocioId: string };
 
   const [mecanicos, setMecanicos] = useState<Mecanico[]>([]);
+  const [invitaciones, setInvitaciones] = useState<InvitacionEnviada[]>([]);
   const [loading, setLoading]     = useState(true);
   const [busy, setBusy]           = useState<string | null>(null);
 
@@ -29,7 +33,12 @@ export default function MiEquipoScreen({ route, navigation }: any) {
 
   async function cargar() {
     setLoading(true);
-    setMecanicos(await fetchMecanicosDeNegocio(negocioId));
+    const [equipo, pendientes] = await Promise.all([
+      fetchMecanicosDeNegocio(negocioId),
+      fetchInvitacionesEnviadas(negocioId),
+    ]);
+    setMecanicos(equipo);
+    setInvitaciones(pendientes);
     setLoading(false);
   }
 
@@ -52,10 +61,29 @@ export default function MiEquipoScreen({ route, navigation }: any) {
       Alert.alert('Ya está en tu equipo', `${usuario.nombre} ya es mecánico de tu taller.`);
       return;
     }
-    const { error } = await agregarMecanico(usuario.id, negocioId);
-    if (error) { Alert.alert('Error', error.message); return; }
+    setBuscando(true);
+    const resultado = await invitarMecanico(negocioId, usuario.id);
+    setBuscando(false);
+    if (!resultado.ok) { Alert.alert('No se pudo invitar', resultado.error); return; }
     setAgregando(false);
+    Alert.alert('Invitación enviada', `@${usuario.nombre_usuario} recibirá una notificación y deberá aceptar para unirse a tu equipo.`);
     cargar();
+  }
+
+  function handleCancelarInvitacion(inv: InvitacionEnviada) {
+    Alert.alert('Cancelar invitación', `¿Cancelar la invitación a @${inv.nombre_usuario ?? 'este usuario'}?`, [
+      { text: 'No', style: 'cancel' },
+      {
+        text: 'Cancelar invitación', style: 'destructive',
+        onPress: async () => {
+          setBusy(inv.id);
+          const r = await cancelarInvitacion(inv.id);
+          setBusy(null);
+          if (!r.ok) { Alert.alert('Error', r.error); return; }
+          setInvitaciones(prev => prev.filter(x => x.id !== inv.id));
+        },
+      },
+    ]);
   }
 
   async function handleToggle(m: Mecanico) {
@@ -98,7 +126,7 @@ export default function MiEquipoScreen({ route, navigation }: any) {
           style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.85 }]}
           onPress={handleAgregar}
           hitSlop={8}
-          accessibilityLabel="Agregar mecánico"
+          accessibilityLabel="Invitar mecánico"
         >
           <IconUserPlus size={18} color="#fff" />
         </Pressable>
@@ -106,17 +134,46 @@ export default function MiEquipoScreen({ route, navigation }: any) {
 
       {loading ? (
         <View style={s.center}><ActivityIndicator color={colors.accent} size="large" /></View>
-      ) : mecanicos.length === 0 ? (
+      ) : mecanicos.length === 0 && invitaciones.length === 0 ? (
         <View style={s.empty}>
           <IconUsers size={40} color={colors.bgSurface} />
           <Text style={s.emptyTitle}>Sin mecánicos</Text>
-          <Text style={s.emptySubtitle}>Agrega a tu equipo por su @usuario — deben tener cuenta en Rodix</Text>
+          <Text style={s.emptySubtitle}>Invita a tu equipo por su @usuario. Deben tener cuenta en Rodix y aceptar la invitación</Text>
         </View>
       ) : (
         <FlatList
           data={mecanicos}
           keyExtractor={m => m.id}
           contentContainerStyle={s.list}
+          ListHeaderComponent={invitaciones.length > 0 ? (
+            <View style={{ gap: spacing.sm, marginBottom: spacing.sm }}>
+              <Text style={s.seccion}>Invitaciones pendientes</Text>
+              {invitaciones.map(inv => (
+                <View key={inv.id} style={s.card}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.nombre}>{inv.nombre ?? 'Usuario'}</Text>
+                    <View style={s.telRow}>
+                      <IconClock size={12} color={colors.textTertiary} />
+                      <Text style={s.telText}>@{inv.nombre_usuario} · esperando respuesta</Text>
+                    </View>
+                  </View>
+                  <Pressable
+                    style={s.iconBtn}
+                    onPress={() => handleCancelarInvitacion(inv)}
+                    disabled={busy === inv.id}
+                    hitSlop={8}
+                    accessibilityLabel={`Cancelar invitación a ${inv.nombre ?? 'usuario'}`}
+                  >
+                    {busy === inv.id
+                      ? <ActivityIndicator size="small" color={colors.textSecondary} />
+                      : <IconX size={18} color={colors.textSecondary} />
+                    }
+                  </Pressable>
+                </View>
+              ))}
+              {mecanicos.length > 0 && <Text style={[s.seccion, { marginTop: spacing.sm }]}>Equipo</Text>}
+            </View>
+          ) : null}
           renderItem={({ item }) => (
             <View style={s.card}>
               <View style={{ flex: 1 }}>
@@ -157,8 +214,8 @@ export default function MiEquipoScreen({ route, navigation }: any) {
       <Modal visible={agregando} transparent animationType="fade" onRequestClose={() => setAgregando(false)}>
         <View style={s.modalBg}>
           <View style={s.modalCard}>
-            <Text style={s.modalTitle}>Agregar mecánico</Text>
-            <Text style={s.modalSubtitle}>Ingresa el @usuario del mecánico en Rodix</Text>
+            <Text style={s.modalTitle}>Invitar mecánico</Text>
+            <Text style={s.modalSubtitle}>Ingresa el @usuario del mecánico en Rodix. Recibirá una invitación y deberá aceptarla</Text>
             <TextInput
               style={s.modalInput}
               value={usuarioInput}
@@ -176,7 +233,7 @@ export default function MiEquipoScreen({ route, navigation }: any) {
               <Pressable style={s.modalBtnGuardar} onPress={confirmarAgregar} disabled={buscando}>
                 {buscando
                   ? <ActivityIndicator size="small" color="#fff" />
-                  : <Text style={s.modalBtnGuardarText}>Agregar</Text>
+                  : <Text style={s.modalBtnGuardarText}>Invitar</Text>
                 }
               </Pressable>
             </View>
@@ -212,6 +269,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgCard, borderRadius: radius.lg,
     borderWidth: 1, borderColor: colors.bgSurface, padding: spacing.md,
   },
+  seccion: { fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   nombre: { fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary },
   telRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   telText: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
