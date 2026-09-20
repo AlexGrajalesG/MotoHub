@@ -9,7 +9,7 @@ import {
 import { tokens } from '../../lib/tokens';
 import {
   fetchMecanicosDeNegocio, buscarUsuarioPorNombreUsuario,
-  toggleMecanicoActivo, quitarMecanico, type Mecanico,
+  toggleMecanicoActivo, quitarMecanico, type Mecanico, type UsuarioBuscado,
 } from '../../lib/mecanicos';
 import {
   invitarMecanico, cancelarInvitacion, fetchInvitacionesEnviadas, type InvitacionEnviada,
@@ -61,6 +61,16 @@ export default function MiEquipoScreen({ route, navigation }: any) {
       Alert.alert('Ya está en tu equipo', `${usuario.nombre} ya es mecánico de tu taller.`);
       return;
     }
+    const reputacion = usuario.total_calificaciones > 0 && usuario.promedio !== null
+      ? `★ ${usuario.promedio.toFixed(1)} (${usuario.total_calificaciones} ${usuario.total_calificaciones === 1 ? 'calificación' : 'calificaciones'} como mecánico)`
+      : 'Sin calificaciones como mecánico todavía';
+    Alert.alert('Invitar a tu equipo', `${usuario.nombre} (@${usuario.nombre_usuario})\n${reputacion}`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Invitar', onPress: () => enviarInvitacion(usuario) },
+    ]);
+  }
+
+  async function enviarInvitacion(usuario: UsuarioBuscado) {
     setBuscando(true);
     const resultado = await invitarMecanico(negocioId, usuario.id);
     setBuscando(false);
@@ -95,7 +105,7 @@ export default function MiEquipoScreen({ route, navigation }: any) {
   }
 
   function handleQuitar(m: Mecanico) {
-    Alert.alert('Quitar del equipo', `¿Seguro que quieres quitar a ${m.usuario?.nombre ?? 'este mecánico'} de tu taller?`, [
+    Alert.alert('Quitar del equipo', `¿Seguro que quieres quitar a ${m.usuario?.nombre ?? 'este mecánico'} de tu taller? Perderá el acceso a tus citas. Su historial y sus calificaciones se conservan.`, [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Quitar', style: 'destructive',

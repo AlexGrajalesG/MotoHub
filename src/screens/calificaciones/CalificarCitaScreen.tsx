@@ -63,7 +63,8 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
     const lista: Destino[] = rol === 'propietario'
       ? [
           { tipo: 'negocio', id: c.negocio_id, nombre: c.negocio?.nombre ?? 'Negocio' },
-          ...(c.mecanico_id ? [{ tipo: 'mecanico' as DestinoTipo, id: c.mecanico_id, nombre: c.mecanico?.usuario?.nombre ?? 'Mecánico' }] : []),
+          // la calificacion es de la persona (usuario_id), asi lo acompana si cambia de taller
+          ...(c.mecanico?.usuario_id ? [{ tipo: 'mecanico' as DestinoTipo, id: c.mecanico.usuario_id as string, nombre: c.mecanico?.usuario?.nombre ?? 'Mecánico' }] : []),
         ]
       : [{ tipo: 'usuario', id: c.usuario_id, nombre: c.usuario?.nombre ?? 'Cliente' }];
 

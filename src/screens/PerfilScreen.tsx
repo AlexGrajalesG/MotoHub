@@ -12,6 +12,8 @@ import {
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
 import { contarInvitacionesRecibidas } from '../lib/invitaciones';
+import { fetchPromedio, type Promedio } from '../lib/calificaciones';
+import { salirDelEquipo } from '../lib/mecanicos';
 import { useAuth } from '../context/AuthContext';
 import { useModo } from '../context/ModoContext';
 import { tokens } from '../lib/tokens';
@@ -27,7 +29,8 @@ type Perfil = {
 
 export default function PerfilScreen({ navigation }: any) {
   const { session } = useAuth();
-  const { tieneNegocio, modoTaller, setModoTaller, esMecanico, miMecanico, modoMecanico, setModoMecanico, loadingModo } = useModo();
+  const { tieneNegocio, modoTaller, setModoTaller, esMecanico, miMecanico, modoMecanico, setModoMecanico, refreshEsMecanico, loadingModo } = useModo();
+  const [reputacion, setReputacion] = useState<Promedio>({ promedio: 0, total: 0 });
   const [perfil, setPerfil]             = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
   const [perfilOriginal, setPerfilOriginal] = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
   const [nombreUsuario, setNombreUsuario] = useState('');
@@ -51,7 +54,10 @@ export default function PerfilScreen({ navigation }: any) {
   useFocusEffect(useCallback(() => { fetchPerfil(); }, []));
 
   async function fetchPerfil() {
-    if (session?.user.id) contarInvitacionesRecibidas(session.user.id).then(setInvitacionesPendientes);
+    if (session?.user.id) {
+      contarInvitacionesRecibidas(session.user.id).then(setInvitacionesPendientes);
+      fetchPromedio('mecanico', session.user.id).then(setReputacion);
+    }
     const { data } = await supabase
       .from('usuarios')
       .select('nombre, nombre_usuario, telefono, ciudad, foto_url')
@@ -140,6 +146,26 @@ export default function PerfilScreen({ navigation }: any) {
     } finally {
       setSubiendoFoto(false);
     }
+  }
+
+  function handleSalirDelTaller() {
+    if (!miMecanico) return;
+    Alert.alert(
+      'Salir del taller',
+      `¿Quieres dejar de ser mecánico de ${miMecanico.negocio_nombre}? Perderás el acceso a sus citas. Tu historial y tus calificaciones se conservan.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Salir', style: 'destructive',
+          onPress: async () => {
+            const r = await salirDelEquipo(miMecanico.negocio_id);
+            if (!r.ok) { Alert.alert('No se pudo salir', r.error); return; }
+            setModoMecanico(false);
+            await refreshEsMecanico();
+          },
+        },
+      ],
+    );
   }
 
   function handleLogout() {
@@ -309,6 +335,26 @@ export default function PerfilScreen({ navigation }: any) {
               <View style={[s.toggleDot, modoMecanico && s.toggleDotOn]} />
             </View>
           </Pressable>
+          <Pressable onPress={handleSalirDelTaller} style={s.salirBtn} hitSlop={6}>
+            <Text style={s.salirText}>Salir de {miMecanico?.negocio_nombre}</Text>
+          </Pressable>
+        </Animated.View>
+      )}
+
+      {/* ── Reputación como mecánico (viaja con la persona, no con el taller) ── */}
+      {reputacion.total > 0 && (
+        <Animated.View style={{ opacity: contentOp }}>
+          <View style={[s.modoCard, { minHeight: 56 }]}>
+            <View style={s.modoIconWrap}>
+              <IconTool size={20} color={colors.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.modoTitle}>Tu reputación como mecánico</Text>
+              <Text style={s.modoSub}>
+                ★ {reputacion.promedio.toFixed(1)} · {reputacion.total} {reputacion.total === 1 ? 'calificación' : 'calificaciones'}
+              </Text>
+            </View>
+          </View>
         </Animated.View>
       )}
 
@@ -442,6 +488,8 @@ const s = StyleSheet.create({
     marginHorizontal: spacing.xl, marginBottom: spacing.md,
   },
   invitacionCard: { borderColor: colors.accent },
+  salirBtn: { alignSelf: 'flex-start', marginHorizontal: spacing.xl, marginTop: -spacing.sm, marginBottom: spacing.md, paddingVertical: spacing.xs },
+  salirText: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, textDecorationLine: 'underline' },
   modoIconWrap: {
     width: 44, height: 44, borderRadius: radius.md,
     backgroundColor: 'rgba(232,82,42,0.12)',
