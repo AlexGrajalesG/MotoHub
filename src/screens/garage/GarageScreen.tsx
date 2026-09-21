@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect, memo } from 'react';
+import { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, FlatList, Pressable,
-  ActivityIndicator, AccessibilityInfo,
+  ActivityIndicator, AccessibilityInfo, RefreshControl,
   Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -19,6 +19,10 @@ import { useAuth } from '../../context/AuthContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
 import { tokens } from '../../lib/tokens';
 import { getDocStatus, DocStatus } from '../../lib/documentos';
+import {
+  calcularAlertas, calcularPrimerosPasos, type Alerta, type PasoInicial, type RecordatorioInicio,
+} from '../../lib/inicio';
+import { ResumenAtencion, PrimerosPasos, AccionesRapidas, SelectorVehiculo } from '../../components/InicioWidgets';
 
 const { colors, spacing, radius, fonts } = tokens;
 const CARD_WIDTH = Dimensions.get('window').width - spacing.xl * 2;
@@ -145,32 +149,93 @@ const VehiculoCard = memo(function VehiculoCard({ item, index, navigation, reduc
 export default function GarageScreen({ navigation }: any) {
   const { session } = useAuth();
   const { unreadCount } = useNotificaciones();
-  const [vehiculos, setVehiculos]       = useState<Vehiculo[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const [filtro, setFiltro]             = useState<FiltroKey>('todas');
+  const [vehiculos, setVehiculos]         = useState<Vehiculo[]>([]);
+  const [recordatorios, setRecordatorios] = useState<RecordatorioInicio[]>([]);
+  const [loading, setLoading]             = useState(true);
+  const [refrescando, setRefrescando]     = useState(false);
+  const [errorCarga, setErrorCarga]       = useState(false);
+  const [reduceMotion, setReduceMotion]   = useState(false);
+  const [filtro, setFiltro]               = useState<FiltroKey>('todas');
+  const [selector, setSelector]           = useState<{ titulo: string; accion: (v: Vehiculo) => void } | null>(null);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
   }, []);
 
-  useFocusEffect(useCallback(() => { fetchVehiculos(); }, []));
+  // El spinner de pantalla completa solo se ve la primera vez (loading arranca en true y nunca vuelve a true).
+  useFocusEffect(useCallback(() => { fetchTodo(); }, []));
 
-  async function fetchVehiculos() {
+  async function fetchTodo() {
     try {
+      setErrorCarga(false);
       const { data, error } = await supabase
         .from('vehiculos')
         .select('id, marca, modelo, anio, placa, tipo, kilometraje, fotos, documentos(tipo, fecha_vencimiento, created_at)')
         .eq('propietario_id', session?.user.id)
         .eq('activo', true)
         .order('created_at', { ascending: false });
-      if (error) console.error(error.message);
-      setVehiculos((data as Vehiculo[]) ?? []);
+      if (error) throw error;
+      const lista = (data as Vehiculo[]) ?? [];
+      setVehiculos(lista);
+
+      if (lista.length === 0) {
+        setRecordatorios([]);
+      } else {
+        const { data: recs, error: errRec } = await supabase
+          .from('recordatorios')
+          .select('id, vehiculo_id, tipo, fecha_limite, km_limite, km_aviso, estado')
+          .in('vehiculo_id', lista.map(v => v.id));
+        if (errRec) throw errRec;
+        setRecordatorios((recs as RecordatorioInicio[]) ?? []);
+      }
     } catch (e) {
       console.error(e);
+      setErrorCarga(true);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function refrescar() {
+    setRefrescando(true);
+    await fetchTodo();
+    setRefrescando(false);
+  }
+
+  const alertas = useMemo(() => calcularAlertas(vehiculos, recordatorios), [vehiculos, recordatorios]);
+  const primerosPasos = useMemo(() => calcularPrimerosPasos(vehiculos, recordatorios), [vehiculos, recordatorios]);
+
+  const hayMezcla = vehiculos.some(v => v.tipo === 'moto') && vehiculos.some(v => v.tipo !== 'moto');
+  const vehiculosFiltrados = vehiculos.filter(v => {
+    if (filtro === 'todas' || !hayMezcla) return true;
+    if (filtro === 'moto')  return v.tipo === 'moto';
+    return v.tipo !== 'moto';
+  });
+
+  // Con un solo vehiculo la accion es directa; con varios se pregunta cual.
+  function conVehiculo(titulo: string, accion: (v: Vehiculo) => void) {
+    if (vehiculos.length === 0) { navigation.navigate('AgregarVehiculo'); return; }
+    if (vehiculos.length === 1) { accion(vehiculos[0]); return; }
+    setSelector({ titulo, accion });
+  }
+
+  const irKm = () => conVehiculo('¿A qué vehículo?', v => navigation.navigate('DetalleVehiculo', { vehiculo: v, abrirKm: true }));
+  const irRecordatorio = () => conVehiculo('¿Para qué vehículo?', v => navigation.navigate('CrearRecordatorio', { vehiculo: v }));
+  const irServicio = () => conVehiculo('¿En qué vehículo?', v => navigation.navigate('AgregarHistorial', { vehiculo: v }));
+
+  function onPressPaso(p: PasoInicial) {
+    if (p.key === 'vehiculo' || vehiculos.length === 0) { navigation.navigate('AgregarVehiculo'); return; }
+    if (p.key === 'soat') {
+      const v = vehiculos.find(x => !(x.documentos ?? []).some(d => d.tipo === 'soat')) ?? vehiculos[0];
+      navigation.navigate('Documentos', { vehiculo: v });
+      return;
+    }
+    irRecordatorio();
+  }
+
+  function onPressAlerta(a: Alerta) {
+    const v = vehiculos.find(x => x.id === a.vehiculoId);
+    if (v) navigation.navigate(a.destino === 'documentos' ? 'Documentos' : 'Recordatorios', { vehiculo: v });
   }
 
   if (loading) {
@@ -181,39 +246,49 @@ export default function GarageScreen({ navigation }: any) {
     );
   }
 
-  const alertas = vehiculos.filter(v =>
-    VENCIMIENTO_CHIPS.some(({ key }) => {
-      const status = getEstadoDocumento(v.documentos ?? [], key);
-      return status && status.estado !== 'al_dia';
-    })
-  ).length;
+  const subtitulo = vehiculos.length === 0
+    ? 'Empecemos por tu primer vehículo'
+    : alertas.length > 0
+      ? `Tienes ${alertas.length} ${alertas.length === 1 ? 'cosa' : 'cosas'} por revisar`
+      : 'Tu garage está al día.';
 
-  const vehiculosFiltrados = vehiculos.filter(v => {
-    if (filtro === 'todas') return true;
-    if (filtro === 'moto')  return v.tipo === 'moto';
-    return v.tipo !== 'moto';
-  });
-
-  return (
-    <View style={styles.container}>
-      {/* Barra superior */}
-      <TopBar unreadCount={unreadCount} onPressBell={() => navigation.navigate('Notificaciones')} />
-
-      {/* Saludo */}
-      <View style={styles.header}>
+  const encabezado = (
+    <View>
+      <View style={styles.headerLista}>
         <Text style={styles.title}>{saludoPorHora()}</Text>
-        <Text style={styles.subtitle}>
-          {vehiculos.length === 0
-            ? 'Sin vehículos aún'
-            : alertas > 0
-              ? `Tienes ${alertas} vehículo${alertas !== 1 ? 's' : ''} con documentos por revisar`
-              : 'Tu garage está al día.'}
-        </Text>
+        <Text style={styles.subtitle}>{subtitulo}</Text>
       </View>
 
-      {/* Filtros por tipo */}
+      {errorCarga && (
+        <Pressable style={styles.bannerError} onPress={refrescar} accessibilityRole="button" accessibilityLabel="Reintentar">
+          <Text style={styles.bannerErrorTexto}>No pudimos actualizar. Toca para reintentar.</Text>
+        </Pressable>
+      )}
+
+      <View style={styles.bloques}>
+        {vehiculos.length > 0 && <ResumenAtencion alertas={alertas} onPressAlerta={onPressAlerta} />}
+        {!primerosPasos.completo && (
+          <PrimerosPasos
+            pasos={primerosPasos.pasos}
+            hechos={primerosPasos.hechos}
+            total={primerosPasos.total}
+            onPressPaso={onPressPaso}
+          />
+        )}
+        {vehiculos.length > 0 && (
+          <AccionesRapidas onKm={irKm} onRecordatorio={irRecordatorio} onServicio={irServicio} />
+        )}
+      </View>
+
       {vehiculos.length > 0 && (
-        <View style={styles.filtros}>
+        <View style={styles.seccion}>
+          <Text style={styles.seccionTitulo}>Mis vehículos</Text>
+          <Text style={styles.seccionConteo}>{vehiculos.length}</Text>
+        </View>
+      )}
+
+      {hayMezcla && (
+        <View style={[styles.filtros, { marginHorizontal: -spacing.xl }]}>
           {FILTROS.map(({ key, label }) => {
             const activo = filtro === key;
             return (
@@ -221,57 +296,63 @@ export default function GarageScreen({ navigation }: any) {
                 key={key}
                 style={[styles.filtroChip, activo && styles.filtroChipActivo]}
                 onPress={() => setFiltro(key)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: activo }}
               >
-                <Text style={[styles.filtroChipText, activo && styles.filtroChipTextActivo]}>
-                  {label}
-                </Text>
+                <Text style={[styles.filtroChipText, activo && styles.filtroChipTextActivo]}>{label}</Text>
               </Pressable>
             );
           })}
         </View>
       )}
+    </View>
+  );
 
-      {vehiculos.length === 0 ? (
-        <View style={styles.empty}>
-          <View style={styles.emptyCard}>
-            <IconBike size={52} color={colors.bgSurface} />
-          </View>
-          <Text style={styles.emptyTitle}>Tu garage está vacío</Text>
-          <Text style={styles.emptySubtitle}>
-            Registra tu vehículo para gestionar documentos, recordatorios e historial
-          </Text>
-          <Pressable
-            style={({ pressed }) => [styles.emptyBtn, pressed && { opacity: 0.85 }]}
-            onPress={() => navigation.navigate('AgregarVehiculo')}
-            accessibilityRole="button"
-            accessibilityLabel="Agregar vehículo"
-          >
-            <Text style={styles.emptyBtnText}>Agregar vehículo</Text>
-          </Pressable>
-        </View>
-      ) : vehiculosFiltrados.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>Sin vehículos en esta categoría</Text>
-          <Text style={styles.emptySubtitle}>Prueba con otro filtro arriba</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={vehiculosFiltrados}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <VehiculoCard
-              item={item}
-              index={index}
-              navigation={navigation}
-              reduceMotion={reduceMotion}
-            />
-          )}
-        />
-      )}
+  return (
+    <View style={styles.container}>
+      <TopBar unreadCount={unreadCount} onPressBell={() => navigation.navigate('Notificaciones')} />
 
-      {/* Agregar vehículo */}
+      <FlatList
+        data={vehiculosFiltrados}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={encabezado}
+        refreshControl={
+          <RefreshControl
+            refreshing={refrescando}
+            onRefresh={refrescar}
+            tintColor={colors.accent}
+            colors={[colors.accent]}
+            progressBackgroundColor={colors.bgCard}
+          />
+        }
+        ListEmptyComponent={
+          vehiculos.length === 0 ? (
+            <View style={styles.vacioCta}>
+              <Pressable
+                style={({ pressed }) => [styles.emptyBtn, pressed && { opacity: 0.85 }]}
+                onPress={() => navigation.navigate('AgregarVehiculo')}
+                accessibilityRole="button"
+                accessibilityLabel="Agregar mi primer vehículo"
+              >
+                <IconPlus size={20} color={colors.onAccent} />
+                <Text style={styles.emptyBtnText}>Agregar mi primer vehículo</Text>
+              </Pressable>
+              <Text style={styles.emptySubtitle}>Documentos, recordatorios e historial en un solo lugar</Text>
+            </View>
+          ) : (
+            <View style={styles.vacioCta}>
+              <Text style={styles.emptyTitle}>Sin vehículos en esta categoría</Text>
+              <Text style={styles.emptySubtitle}>Prueba con otro filtro arriba</Text>
+            </View>
+          )
+        }
+        renderItem={({ item, index }) => (
+          <VehiculoCard item={item} index={index} navigation={navigation} reduceMotion={reduceMotion} />
+        )}
+      />
+
       {vehiculos.length > 0 && (
         <IconButton
           size={56}
@@ -282,6 +363,19 @@ export default function GarageScreen({ navigation }: any) {
           <IconPlus size={26} color={colors.onAccent} />
         </IconButton>
       )}
+
+      <SelectorVehiculo
+        visible={!!selector}
+        titulo={selector?.titulo ?? ''}
+        vehiculos={vehiculos}
+        onElegir={(id) => {
+          const v = vehiculos.find(x => x.id === id);
+          const accion = selector?.accion;
+          setSelector(null);
+          if (v && accion) accion(v);
+        }}
+        onCerrar={() => setSelector(null)}
+      />
     </View>
   );
 }
@@ -289,6 +383,19 @@ export default function GarageScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
+
+  /* ── Inicio: bloques ── */
+  headerLista: { paddingBottom: spacing.lg },
+  bloques: { gap: spacing.md, marginBottom: spacing.xl },
+  seccion: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: spacing.md },
+  seccionTitulo: { fontFamily: fonts.display, fontSize: 20, color: colors.textPrimary, letterSpacing: -0.3 },
+  seccionConteo: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
+  bannerError: {
+    minHeight: 44, justifyContent: 'center', borderRadius: radius.md, paddingHorizontal: spacing.lg, marginBottom: spacing.md,
+    backgroundColor: colors.dangerActionBg, borderWidth: 1, borderColor: colors.dangerActionBorder,
+  },
+  bannerErrorTexto: { fontFamily: fonts.body, fontSize: 13, color: colors.textPrimary },
+  vacioCta: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.xl },
 
   /* ── Header (saludo) ── */
   header: {

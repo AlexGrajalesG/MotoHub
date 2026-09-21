@@ -103,6 +103,11 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
   const [editandoKm, setEditandoKm] = useState(false);
   const [kmInput, setKmInput]       = useState('');
 
+  // Llega con abrirKm cuando se toca "Actualizar km" en el Inicio
+  useEffect(() => {
+    if (route.params?.abrirKm) { setKmInput(String(inicial.kilometraje)); setEditandoKm(true); }
+  }, []);
+
   /* Animaciones */
   const docSectionOp = useRef(new Animated.Value(0)).current;
   const activeDotOp  = useRef(new Animated.Value(1)).current;
