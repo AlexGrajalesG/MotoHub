@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { View } from 'react-native';
 import { useFonts } from 'expo-font';
 import {
@@ -11,7 +10,7 @@ import { AuthProvider } from './src/context/AuthContext';
 import { ModoProvider } from './src/context/ModoContext';
 import { NotificacionesProvider } from './src/context/NotificacionesContext';
 import AppNavigator from './src/navigation/AppNavigator';
-import { configurarHandler, solicitarPermisos } from './src/lib/notificaciones';
+import { configurarHandler } from './src/lib/notificaciones';
 
 configurarHandler();
 
@@ -22,10 +21,6 @@ export default function App() {
     Inter_700Bold,
     SpaceGrotesk_700Bold,
   });
-
-  useEffect(() => {
-    solicitarPermisos();
-  }, []);
 
   if (!fontsLoaded) {
     return <View style={{ flex: 1, backgroundColor: '#020202' }} />;

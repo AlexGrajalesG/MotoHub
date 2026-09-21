@@ -1,219 +1,175 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ActivityIndicator, KeyboardAvoidingView,
-  Platform, Alert,
+  View, Text, Pressable, StyleSheet, ActivityIndicator, KeyboardAvoidingView,
+  Platform, ScrollView, type TextInput,
 } from 'react-native';
-import { IconMail, IconLock, IconEye, IconEyeOff } from '@tabler/icons-react-native';
+import { IconMail, IconLock, IconAlertCircle } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
+import { mensajeErrorAuth, type ErrorAuth } from '../../lib/errores';
+import RodixLogo from '../../components/RodixLogo';
+import { Campo, Entrada } from '../../components/FormField';
 
 const { colors, spacing, radius, fonts } = tokens;
+
+const EMAIL_OK = /^\S+@\S+\.\S+$/;
 
 export default function LoginScreen({ navigation }: any) {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [verPassword, setVerPassword] = useState(false);
   const [loading, setLoading]   = useState(false);
+  const [intento, setIntento]   = useState(false);
+  const [tocados, setTocados]   = useState<{ email?: boolean; password?: boolean }>({});
+  const [errorServidor, setErrorServidor] = useState<ErrorAuth | null>(null);
+  const [reenviado, setReenviado] = useState(false);
+  const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+
+  const errEmail = !email.trim() ? 'Escribe tu correo' : !EMAIL_OK.test(email.trim()) ? 'Ese correo no parece válido' : undefined;
+  const errPassword = !password ? 'Escribe tu contraseña' : undefined;
+  const verEmail = intento || tocados.email ? errEmail : undefined;
+  const verPassword = intento || tocados.password ? errPassword : undefined;
 
   async function handleLogin() {
-    if (!email || !password) {
-      Alert.alert('Error', 'Completa todos los campos');
-      return;
-    }
+    setIntento(true);
+    if (errEmail) { emailRef.current?.focus(); return; }
+    if (errPassword) { passwordRef.current?.focus(); return; }
+
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) Alert.alert('Error', error.message);
+    setErrorServidor(null);
+    setReenviado(false);
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
+    if (error) setErrorServidor(mensajeErrorAuth(error));
+    // si entra bien, AppNavigator cambia de pila solo al detectar la sesion
+  }
+
+  async function reenviarCorreo() {
+    const { error } = await supabase.auth.resend({ type: 'signup', email: email.trim() });
+    if (error) setErrorServidor(mensajeErrorAuth(error));
+    else setReenviado(true);
   }
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.content}>
-
-        {/* Wordmark Rodix */}
-        <View style={styles.logoWrap}>
-          <View style={styles.logoIcon}>
-            <Text style={styles.logoIconText}>R</Text>
-          </View>
-          <View style={styles.wordmark}>
-            <View style={styles.wordmarkRow}>
-              <Text style={styles.logoRodi}>Rodi</Text>
-              <Text style={styles.logoX}>x</Text>
-            </View>
-            <Text style={styles.superApp}>SUPER-APP</Text>
-          </View>
+    <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <View style={s.logo}>
+          <RodixLogo variante="completo" alto={40} />
         </View>
 
-        <Text style={styles.tagline}>Roda diferente.</Text>
+        <Text style={s.titulo}>Bienvenido de vuelta</Text>
+        <Text style={s.sub}>Entra para ver el estado de tu vehículo</Text>
 
-        {/* Formulario */}
-        <View style={styles.card}>
-          <View style={styles.field}>
-            <Text style={styles.label}>Correo electrónico</Text>
-            <View style={styles.inputRow}>
-              <IconMail size={18} color={colors.textTertiary} />
-              <TextInput
-                style={styles.input}
-                placeholder="tu@email.com"
-                placeholderTextColor={colors.textTertiary}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                returnKeyType="next"
-              />
+        {errorServidor && (
+          <View style={s.banner} accessibilityLiveRegion="polite">
+            <IconAlertCircle size={18} color={colors.dangerAction} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Text style={s.bannerTexto}>{errorServidor.mensaje}</Text>
+              {errorServidor.correoSinConfirmar && (
+                reenviado
+                  ? <Text style={s.bannerOk}>Listo, te enviamos otro correo. Revisa también Spam.</Text>
+                  : (
+                    <Pressable onPress={reenviarCorreo} hitSlop={8} accessibilityRole="button">
+                      <Text style={s.bannerAccion}>Reenviar correo de confirmación</Text>
+                    </Pressable>
+                  )
+              )}
             </View>
           </View>
+        )}
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Contraseña</Text>
-            <View style={styles.inputRow}>
-              <IconLock size={18} color={colors.textTertiary} />
-              <TextInput
-                style={styles.input}
-                placeholder="••••••••"
-                placeholderTextColor={colors.textTertiary}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!verPassword}
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-              />
-              <TouchableOpacity onPress={() => setVerPassword(v => !v)} hitSlop={8}>
-                {verPassword
-                  ? <IconEyeOff size={18} color={colors.textTertiary} />
-                  : <IconEye size={18} color={colors.textTertiary} />
-                }
-              </TouchableOpacity>
-            </View>
-          </View>
+        <View style={s.form}>
+          <Campo label="Correo electrónico" sinMarca error={verEmail}>
+            <Entrada
+              inputRef={emailRef}
+              icono={<IconMail size={18} color={colors.textTertiary} />}
+              value={email}
+              onChangeText={setEmail}
+              onBlur={() => setTocados(t => ({ ...t, email: true }))}
+              error={!!verEmail}
+              placeholder="tu@correo.com"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              textContentType="emailAddress"
+              returnKeyType="next"
+              onSubmitEditing={() => passwordRef.current?.focus()}
+              blurOnSubmit={false}
+            />
+          </Campo>
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading
-              ? <ActivityIndicator color={colors.onAccent} />
-              : <Text style={styles.buttonText}>Ingresar</Text>
-            }
-          </TouchableOpacity>
+          <Campo label="Contraseña" sinMarca error={verPassword}>
+            <Entrada
+              inputRef={passwordRef}
+              icono={<IconLock size={18} color={colors.textTertiary} />}
+              esContrasena
+              value={password}
+              onChangeText={setPassword}
+              onBlur={() => setTocados(t => ({ ...t, password: true }))}
+              error={!!verPassword}
+              placeholder="Tu contraseña"
+              autoCapitalize="none"
+              autoComplete="password"
+              textContentType="password"
+              returnKeyType="done"
+              onSubmitEditing={handleLogin}
+            />
+          </Campo>
         </View>
+      </ScrollView>
 
-        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-          <Text style={styles.link}>
-            ¿No tienes cuenta?{' '}
-            <Text style={styles.linkBold}>Regístrate</Text>
+      <View style={s.footer}>
+        <Pressable
+          style={({ pressed }) => [s.boton, loading && s.botonOcupado, pressed && { opacity: 0.85 }]}
+          onPress={handleLogin}
+          disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Ingresar"
+        >
+          {loading ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.botonTexto}>Ingresar</Text>}
+        </Pressable>
+
+        <Pressable onPress={() => navigation.navigate('Register')} hitSlop={8} style={s.enlaceWrap} accessibilityRole="link">
+          <Text style={s.enlace}>
+            ¿No tienes cuenta? <Text style={s.enlaceFuerte}>Crea una gratis</Text>
           </Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
-  content:   { flex: 1, justifyContent: 'center', paddingHorizontal: spacing.xl },
+  content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, paddingTop: 60, paddingBottom: spacing.xl },
 
-  /* ── Wordmark ── */
-  logoWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  logoIcon: {
-    width: 52,
-    height: 52,
-    backgroundColor: colors.accent,
-    borderRadius: 13,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoIconText: {
-    fontFamily: fonts.display,
-    fontSize: 28,
-    color: colors.onAccent,
-    lineHeight: 32,
-  },
-  wordmark: { gap: 1 },
-  wordmarkRow: { flexDirection: 'row', alignItems: 'baseline' },
-  logoRodi: {
-    fontFamily: fonts.display,
-    fontSize: 36,
-    color: colors.textPrimary,
-    letterSpacing: -1,
-  },
-  logoX: {
-    fontFamily: fonts.display,
-    fontSize: 36,
-    color: colors.accent,
-    letterSpacing: -1,
-  },
-  superApp: {
-    fontFamily: fonts.bold,
-    fontSize: 10,
-    color: colors.textTertiary,
-    letterSpacing: 3,
-  },
+  logo: { alignItems: 'center', marginBottom: spacing.xxl },
+  titulo: { fontFamily: fonts.display, fontSize: 28, color: colors.textPrimary, letterSpacing: -0.5, textAlign: 'center' },
+  sub: { fontFamily: fonts.body, fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm, marginBottom: spacing.xl },
 
-  tagline: {
-    fontFamily: fonts.body,
-    fontSize: 15,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.xxl + spacing.lg,
+  banner: {
+    flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start',
+    backgroundColor: colors.dangerActionBg, borderWidth: 1, borderColor: colors.dangerActionBorder,
+    borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.lg,
   },
+  bannerTexto: { fontFamily: fonts.body, fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
+  bannerAccion: { fontFamily: fonts.bold, fontSize: 14, color: colors.accent },
+  bannerOk: { fontFamily: fonts.body, fontSize: 13, color: colors.success },
 
-  /* ── Form card ── */
-  card: {
-    backgroundColor: colors.bgCard,
-    borderRadius: radius.xl,
-    borderWidth: 1,
-    borderColor: colors.bgSurface,
-    padding: spacing.xl,
-    gap: spacing.lg,
-    marginBottom: spacing.xxl,
-  },
-  field: { gap: spacing.xs },
-  label: {
-    fontFamily: fonts.heading, fontSize: 11, color: colors.textSecondary,
-    textTransform: 'uppercase', letterSpacing: 0.8,
-  },
-  inputRow: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    backgroundColor: colors.bgSurface,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    minHeight: 52,
-  },
-  input: {
-    flex: 1,
-    color: colors.textPrimary,
-    fontFamily: fonts.body,
-    fontSize: 16,
-    paddingVertical: 14,
-  },
-  button: {
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginTop: spacing.xs,
-    minHeight: 52,
-    justifyContent: 'center',
-  },
-  buttonDisabled: { opacity: 0.6 },
-  buttonText: {
-    fontFamily: fonts.bold, color: colors.onAccent, fontSize: 14,
-    textTransform: 'uppercase', letterSpacing: 1.5,
-  },
+  form: { gap: spacing.lg },
 
-  link:     { fontFamily: fonts.body, color: colors.textSecondary, textAlign: 'center', fontSize: 14 },
-  linkBold: { fontFamily: fonts.bold, color: colors.accent },
+  footer: {
+    paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.md,
+    backgroundColor: colors.bgPrimary, borderTopWidth: 1, borderTopColor: colors.bgCard,
+  },
+  boton: {
+    backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  botonOcupado: { opacity: 0.6 },
+  botonTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
+  enlaceWrap: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
+  enlace: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary },
+  enlaceFuerte: { fontFamily: fonts.bold, color: colors.accent },
 });

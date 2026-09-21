@@ -30,9 +30,10 @@ export function configurarHandler() {
   });
 }
 
+// Solo muestra la alerta si el usuario ya dio permiso; nunca lo pide (se pide al crear un recordatorio).
 export async function notificarKm(titulo: string, body: string) {
-  const ok = await solicitarPermisos();
-  if (!ok) return;
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== 'granted') return;
   await Notifications.scheduleNotificationAsync({
     content: { title: titulo, body },
     trigger: null,

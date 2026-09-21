@@ -1,14 +1,16 @@
 import { useState, useRef } from 'react';
 import {
   View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, Alert,
-  ScrollView, KeyboardAvoidingView, Platform, type TextInputProps,
+  ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import {
-  IconArrowLeft, IconMotorbike, IconCar, IconTruck, IconDots, IconAlertCircle, IconCheck,
+  IconArrowLeft, IconMotorbike, IconCar, IconTruck, IconDots, IconCheck,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
+import { mensajeError } from '../../lib/errores';
+import { Campo, Entrada } from '../../components/FormField';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -36,10 +38,10 @@ const MARCAS: Record<string, string[]> = {
 };
 
 const CAMPOS = ['marca', 'modelo', 'anio', 'placa', 'km'] as const;
-type Campo = typeof CAMPOS[number];
+type NombreCampo = typeof CAMPOS[number];
 
-function validar(v: { marca: string; modelo: string; anio: string; placa: string; km: string }): Partial<Record<Campo, string>> {
-  const e: Partial<Record<Campo, string>> = {};
+function validar(v: { marca: string; modelo: string; anio: string; placa: string; km: string }): Partial<Record<NombreCampo, string>> {
+  const e: Partial<Record<NombreCampo, string>> = {};
   if (!v.marca.trim()) e.marca = 'Escribe la marca';
   if (!v.modelo.trim()) e.modelo = 'Escribe el modelo';
   const anioNum = parseInt(v.anio, 10);
@@ -62,44 +64,6 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
   );
 }
 
-function Campo({ label, requerido, error, ayuda, children }: {
-  label: string; requerido?: boolean; error?: string; ayuda?: string; children: React.ReactNode;
-}) {
-  return (
-    <View style={s.campo}>
-      <Text style={s.label}>
-        {label}
-        {requerido ? <Text style={s.requerido}> *</Text> : <Text style={s.opcional}>  opcional</Text>}
-      </Text>
-      {children}
-      {error ? (
-        <View style={s.errorRow} accessibilityLiveRegion="polite">
-          <IconAlertCircle size={14} color={colors.dangerAction} />
-          <Text style={s.errorText}>{error}</Text>
-        </View>
-      ) : ayuda ? (
-        <Text style={s.ayuda}>{ayuda}</Text>
-      ) : null}
-    </View>
-  );
-}
-
-type EntradaProps = TextInputProps & { error?: boolean; inputRef?: React.RefObject<TextInput | null> };
-
-function Entrada({ error, inputRef, style, onFocus, onBlur, ...rest }: EntradaProps) {
-  const [foco, setFoco] = useState(false);
-  return (
-    <TextInput
-      ref={inputRef}
-      style={[s.input, foco && s.inputFoco, error && s.inputError, style]}
-      placeholderTextColor={colors.textTertiary}
-      onFocus={(e) => { setFoco(true); onFocus?.(e); }}
-      onBlur={(e) => { setFoco(false); onBlur?.(e); }}
-      {...rest}
-    />
-  );
-}
-
 // ─── Pantalla ────────────────────────────────────────────────────────────────
 
 export default function AgregarVehiculoScreen({ navigation }: any) {
@@ -115,7 +79,7 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
   const [km, setKm] = useState('');
   const [loading, setLoading] = useState(false);
   const [intento, setIntento] = useState(false);
-  const [tocados, setTocados] = useState<Partial<Record<Campo, boolean>>>({});
+  const [tocados, setTocados] = useState<Partial<Record<NombreCampo, boolean>>>({});
 
   const marcaRef = useRef<TextInput>(null);
   const modeloRef = useRef<TextInput>(null);
@@ -124,13 +88,13 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
   const placaRef = useRef<TextInput>(null);
   const colorRef = useRef<TextInput>(null);
   const kmRef = useRef<TextInput>(null);
-  const refs: Record<Campo, React.RefObject<TextInput | null>> = {
+  const refs: Record<NombreCampo, React.RefObject<TextInput | null>> = {
     marca: marcaRef, modelo: modeloRef, anio: anioRef, placa: placaRef, km: kmRef,
   };
 
   const errores = validar({ marca, modelo, anio, placa, km });
-  const verError = (c: Campo) => (intento || tocados[c] ? errores[c] : undefined);
-  const tocar = (c: Campo) => setTocados(t => ({ ...t, [c]: true }));
+  const verError = (c: NombreCampo) => (intento || tocados[c] ? errores[c] : undefined);
+  const tocar = (c: NombreCampo) => setTocados(t => ({ ...t, [c]: true }));
 
   const TipoIcon = TIPOS.find(t => t.key === tipo)!.Icon;
   const titulo = `${marca.trim()} ${modelo.trim()}`.trim() || 'Tu vehículo';
@@ -161,7 +125,7 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
     if (error) {
       Alert.alert(
         'No se pudo guardar',
-        error.code === '23505' ? 'Ya existe un vehículo con esa placa.' : 'Revisa tu conexión e intenta de nuevo.',
+        error.code === '23505' ? 'Ya existe un vehículo con esa placa.' : mensajeError(error),
       );
       return;
     }
@@ -459,22 +423,7 @@ const s = StyleSheet.create({
   /* Secciones y campos */
   seccion: { gap: spacing.md },
   seccionTitulo: { fontFamily: fonts.heading, fontSize: 16, color: colors.textPrimary },
-  campo: { gap: 6 },
-  label: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
-  requerido: { color: colors.accent },
-  opcional: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
-  ayuda: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, lineHeight: 17 },
-  errorRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  errorText: { fontFamily: fonts.body, fontSize: 12, color: colors.dangerAction },
 
-  input: {
-    backgroundColor: colors.bgCard, borderRadius: radius.md,
-    borderWidth: 1, borderColor: colors.bgSurface,
-    paddingHorizontal: spacing.lg, minHeight: 52,
-    fontFamily: fonts.body, fontSize: 16, color: colors.textPrimary,
-  },
-  inputFoco: { borderColor: colors.accent },
-  inputError: { borderColor: colors.dangerAction },
   inputPlaca: { fontFamily: fonts.bold, letterSpacing: 2 },
 
   fila: { flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start' },

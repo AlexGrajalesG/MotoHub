@@ -16,6 +16,7 @@ import { getDocStatus } from '../lib/documentos';
 
 import LoginScreen            from '../screens/auth/LoginScreen';
 import RegisterScreen         from '../screens/auth/RegisterScreen';
+import LegalScreen from '../screens/legal/LegalScreen';
 import CheckEmailScreen       from '../screens/auth/CheckEmailScreen';
 
 import GarageScreen           from '../screens/garage/GarageScreen';
@@ -416,6 +417,7 @@ function AuthStack() {
       <AuthNav.Screen name="Login"      component={LoginScreen} />
       <AuthNav.Screen name="Register"   component={RegisterScreen} />
       <AuthNav.Screen name="CheckEmail" component={CheckEmailScreen} />
+      <AuthNav.Screen name="Legal"      component={LegalScreen} />
     </AuthNav.Navigator>
   );
 }
