@@ -28,9 +28,9 @@ export async function uploadFotoProducto(uri: string, negocioId: string): Promis
   const path = `productos/${negocioId}/${Date.now()}.${safeExt}`;
   try {
     const response = await fetch(uri);
-    const blob = await response.blob();
-    if (blob.size > MAX_FOTO_BYTES) { console.warn('uploadFotoProducto: imagen muy grande'); return null; }
-    const ab = await blob.arrayBuffer();
+    const ab = await response.arrayBuffer();
+    if (ab.byteLength === 0) { console.warn('uploadFotoProducto: imagen vacia'); return null; }
+    if (ab.byteLength > MAX_FOTO_BYTES) { console.warn('uploadFotoProducto: imagen muy grande'); return null; }
     const { error } = await supabase.storage.from('fotos').upload(path, ab, { contentType: `image/${safeExt}` });
     if (error) { console.error(error.message); return null; }
     const { data } = supabase.storage.from('fotos').getPublicUrl(path);

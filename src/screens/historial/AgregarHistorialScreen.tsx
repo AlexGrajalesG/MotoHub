@@ -120,8 +120,8 @@ export default function AgregarHistorialScreen({ route, navigation }: any) {
       const path = `${session.user.id}/historial/${vehiculo.id}/${Date.now()}.${safeExt}`;
       try {
         const response = await fetch(uri);
-        const blob = await response.blob();
-        const ab = await blob.arrayBuffer();
+        const ab = await response.arrayBuffer();
+        if (ab.byteLength === 0) continue;
         const { error } = await supabase.storage
           .from('fotos')
           .upload(path, ab, { contentType: `image/${safeExt}` });

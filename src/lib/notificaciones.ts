@@ -22,7 +22,6 @@ export async function solicitarPermisos(): Promise<boolean> {
 export function configurarHandler() {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
-      shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: false,
       shouldShowBanner: true,
