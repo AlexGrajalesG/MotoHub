@@ -73,9 +73,9 @@ export async function uploadAdjuntoCita(uri: string, citaId: string, mimeExt: st
   const path = `chats/${citaId}/${Date.now()}.${safeExt}`;
   try {
     const response = await fetch(uri);
-    const blob = await response.blob();
-    if (blob.size > MAX_UPLOAD_BYTES) { console.warn('uploadAdjuntoCita: archivo muy grande'); return null; }
-    const ab = await blob.arrayBuffer();
+    const ab = await response.arrayBuffer();
+    if (ab.byteLength === 0) { console.warn('uploadAdjuntoCita: archivo vacio'); return null; }
+    if (ab.byteLength > MAX_UPLOAD_BYTES) { console.warn('uploadAdjuntoCita: archivo muy grande'); return null; }
     const contentType = safeExt === 'pdf' ? 'application/pdf' : `image/${safeExt}`;
     const { error } = await supabase.storage.from('fotos').upload(path, ab, { contentType });
     if (error) { console.error(error.message); return null; }

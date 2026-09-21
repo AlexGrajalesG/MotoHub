@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { fetchMiMecanico } from '../lib/mecanicos';
+import { useRealtimeRefresh } from '../lib/useRealtimeRefresh';
 
 const STORAGE_KEY = 'modo_taller';
 const STORAGE_KEY_MECANICO = 'modo_mecanico';
@@ -72,6 +73,7 @@ export function ModoProvider({ children }: { children: React.ReactNode }) {
   }, [negocioId]);
 
   useEffect(() => { refreshCitasPendientes(); }, [refreshCitasPendientes]);
+  useRealtimeRefresh('citas', negocioId ? `negocio_id=eq.${negocioId}` : null, refreshCitasPendientes);
 
   const refreshEsMecanico = useCallback(async () => {
     if (!session?.user.id) { setMiMecanico(null); return; }

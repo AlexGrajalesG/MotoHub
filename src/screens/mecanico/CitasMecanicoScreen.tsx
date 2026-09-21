@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert,
@@ -12,6 +12,7 @@ import { useModo } from '../../context/ModoContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
 import { fetchCitasNoLeidas } from '../../lib/lecturas';
 import { tokens } from '../../lib/tokens';
+import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -54,11 +55,15 @@ export default function CitasMecanicoScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy]       = useState<string | null>(null);
 
+  const cargadoKey = useRef<string | null>(null);
   useFocusEffect(useCallback(() => { cargar(); }, [filtro, miMecanico?.negocio_id]));
+  useRealtimeRefresh('citas', miMecanico?.negocio_id ? `negocio_id=eq.${miMecanico.negocio_id}` : null, () => cargar());
 
   async function cargar() {
     if (!miMecanico) return;
-    setLoading(true);
+    // spinner solo en la primera carga o al cambiar de filtro; las recargas son silenciosas
+    const clave = `${filtro}|${miMecanico.negocio_id}`;
+    if (cargadoKey.current !== clave) { cargadoKey.current = clave; setLoading(true); }
     let query = supabase
       .from('citas')
       .select(`

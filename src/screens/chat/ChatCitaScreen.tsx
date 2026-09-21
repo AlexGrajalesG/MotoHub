@@ -135,8 +135,9 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     setMensajes(await fetchMensajes(citaId));
   }
 
+  const primeraCarga = useRef(true);
   useFocusEffect(useCallback(() => {
-    setLoading(true);
+    if (primeraCarga.current) { primeraCarga.current = false; setLoading(true); }
     Promise.all([cargarCita(), cargarMensajes()]).finally(() => setLoading(false));
     if (session?.user.id) marcarCitaLeida(citaId, session.user.id);
   }, [citaId]));
@@ -228,8 +229,11 @@ export default function ChatCitaScreen({ route, navigation }: any) {
   }
 
   async function handleResolver(historialId: string, aceptar: boolean) {
+    if (resolviendo) return;
     setResolviendo(historialId);
     const { error } = await resolverRegistroServicio(historialId, aceptar);
+    // se recarga aqui mismo: no depender del tiempo real para ver el resultado
+    if (!error) await cargarMensajes();
     setResolviendo(null);
     if (error) Alert.alert('Error', error.message);
   }

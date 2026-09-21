@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, FlatList, Pressable, TextInput,
@@ -13,6 +13,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useModo } from '../../context/ModoContext';
 import { tokens } from '../../lib/tokens';
+import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
 import { type TipoPrecio } from '../../lib/precio';
 import { fetchCitasNoLeidas } from '../../lib/lecturas';
 
@@ -110,8 +111,15 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
     setRevisarCount(count ?? 0);
   }
 
+  const cargadoKey = useRef<string | null>(null);
+  useRealtimeRefresh('citas', negocioId ? `negocio_id=eq.${negocioId}` : null, () => {
+    fetchCitas(); refreshCitasPendientes(); fetchRevisarCount();
+  });
+
   async function fetchCitas() {
-    setLoading(true);
+    // spinner solo en la primera carga o al cambiar de pestana; las recargas son silenciosas
+    const clave = `${tab}|${negocioId}`;
+    if (cargadoKey.current !== clave) { cargadoKey.current = clave; setLoading(true); }
     const hoy = hoyISO();
     let query = supabase
       .from('citas')

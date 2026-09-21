@@ -11,6 +11,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
+import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
 import { formatPrecioServicio, formatCOP, type TipoPrecio } from '../../lib/precio';
 import { fetchCitasNoLeidas } from '../../lib/lecturas';
 
@@ -180,10 +181,13 @@ export default function MisCitasScreen({ navigation }: any) {
     AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
   }, []);
 
+  const cargadoKey = useRef<string | null>(null);
   useFocusEffect(useCallback(() => { fetchCitas(); }, [filtro]));
+  useRealtimeRefresh('citas', session?.user.id ? `usuario_id=eq.${session.user.id}` : null, () => fetchCitas());
 
   async function fetchCitas() {
-    setLoading(true);
+    // spinner solo en la primera carga o al cambiar de filtro; las recargas son silenciosas
+    if (cargadoKey.current !== filtro) { cargadoKey.current = filtro; setLoading(true); }
     let query = supabase
       .from('citas')
       .select(`
