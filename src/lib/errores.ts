@@ -27,6 +27,9 @@ export function mensajeErrorAuth(error: unknown): ErrorAuth {
   if (m.includes('password should be at least') || m.includes('weak password')) {
     return { mensaje: 'La contraseña es muy corta. Usa al menos 6 caracteres.' };
   }
+  if (m.includes('different from the old') || m.includes('same_password')) {
+    return { mensaje: 'La nueva contraseña debe ser distinta de la actual.' };
+  }
   if (m.includes('unable to validate email') || m.includes('invalid email')) {
     return { mensaje: 'Ese correo no parece válido. Revísalo.' };
   }

@@ -17,6 +17,11 @@ import { getDocStatus } from '../lib/documentos';
 import LoginScreen            from '../screens/auth/LoginScreen';
 import RegisterScreen         from '../screens/auth/RegisterScreen';
 import LegalScreen from '../screens/legal/LegalScreen';
+import SeguridadScreen from '../screens/cuenta/SeguridadScreen';
+import EliminarCuentaScreen from '../screens/cuenta/EliminarCuentaScreen';
+import PrivacidadScreen from '../screens/cuenta/PrivacidadScreen';
+import AyudaScreen from '../screens/cuenta/AyudaScreen';
+import CuentaGate from '../components/CuentaGate';
 import CheckEmailScreen       from '../screens/auth/CheckEmailScreen';
 
 import GarageScreen           from '../screens/garage/GarageScreen';
@@ -185,6 +190,11 @@ function PerfilStack() {
       <PerfilNav.Screen name="PerfilHome"       component={PerfilScreen} />
       <PerfilNav.Screen name="RegistrarNegocio" component={RegistrarNegocioScreen} />
       <PerfilNav.Screen name="InvitacionesEquipo" component={InvitacionesEquipoScreen} />
+      <PerfilNav.Screen name="Seguridad"       component={SeguridadScreen} />
+      <PerfilNav.Screen name="EliminarCuenta"  component={EliminarCuentaScreen} />
+      <PerfilNav.Screen name="Privacidad"      component={PrivacidadScreen} />
+      <PerfilNav.Screen name="Ayuda"           component={AyudaScreen} />
+      <PerfilNav.Screen name="Legal"           component={LegalScreen} />
     </PerfilNav.Navigator>
   );
 }
@@ -436,7 +446,7 @@ export default function AppNavigator() {
 
   return (
     <NavigationContainer>
-      {session ? <ModeAwareTabs /> : <AuthStack />}
+      {session ? <CuentaGate><ModeAwareTabs /></CuentaGate> : <AuthStack />}
     </NavigationContainer>
   );
 }

@@ -9,11 +9,13 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   IconPencil, IconCheck, IconLogout, IconPhone,
   IconMapPin, IconCamera, IconTools, IconBuildingStore, IconChevronRight, IconCar, IconTool, IconUserPlus,
+  IconShieldLock, IconShieldCheck, IconHelpCircle,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
 import { contarInvitacionesRecibidas } from '../lib/invitaciones';
 import { fetchPromedio, type Promedio } from '../lib/calificaciones';
 import { salirDelEquipo } from '../lib/mecanicos';
+import { FORMATO_USUARIO, usuarioDisponible } from '../lib/cuenta';
 import { useAuth } from '../context/AuthContext';
 import { useModo } from '../context/ModoContext';
 import { tokens } from '../lib/tokens';
@@ -34,6 +36,8 @@ export default function PerfilScreen({ navigation }: any) {
   const [perfil, setPerfil]             = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
   const [perfilOriginal, setPerfilOriginal] = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
   const [nombreUsuario, setNombreUsuario] = useState('');
+  const [usuarioEdit, setUsuarioEdit] = useState('');
+  const [errorUsuario, setErrorUsuario] = useState<string | null>(null);
   const [invitacionesPendientes, setInvitacionesPendientes] = useState(0);
   const [editando, setEditando]         = useState(false);
   const [loading, setLoading]           = useState(true);
@@ -66,6 +70,7 @@ export default function PerfilScreen({ navigation }: any) {
 
     if (data) {
       setNombreUsuario(data.nombre_usuario ?? '');
+      setUsuarioEdit(data.nombre_usuario ?? '');
       const cargado = {
         nombre:   data.nombre   ?? '',
         telefono: data.telefono ?? '',
@@ -86,7 +91,22 @@ export default function PerfilScreen({ navigation }: any) {
   }
 
   async function handleGuardar() {
+    const usuarioNuevo = usuarioEdit.trim();
+    const cambioUsuario = usuarioNuevo !== nombreUsuario;
+    setErrorUsuario(null);
     setGuardando(true);
+
+    if (cambioUsuario) {
+      if (!FORMATO_USUARIO.test(usuarioNuevo)) {
+        setGuardando(false);
+        setErrorUsuario('Usa de 3 a 20 letras minúsculas, números o guion bajo');
+        return;
+      }
+      const libre = await usuarioDisponible(usuarioNuevo);
+      if (libre === false) { setGuardando(false); setErrorUsuario('Ese usuario ya está en uso'); return; }
+      if (libre === null) { setGuardando(false); setErrorUsuario('No se pudo verificar el usuario. Intenta de nuevo'); return; }
+    }
+
     const actualizado = {
       ...perfil,
       nombre:   perfil.nombre.trim(),
@@ -97,22 +117,29 @@ export default function PerfilScreen({ navigation }: any) {
       nombre:   actualizado.nombre,
       telefono: actualizado.telefono,
       ciudad:   actualizado.ciudad,
+      ...(cambioUsuario ? { nombre_usuario: usuarioNuevo } : {}),
     }).eq('id', session!.user.id);
     setGuardando(false);
-    if (error) { Alert.alert('Error', error.message); return; }
+    if (error) {
+      if (error.code === '23505') { setErrorUsuario('Ese usuario ya está en uso'); return; }
+      Alert.alert('No se pudo guardar', 'Revisa tu conexión e intenta de nuevo.');
+      return;
+    }
     setPerfil(actualizado);
     setPerfilOriginal(actualizado);
+    if (cambioUsuario) setNombreUsuario(usuarioNuevo);
     setEditando(false);
   }
 
   function handleCancelar() {
-    if (JSON.stringify(perfil) !== JSON.stringify(perfilOriginal)) {
+    if (JSON.stringify(perfil) !== JSON.stringify(perfilOriginal) || usuarioEdit !== nombreUsuario) {
       Alert.alert('¿Descartar cambios?', 'Perderás la información que editaste.', [
         { text: 'Seguir editando', style: 'cancel' },
-        { text: 'Descartar', style: 'destructive', onPress: () => { setPerfil(perfilOriginal); setEditando(false); } },
+        { text: 'Descartar', style: 'destructive', onPress: () => { setPerfil(perfilOriginal); setUsuarioEdit(nombreUsuario); setErrorUsuario(null); setEditando(false); } },
       ]);
       return;
     }
+    setErrorUsuario(null);
     setEditando(false);
   }
 
@@ -229,6 +256,13 @@ export default function PerfilScreen({ navigation }: any) {
       {/* ── Campos ── */}
       <Animated.View style={[s.card, { opacity: contentOp }]}>
         <CampoFila
+          label="Usuario"
+          valor={editando ? usuarioEdit : (nombreUsuario ? `@${nombreUsuario}` : '')}
+          editando={editando}
+          placeholder="tu_usuario"
+          onChange={v => { setUsuarioEdit(v.toLowerCase().replace(/[^a-z0-9_]/g, '')); setErrorUsuario(null); }}
+        />
+        <CampoFila
           label="Nombre"
           valor={perfil.nombre}
           editando={editando}
@@ -254,6 +288,9 @@ export default function PerfilScreen({ navigation }: any) {
           onChange={v => setPerfil(p => ({ ...p, ciudad: v }))}
         />
       </Animated.View>
+      {editando && !!errorUsuario && (
+        <Text style={s.errorUsuario} accessibilityLiveRegion="polite">{errorUsuario}</Text>
+      )}
 
       {/* ── Invitaciones de talleres (solo si hay pendientes) ── */}
       {invitacionesPendientes > 0 && (
@@ -370,6 +407,21 @@ export default function PerfilScreen({ navigation }: any) {
           <Text style={s.menuLabel}>Mis Vehículos</Text>
           <IconChevronRight size={17} color={colors.textTertiary} />
         </Pressable>
+        <Pressable style={({ pressed }) => [s.menuItem, pressed && { opacity: 0.85 }]} onPress={() => navigation.navigate('Seguridad')}>
+          <View style={s.menuIconWrap}><IconShieldLock size={20} color={colors.accent} /></View>
+          <Text style={s.menuLabel}>Seguridad</Text>
+          <IconChevronRight size={17} color={colors.textTertiary} />
+        </Pressable>
+        <Pressable style={({ pressed }) => [s.menuItem, pressed && { opacity: 0.85 }]} onPress={() => navigation.navigate('Privacidad')}>
+          <View style={s.menuIconWrap}><IconShieldCheck size={20} color={colors.accent} /></View>
+          <Text style={s.menuLabel}>Privacidad y datos</Text>
+          <IconChevronRight size={17} color={colors.textTertiary} />
+        </Pressable>
+        <Pressable style={({ pressed }) => [s.menuItem, pressed && { opacity: 0.85 }]} onPress={() => navigation.navigate('Ayuda')}>
+          <View style={s.menuIconWrap}><IconHelpCircle size={20} color={colors.accent} /></View>
+          <Text style={s.menuLabel}>Ayuda</Text>
+          <IconChevronRight size={17} color={colors.textTertiary} />
+        </Pressable>
       </Animated.View>
 
       {/* ── Cancelar edición ── */}
@@ -471,6 +523,7 @@ const s = StyleSheet.create({
     borderWidth: 2.5, borderColor: colors.bgPrimary,
   },
   nombreText: { fontFamily: fonts.bold,  fontSize: 20, color: colors.textPrimary, letterSpacing: -0.3 },
+  errorUsuario: { fontFamily: fonts.body, fontSize: 13, color: colors.dangerAction, marginHorizontal: spacing.xl, marginTop: -spacing.sm, marginBottom: spacing.md },
   usuarioText: { fontFamily: fonts.heading, fontSize: 14, color: colors.accent },
   emailText:  { fontFamily: fonts.body,  fontSize: 13, color: colors.textSecondary },
 
