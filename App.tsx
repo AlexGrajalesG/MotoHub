@@ -28,7 +28,7 @@ export default function App() {
   }, []);
 
   if (!fontsLoaded) {
-    return <View style={{ flex: 1, backgroundColor: '#111318' }} />;
+    return <View style={{ flex: 1, backgroundColor: '#020202' }} />;
   }
 
   return (
