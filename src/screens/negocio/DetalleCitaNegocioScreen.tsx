@@ -216,7 +216,7 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
         style={({ pressed }) => [s.chatBtn, pressed && { opacity: 0.85 }]}
         onPress={() => navigation.navigate('ChatCita', { citaId: cita.id })}
       >
-        <IconMessageCircle size={18} color="#fff" />
+        <IconMessageCircle size={18} color={colors.onAccent} />
         <Text style={s.chatBtnText}>ESCRIBIR AL DUEÑO</Text>
       </Pressable>
 
@@ -291,8 +291,8 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
               {precio !== (cita.precio_acordado != null ? String(cita.precio_acordado) : '') && (
                 <Pressable style={({ pressed }) => [s.precioSaveBtn, pressed && { opacity: 0.8 }]} onPress={guardarPrecio} disabled={busy}>
                   {busy
-                    ? <ActivityIndicator size="small" color="#fff" />
-                    : <IconDeviceFloppy size={16} color="#fff" />
+                    ? <ActivityIndicator size="small" color={colors.onAccent} />
+                    : <IconDeviceFloppy size={16} color={colors.onAccent} />
                   }
                 </Pressable>
               )}
@@ -315,8 +315,8 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
             {notas !== (cita.notas_negocio ?? '') && (
               <Pressable style={({ pressed }) => [s.notasSaveBtn, pressed && { opacity: 0.8 }]} onPress={guardarNotas} disabled={busy}>
                 {busy
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <><IconDeviceFloppy size={14} color="#fff" /><Text style={s.notasSaveText}>Guardar</Text></>
+                  ? <ActivityIndicator size="small" color={colors.onAccent} />
+                  : <><IconDeviceFloppy size={14} color={colors.onAccent} /><Text style={s.notasSaveText}>Guardar</Text></>
                 }
               </Pressable>
             )}
@@ -394,7 +394,7 @@ const s = StyleSheet.create({
   heroTitle: { fontFamily: fonts.heading, fontSize: 20, color: '#fff', marginBottom: 4 },
   placaChip: {
     backgroundColor: colors.bgSurface, borderRadius: radius.sm,
-    borderWidth: 1, borderColor: 'rgba(232,82,42,0.3)',
+    borderWidth: 1, borderColor: 'rgba(72,151,90,0.3)',
     paddingHorizontal: 8, paddingVertical: 2,
   },
   placaText: { fontFamily: fonts.bold, fontSize: 10, color: colors.accent, letterSpacing: 1.5 },
@@ -406,7 +406,7 @@ const s = StyleSheet.create({
     minHeight: 52, marginBottom: spacing.xl,
     shadowColor: colors.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 10, elevation: 4,
   },
-  chatBtnText: { fontFamily: fonts.bold, fontSize: 14, color: '#fff', letterSpacing: 0.8 },
+  chatBtnText: { fontFamily: fonts.bold, fontSize: 14, color: colors.onAccent, letterSpacing: 0.8 },
 
   section: { marginBottom: spacing.xl },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: spacing.md },
@@ -432,7 +432,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgSurface, borderRadius: radius.pill,
     paddingHorizontal: spacing.sm, paddingVertical: 6, borderWidth: 1, borderColor: 'transparent',
   },
-  mecChipOn: { backgroundColor: 'rgba(232,82,42,0.15)', borderColor: colors.accent },
+  mecChipOn: { backgroundColor: 'rgba(72,151,90,0.15)', borderColor: colors.accent },
   mecChipText: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary },
   mecChipTextOn: { color: colors.accent, fontFamily: fonts.heading },
   precioRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -457,14 +457,14 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, borderRadius: radius.md,
     minHeight: 40, alignSelf: 'flex-start', paddingHorizontal: spacing.md,
   },
-  notasSaveText: { fontFamily: fonts.bold, fontSize: 12, color: '#fff' },
+  notasSaveText: { fontFamily: fonts.bold, fontSize: 12, color: colors.onAccent },
 
   bottomActions: { gap: spacing.sm, marginTop: spacing.md, alignItems: 'center' },
   finalizarBtn: {
     width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: '#fff', borderRadius: radius.xl, minHeight: 54,
   },
-  finalizarBtnSecundario: { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(232,82,42,0.35)' },
+  finalizarBtnSecundario: { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)' },
   finalizarText: { fontFamily: fonts.bold, fontSize: 14, color: colors.bgPrimary, letterSpacing: 0.8 },
   pausarText: { fontFamily: fonts.bold, fontSize: 13, color: colors.textTertiary, letterSpacing: 0.8, paddingVertical: spacing.sm },
 });

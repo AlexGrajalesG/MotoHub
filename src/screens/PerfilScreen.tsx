@@ -195,9 +195,9 @@ export default function PerfilScreen({ navigation }: any) {
           disabled={guardando}
         >
           {guardando
-            ? <ActivityIndicator size="small" color="#fff" />
+            ? <ActivityIndicator size="small" color={colors.onAccent} />
             : editando
-              ? <><IconCheck size={15} color="#fff" /><Text style={[s.editBtnText, { color: '#fff' }]}>Guardar</Text></>
+              ? <><IconCheck size={15} color={colors.onAccent} /><Text style={[s.editBtnText, { color: colors.onAccent }]}>Guardar</Text></>
               : <><IconPencil size={15} color={colors.accent} /><Text style={s.editBtnText}>Editar</Text></>
           }
         </TouchableOpacity>
@@ -216,8 +216,8 @@ export default function PerfilScreen({ navigation }: any) {
           }
           <View style={s.cameraBadge}>
             {subiendoFoto
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <IconCamera size={15} color="#fff" />
+              ? <ActivityIndicator size="small" color={colors.onAccent} />
+              : <IconCamera size={15} color={colors.onAccent} />
             }
           </View>
         </TouchableOpacity>
@@ -453,7 +453,7 @@ const s = StyleSheet.create({
   avatarWrap:    {
     position: 'relative', marginBottom: spacing.sm,
     width: 120, height: 120, borderRadius: 60,
-    borderWidth: 3, borderColor: 'rgba(232,82,42,0.2)',
+    borderWidth: 3, borderColor: 'rgba(72,151,90,0.2)',
     justifyContent: 'center', alignItems: 'center',
   },
   avatar:        { width: 108, height: 108, borderRadius: 54 },
@@ -487,12 +487,12 @@ const s = StyleSheet.create({
     padding: spacing.md, minHeight: 64,
     marginHorizontal: spacing.xl, marginBottom: spacing.md,
   },
-  invitacionCard: { borderColor: colors.accent },
+  invitacionCard: { borderColor: colors.accent, backgroundColor: colors.accentDark },
   salirBtn: { alignSelf: 'flex-start', marginHorizontal: spacing.xl, marginTop: -spacing.sm, marginBottom: spacing.md, paddingVertical: spacing.xs },
   salirText: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, textDecorationLine: 'underline' },
   modoIconWrap: {
     width: 44, height: 44, borderRadius: radius.md,
-    backgroundColor: 'rgba(232,82,42,0.12)',
+    backgroundColor: 'rgba(72,151,90,0.12)',
     justifyContent: 'center', alignItems: 'center',
   },
   modoTitle: { fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
@@ -506,7 +506,7 @@ const s = StyleSheet.create({
     width: 56, height: 28, borderRadius: 14,
     backgroundColor: colors.bgSurface, padding: 3, justifyContent: 'center',
   },
-  toggleOn: { backgroundColor: 'rgba(232,82,42,0.35)' },
+  toggleOn: { backgroundColor: 'rgba(72,151,90,0.35)' },
   toggleDot: {
     width: 22, height: 22, borderRadius: 11, backgroundColor: colors.textTertiary,
   },

@@ -13,7 +13,8 @@
       "package": "com.rodix.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#133210",
+        "backgroundImage": "./assets/adaptive-bg.png"
       },
       "predictiveBackGestureEnabled": false
     },
@@ -29,7 +30,8 @@
         {
           "image": "./assets/splash-icon.png",
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#020202",
+          "imageWidth": 240
         }
       ]
     ],

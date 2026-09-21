@@ -92,7 +92,7 @@ export default function InvitacionesEquipoScreen({ navigation }: any) {
                   disabled={busy === item.id}
                 >
                   {busy === item.id
-                    ? <ActivityIndicator size="small" color="#fff" />
+                    ? <ActivityIndicator size="small" color={colors.onAccent} />
                     : <Text style={s.btnAceptarText}>Aceptar</Text>
                   }
                 </Pressable>
@@ -144,7 +144,7 @@ const s = StyleSheet.create({
     flex: 1, minHeight: 48, borderRadius: radius.md, backgroundColor: colors.accent,
     justifyContent: 'center', alignItems: 'center',
   },
-  btnAceptarText: { fontFamily: fonts.heading, fontSize: 14, color: '#fff' },
+  btnAceptarText: { fontFamily: fonts.heading, fontSize: 14, color: colors.onAccent },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl, gap: spacing.sm },
   emptyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, letterSpacing: -0.3, textAlign: 'center', marginTop: spacing.sm },

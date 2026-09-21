@@ -84,7 +84,7 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
               onPress={handleBuscar}
               disabled={!usuario.trim() || buscando}
             >
-              {buscando ? <ActivityIndicator size="small" color="#fff" /> : <IconSearch size={18} color="#fff" />}
+              {buscando ? <ActivityIndicator size="small" color={colors.onAccent} /> : <IconSearch size={18} color={colors.onAccent} />}
             </Pressable>
           </View>
         </View>
@@ -163,8 +163,8 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
             disabled={creando}
           >
             {creando
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <><IconUserPlus size={18} color="#fff" /><Text style={s.crearBtnText}>Crear orden</Text></>
+              ? <ActivityIndicator size="small" color={colors.onAccent} />
+              : <><IconUserPlus size={18} color={colors.onAccent} /><Text style={s.crearBtnText}>Crear orden</Text></>
             }
           </Pressable>
         </View>
@@ -242,7 +242,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: colors.bgSurface,
     paddingHorizontal: spacing.md, minHeight: 44,
   },
-  vehiculoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(232,82,42,0.1)' },
+  vehiculoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.1)' },
   vehiculoChipText: { fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary },
   vehiculoChipTextActive: { color: colors.accent },
 
@@ -252,7 +252,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: colors.bgSurface,
     paddingHorizontal: spacing.md, minHeight: 44,
   },
-  estadoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(232,82,42,0.1)' },
+  estadoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.1)' },
   estadoChipText: { fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary },
   estadoChipTextActive: { color: colors.accent },
 
@@ -261,5 +261,5 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, borderRadius: radius.md,
     minHeight: 52, marginTop: spacing.md,
   },
-  crearBtnText: { fontFamily: fonts.bold, fontSize: 15, color: '#fff' },
+  crearBtnText: { fontFamily: fonts.bold, fontSize: 15, color: colors.onAccent },
 });

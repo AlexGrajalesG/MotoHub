@@ -157,7 +157,7 @@ export default function EditarProductoScreen({ route, navigation }: any) {
         </View>
 
         <Pressable style={[s.guardarBtn, guardando && s.guardarBtnDisabled]} onPress={handleGuardar} disabled={guardando}>
-          {guardando ? <ActivityIndicator color="#fff" /> : <Text style={s.guardarBtnText}>Guardar producto</Text>}
+          {guardando ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.guardarBtnText}>Guardar producto</Text>}
         </Pressable>
       </ScrollView>
     </View>
@@ -207,7 +207,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
     paddingVertical: 10, paddingHorizontal: spacing.md,
   },
-  chipActive: { borderColor: colors.accent, backgroundColor: 'rgba(232,82,42,0.12)' },
+  chipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.12)' },
   chipLabel: { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
   chipLabelActive: { color: colors.accent, fontFamily: fonts.heading },
 
@@ -228,5 +228,5 @@ const s = StyleSheet.create({
 
   guardarBtn: { backgroundColor: colors.accent, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: spacing.xl },
   guardarBtnDisabled: { opacity: 0.5 },
-  guardarBtnText: { color: '#fff', fontFamily: fonts.bold, fontSize: 16 },
+  guardarBtnText: { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 16 },
 });

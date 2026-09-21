@@ -268,8 +268,8 @@ export default function ChatCitaScreen({ route, navigation }: any) {
               ? <Image key={i} source={{ uri: a.url }} style={s.adjuntoFoto} resizeMode="cover" />
               : (
                 <Pressable key={i} style={s.adjuntoDoc} onPress={() => openUrl(a.url)}>
-                  <IconFileText size={16} color={isMine ? '#fff' : colors.accent} />
-                  <Text style={[s.adjuntoDocText, { color: isMine ? '#fff' : colors.textPrimary }]}>
+                  <IconFileText size={16} color={isMine ? colors.onAccent : colors.accent} />
+                  <Text style={[s.adjuntoDocText, { color: isMine ? colors.onAccent : colors.textPrimary }]}>
                     {a.tipo === 'factura' ? 'Factura' : 'Documento'}
                   </Text>
                 </Pressable>
@@ -369,7 +369,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
           hitSlop={8}
           accessibilityLabel="Enviar mensaje"
         >
-          {enviando ? <ActivityIndicator size="small" color="#fff" /> : <IconSend size={18} color="#fff" />}
+          {enviando ? <ActivityIndicator size="small" color={colors.onAccent} /> : <IconSend size={18} color={colors.onAccent} />}
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -445,8 +445,8 @@ function RegistroCard({
             disabled={busy === h.id}
           >
             {busy === h.id
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <><IconCheck size={16} color="#fff" /><Text style={s.registroBtnPrimarioText}>Aceptar y agregar a mi historial</Text></>
+              ? <ActivityIndicator size="small" color={colors.onAccent} />
+              : <><IconCheck size={16} color={colors.onAccent} /><Text style={s.registroBtnPrimarioText}>Aceptar y agregar a mi historial</Text></>
             }
           </Pressable>
           <Pressable
@@ -510,7 +510,7 @@ const s = StyleSheet.create({
   bubbleMine:  { backgroundColor: colors.accent, borderBottomRightRadius: 4 },
   bubbleOther: { backgroundColor: colors.bgCard, borderBottomLeftRadius: 4 },
   bubbleText:     { fontFamily: fonts.body, fontSize: 14, color: colors.textPrimary, lineHeight: 19 },
-  bubbleTextMine: { color: '#fff' },
+  bubbleTextMine: { color: colors.onAccent },
   bubbleHora:     { fontFamily: fonts.body, fontSize: 10, color: colors.textTertiary, alignSelf: 'flex-end' },
   bubbleHoraMine: { color: 'rgba(255,255,255,0.7)' },
 
@@ -535,7 +535,7 @@ const s = StyleSheet.create({
   },
   registroBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
-    backgroundColor: 'rgba(232,82,42,0.12)', borderRadius: radius.pill,
+    backgroundColor: 'rgba(72,151,90,0.12)', borderRadius: radius.pill,
     paddingHorizontal: spacing.sm, paddingVertical: 3,
   },
   registroBadgeText: { fontFamily: fonts.heading, fontSize: 11, color: colors.accent },
@@ -560,7 +560,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 46,
   },
-  registroBtnPrimarioText: { fontFamily: fonts.bold, fontSize: 13, color: '#fff' },
+  registroBtnPrimarioText: { fontFamily: fonts.bold, fontSize: 13, color: colors.onAccent },
   registroBtnSecundario: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     backgroundColor: 'transparent', borderRadius: radius.md, minHeight: 46,

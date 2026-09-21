@@ -58,7 +58,7 @@ const TIPO_LABEL: Record<string, string> = {
 };
 
 const TIPO_COLOR: Record<string, string> = {
-  aceite:           '#e8522a',
+  aceite:           '#48975a',
   frenos:           '#e05555',
   cadena:           '#d48b24',
   llantas:          '#5b8dd9',
@@ -490,8 +490,8 @@ export default function DetalleHistorialScreen({ route, navigation }: any) {
                   accessibilityLabel="Guardar recomendación"
                 >
                   {guardandoReco
-                    ? <ActivityIndicator size="small" color="#fff" />
-                    : <IconCheck size={16} color="#fff" />
+                    ? <ActivityIndicator size="small" color={colors.onAccent} />
+                    : <IconCheck size={16} color={colors.onAccent} />
                   }
                 </Pressable>
               </View>
@@ -565,8 +565,8 @@ export default function DetalleHistorialScreen({ route, navigation }: any) {
             accessibilityLabel="Enviar mensaje"
           >
             {enviando
-              ? <ActivityIndicator size="small" color="#fff" />
-              : <IconSend size={18} color="#fff" />
+              ? <ActivityIndicator size="small" color={colors.onAccent} />
+              : <IconSend size={18} color={colors.onAccent} />
             }
           </Pressable>
         </View>
@@ -755,9 +755,9 @@ const s = StyleSheet.create({
   },
   bubbleMio:  {
     alignSelf:       'flex-end',
-    backgroundColor: 'rgba(232,82,42,0.15)',
+    backgroundColor: 'rgba(72,151,90,0.15)',
     borderWidth:     1,
-    borderColor:     'rgba(232,82,42,0.3)',
+    borderColor:     'rgba(72,151,90,0.3)',
   },
   bubbleOtro: {
     alignSelf:       'flex-start',
@@ -770,7 +770,7 @@ const s = StyleSheet.create({
   bubbleTextoMio:  { color: colors.textPrimary },
   bubbleTextoOtro: { color: colors.textPrimary },
   bubbleHora:      { fontSize: 10, fontFamily: fonts.body, marginTop: 4 },
-  bubbleHoraMia:   { color: 'rgba(232,82,42,0.6)', textAlign: 'right' },
+  bubbleHoraMia:   { color: 'rgba(72,151,90,0.6)', textAlign: 'right' },
   bubbleHoraOtra:  { color: colors.textTertiary },
 
   // input bar

@@ -75,7 +75,7 @@ const NegocioCard = memo(function NegocioCard({
             <Image source={{ uri: item.foto_url }} style={StyleSheet.absoluteFill} contentFit="cover" />
           ) : (
             <LinearGradient
-              colors={['rgba(232,82,42,0.18)', colors.bgSurface]}
+              colors={['rgba(72,151,90,0.18)', colors.bgSurface]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFill}
               pointerEvents="none"
@@ -100,7 +100,7 @@ const NegocioCard = memo(function NegocioCard({
           </View>
           {/* Icon placeholder cuando no hay foto */}
           {!item.foto_url && (
-            <IconBuildingStore size={48} color="rgba(232,82,42,0.2)" />
+            <IconBuildingStore size={48} color="rgba(72,151,90,0.2)" />
           )}
         </View>
 
@@ -379,7 +379,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   agendarText: {
-    fontFamily: fonts.bold, fontSize: 13, color: '#fff',
+    fontFamily: fonts.bold, fontSize: 13, color: colors.onAccent,
     textTransform: 'uppercase', letterSpacing: 1.5,
   },
 

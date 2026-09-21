@@ -164,7 +164,7 @@ export default function DocumentosScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#e8522a" size="large" />
+        <ActivityIndicator color="#48975a" size="large" />
       </View>
     );
   }
@@ -194,7 +194,7 @@ export default function DocumentosScreen({ route, navigation }: any) {
                 disabled={subiendo}
               >
                 {subiendo
-                  ? <ActivityIndicator color="#fff" size="small" />
+                  ? <ActivityIndicator color="#020202" size="small" />
                   : <Text style={styles.subirBtnText}>+ Subir</Text>
                 }
               </TouchableOpacity>
@@ -255,20 +255,20 @@ export default function DocumentosScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111318' },
+  container: { flex: 1, backgroundColor: '#020202' },
   content: { padding: 24, paddingTop: 56 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111318' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#020202' },
   header: { marginBottom: 32 },
-  back: { color: '#e8522a', fontSize: 16, marginBottom: 8 },
+  back: { color: '#48975a', fontSize: 16, marginBottom: 8 },
   title: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
   subtitle: { fontSize: 14, color: '#666', marginTop: 4 },
   seccion: {
-    backgroundColor: '#1c1f27',
+    backgroundColor: '#0f1110',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: '#3e4140',
   },
   seccionHeader: {
     flexDirection: 'row',
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   seccionEmoji: { fontSize: 20, marginRight: 8 },
   seccionLabel: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#fff' },
   subirBtn: {
-    backgroundColor: '#e8522a',
+    backgroundColor: '#48975a',
     borderRadius: 8,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   subirBtnDisabled: { opacity: 0.6 },
-  subirBtnText: { color: '#fff', fontSize: 13, fontWeight: 'bold' },
+  subirBtnText: { color: '#020202', fontSize: 13, fontWeight: 'bold' },
   vacio: { color: '#444', fontSize: 13, paddingLeft: 4 },
   docCard: {
     flexDirection: 'row',
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  pdfIcon: { color: '#e8522a', fontWeight: 'bold', fontSize: 12 },
+  pdfIcon: { color: '#48975a', fontWeight: 'bold', fontSize: 12 },
   docMeta: { flex: 1 },
   docNombre: { color: '#fff', fontSize: 14 },
   docFecha: { color: '#666', fontSize: 12, marginTop: 2 },

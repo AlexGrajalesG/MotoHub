@@ -70,7 +70,7 @@ export default function MisProductosScreen({ route, navigation }: any) {
           hitSlop={8}
           accessibilityLabel="Agregar producto"
         >
-          <IconPlus size={18} color="#fff" />
+          <IconPlus size={18} color={colors.onAccent} />
         </Pressable>
       </View>
 

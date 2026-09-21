@@ -143,14 +143,14 @@ export default function RegistrarNegocioScreen({ navigation }: any) {
               style={[s.chip, atiende.includes('motos') && s.chipOn]}
               onPress={() => toggleAtiende('motos')}
             >
-              <IconBike size={13} color={atiende.includes('motos') ? '#fff' : colors.textSecondary} />
+              <IconBike size={13} color={atiende.includes('motos') ? colors.onAccent : colors.textSecondary} />
               <Text style={[s.chipText, atiende.includes('motos') && s.chipTextOn]}>Motos</Text>
             </Pressable>
             <Pressable
               style={[s.chip, atiende.includes('carros') && s.chipOn]}
               onPress={() => toggleAtiende('carros')}
             >
-              <IconCar size={13} color={atiende.includes('carros') ? '#fff' : colors.textSecondary} />
+              <IconCar size={13} color={atiende.includes('carros') ? colors.onAccent : colors.textSecondary} />
               <Text style={[s.chipText, atiende.includes('carros') && s.chipTextOn]}>Carros</Text>
             </Pressable>
           </View>
@@ -236,7 +236,7 @@ export default function RegistrarNegocioScreen({ navigation }: any) {
           disabled={!nombre.trim() || guardando}
         >
           {guardando
-            ? <ActivityIndicator color="#fff" size="small" />
+            ? <ActivityIndicator color={colors.onAccent} size="small" />
             : <Text style={s.sendBtnText}>Registrar taller</Text>
           }
         </Pressable>
@@ -276,7 +276,7 @@ const s = StyleSheet.create({
   },
   chipOn:     { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText:   { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
-  chipTextOn: { color: '#fff' },
+  chipTextOn: { color: colors.onAccent },
 
   inputRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
@@ -297,5 +297,5 @@ const s = StyleSheet.create({
     marginTop: spacing.sm, minHeight: 54,
   },
   sendBtnOff:  { opacity: 0.45 },
-  sendBtnText: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
+  sendBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 });

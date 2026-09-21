@@ -199,7 +199,7 @@ export default function CrearRecordatorioScreen({ route, navigation }: any) {
           disabled={loading}
         >
           {loading
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color="#020202" />
             : <Text style={styles.buttonText}>
                 {tipoSeleccionado?.emoji} Guardar recordatorio
               </Text>
@@ -212,21 +212,21 @@ export default function CrearRecordatorioScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111318' },
+  container: { flex: 1, backgroundColor: '#020202' },
   content: { padding: 24, paddingTop: 56 },
   header: { marginBottom: 28 },
-  back: { color: '#e8522a', fontSize: 16, marginBottom: 8 },
+  back: { color: '#48975a', fontSize: 16, marginBottom: 8 },
   title: { fontSize: 26, fontWeight: 'bold', color: '#fff' },
   subtitle: { fontSize: 13, color: '#666', marginTop: 2 },
   label: { color: '#888', fontSize: 13, marginBottom: 8, marginTop: 16 },
   input: {
-    backgroundColor: '#1c1f27',
+    backgroundColor: '#0f1110',
     borderRadius: 12,
     padding: 16,
     color: '#fff',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: '#3e4140',
   },
   tiposGrid: {
     flexDirection: 'row',
@@ -238,45 +238,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#1c1f27',
+    backgroundColor: '#0f1110',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: '#3e4140',
   },
-  tipoChipActive: { backgroundColor: '#e8522a', borderColor: '#e8522a' },
+  tipoChipActive: { backgroundColor: '#48975a', borderColor: '#48975a' },
   tipoEmoji: { fontSize: 16 },
   tipoLabel: { color: '#666', fontSize: 13 },
-  tipoLabelActive: { color: '#fff', fontWeight: 'bold' },
+  tipoLabelActive: { color: '#020202', fontWeight: 'bold' },
   sectionTitle: { color: '#fff', fontSize: 16, fontWeight: 'bold', marginTop: 28 },
   sectionHint: { color: '#555', fontSize: 12, marginTop: 4 },
   avisarRow: { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap' },
   avisarChip: {
-    backgroundColor: '#1c1f27',
+    backgroundColor: '#0f1110',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: '#3e4140',
   },
-  avisarChipActive: { backgroundColor: '#e8522a', borderColor: '#e8522a' },
+  avisarChipActive: { backgroundColor: '#48975a', borderColor: '#48975a' },
   avisarChipText: { color: '#666', fontSize: 13 },
-  avisarChipTextActive: { color: '#fff', fontWeight: 'bold' },
+  avisarChipTextActive: { color: '#020202', fontWeight: 'bold' },
   avisarInput: {
-    backgroundColor: '#1c1f27',
+    backgroundColor: '#0f1110',
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
     color: '#fff',
     fontSize: 13,
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: '#3e4140',
     width: 64,
   },
-  avisarInputActive: { borderColor: '#e8522a' },
+  avisarInputActive: { borderColor: '#48975a' },
   button: {
-    backgroundColor: '#e8522a',
+    backgroundColor: '#48975a',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -284,5 +284,5 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  buttonText: { color: '#020202', fontSize: 16, fontWeight: 'bold' },
 });

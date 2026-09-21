@@ -142,7 +142,7 @@ export default function RecordatoriosScreen({ route, navigation }: any) {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color="#e8522a" size="large" />
+        <ActivityIndicator color="#48975a" size="large" />
       </View>
     );
   }
@@ -195,29 +195,29 @@ export default function RecordatoriosScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111318' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#111318' },
+  container: { flex: 1, backgroundColor: '#020202' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#020202' },
   header: { padding: 24, paddingTop: 56 },
-  back: { color: '#e8522a', fontSize: 16, marginBottom: 12 },
+  back: { color: '#48975a', fontSize: 16, marginBottom: 12 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 26, fontWeight: 'bold', color: '#fff' },
   subtitle: { fontSize: 13, color: '#666', marginTop: 2 },
   nuevoBtn: {
-    backgroundColor: '#e8522a',
+    backgroundColor: '#48975a',
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 16,
   },
-  nuevoBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 14 },
+  nuevoBtnText: { color: '#020202', fontWeight: 'bold', fontSize: 14 },
   lista: { padding: 16, gap: 10, paddingBottom: 40 },
   card: {
-    backgroundColor: '#1c1f27',
+    backgroundColor: '#0f1110',
     borderRadius: 14,
     padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: '#3e4140',
     gap: 12,
   },
   cardVencido: { borderColor: '#ff3b30', backgroundColor: '#1f1212' },
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   },
   cardAcciones: { gap: 10, alignItems: 'center' },
   checkBtn: {
-    backgroundColor: '#e8522a',
+    backgroundColor: '#48975a',
     borderRadius: 16,
     width: 32,
     height: 32,

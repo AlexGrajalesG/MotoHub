@@ -630,7 +630,7 @@ function DocumentosInline({
                 disabled={subiendo}
               >
                 {subiendo
-                  ? <ActivityIndicator size="small" color={ctaPrimaria ? '#fff' : colors.accent} />
+                  ? <ActivityIndicator size="small" color={ctaPrimaria ? colors.onAccent : colors.accent} />
                   : <Text style={[ds.ctaText, ctaPrimaria ? ds.ctaTextPrimary : ds.ctaTextSecondary]}>
                       {ctaLabel.toUpperCase()}
                     </Text>
@@ -862,7 +862,7 @@ const s = StyleSheet.create({
     flex: 1, paddingVertical: 12, borderRadius: radius.md,
     alignItems: 'center', backgroundColor: colors.accent,
   },
-  fechaBtnGuardarText: { fontFamily: fonts.heading, color: '#fff', fontSize: 14 },
+  fechaBtnGuardarText: { fontFamily: fonts.heading, color: colors.onAccent, fontSize: 14 },
 });
 
 /* ─── Estilos documentos inline ─── */
@@ -909,7 +909,7 @@ const ds = StyleSheet.create({
   ctaSecondary: { backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   ctaDisabled:  { opacity: 0.6 },
   ctaText:        { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' },
-  ctaTextPrimary:   { color: '#fff' },
+  ctaTextPrimary:   { color: colors.onAccent },
   ctaTextSecondary: { color: colors.textPrimary },
 
   docList: { gap: spacing.sm, marginBottom: spacing.xs },
@@ -921,7 +921,7 @@ const ds = StyleSheet.create({
   imgThumb: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.bgPrimary },
   pdfThumb: {
     width: 52, height: 52, borderRadius: radius.md,
-    backgroundColor: 'rgba(232,82,42,0.12)',
+    backgroundColor: 'rgba(72,151,90,0.12)',
     justifyContent: 'center', alignItems: 'center',
   },
   pdfLabel: { fontFamily: fonts.bold, color: colors.accent, fontSize: 11 },

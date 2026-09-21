@@ -391,7 +391,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: 4, borderWidth: 2, borderColor: colors.bgPrimary,
   },
-  bellBadgeText: { fontFamily: fonts.bold, color: '#fff', fontSize: 10 },
+  bellBadgeText: { fontFamily: fonts.bold, color: colors.onAccent, fontSize: 10 },
 
   /* ── Encabezado del taller ── */
   workshopHeader: {
@@ -463,7 +463,7 @@ const s = StyleSheet.create({
   citaPlaca: {
     backgroundColor: colors.bgSurface, borderRadius: 4,
     paddingHorizontal: 6, paddingVertical: 2,
-    borderWidth: 1, borderColor: 'rgba(232,82,42,0.2)',
+    borderWidth: 1, borderColor: 'rgba(72,151,90,0.2)',
   },
   citaPlacaText: {
     fontFamily: fonts.display, fontSize: 11, color: colors.textPrimary,
@@ -487,7 +487,7 @@ const s = StyleSheet.create({
     shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
   },
   agendaBtnText: {
-    fontFamily: fonts.bold, fontSize: 13, color: '#fff',
+    fontFamily: fonts.bold, fontSize: 13, color: colors.onAccent,
     textTransform: 'uppercase', letterSpacing: 1.5,
   },
 
@@ -524,7 +524,7 @@ const s = StyleSheet.create({
     width: 44, height: 26, borderRadius: 13,
     backgroundColor: colors.bgSurface, padding: 3, justifyContent: 'center',
   },
-  toggleOn:    { backgroundColor: 'rgba(26,138,58,0.35)' },
+  toggleOn:    { backgroundColor: 'rgba(47,168,155,0.35)' },
   toggleDot:   { width: 20, height: 20, borderRadius: 10, backgroundColor: colors.textTertiary },
   toggleDotOn: { backgroundColor: colors.success, alignSelf: 'flex-end' },
 
@@ -550,5 +550,5 @@ const s = StyleSheet.create({
     paddingVertical: spacing.lg, paddingHorizontal: spacing.xxl,
     minHeight: 52, justifyContent: 'center',
   },
-  ctaBtnText: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
+  ctaBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 });

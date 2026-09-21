@@ -231,7 +231,7 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
           disabled={loading}
         >
           {loading
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={colors.onAccent} />
             : <Text style={styles.buttonText}>Guardar vehículo</Text>
           }
         </TouchableOpacity>
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   chipActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText: { color: colors.textSecondary, fontSize: 13 },
-  chipTextActive: { color: '#fff', fontWeight: '700' },
+  chipTextActive: { color: colors.onAccent, fontWeight: '700' },
 
   rowInputs: { flexDirection: 'row', gap: 12 },
   halfInput: { flex: 1 },
@@ -294,5 +294,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonDisabled: { opacity: 0.6 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  buttonText: { color: colors.onAccent, fontSize: 16, fontWeight: '700' },
 });

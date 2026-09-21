@@ -445,7 +445,7 @@ export default function AgregarHistorialScreen({ route, navigation }: any) {
           disabled={guardando}
         >
           {guardando
-            ? <ActivityIndicator color="#fff" />
+            ? <ActivityIndicator color={colors.onAccent} />
             : <Text style={s.guardarBtnText}>Guardar registro</Text>
           }
         </Pressable>
@@ -509,7 +509,7 @@ const s = StyleSheet.create({
     paddingVertical:  10,
     paddingHorizontal: spacing.md,
   },
-  tipoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(232,82,42,0.12)' },
+  tipoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.12)' },
   tipoLabel:      { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
   tipoLabelActive:{ color: colors.accent, fontFamily: fonts.heading },
 
@@ -518,7 +518,7 @@ const s = StyleSheet.create({
     borderRadius:    radius.lg,
     padding:         spacing.md,
     borderWidth:     1,
-    borderColor:     'rgba(232,82,42,0.2)',
+    borderColor:     'rgba(72,151,90,0.2)',
     marginTop:       spacing.sm,
   },
 
@@ -531,7 +531,7 @@ const s = StyleSheet.create({
     borderWidth:     1,
     borderColor:     'transparent',
   },
-  smallChipActive:      { borderColor: colors.accent, backgroundColor: 'rgba(232,82,42,0.1)' },
+  smallChipActive:      { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.1)' },
   smallChipLabel:       { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
   smallChipLabelActive: { color: colors.accent, fontFamily: fonts.heading },
 
@@ -613,5 +613,5 @@ const s = StyleSheet.create({
     marginTop:       spacing.xl,
   },
   guardarBtnDisabled: { opacity: 0.5 },
-  guardarBtnText:     { color: '#fff', fontFamily: fonts.bold, fontSize: 16 },
+  guardarBtnText:     { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 16 },
 });

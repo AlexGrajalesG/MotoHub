@@ -98,7 +98,7 @@ export default function LoginScreen({ navigation }: any) {
             disabled={loading}
           >
             {loading
-              ? <ActivityIndicator color="#fff" />
+              ? <ActivityIndicator color={colors.onAccent} />
               : <Text style={styles.buttonText}>Ingresar</Text>
             }
           </TouchableOpacity>
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   logoIconText: {
     fontFamily: fonts.display,
     fontSize: 28,
-    color: '#fff',
+    color: colors.onAccent,
     lineHeight: 32,
   },
   wordmark: { gap: 1 },
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: {
-    fontFamily: fonts.bold, color: '#fff', fontSize: 14,
+    fontFamily: fonts.bold, color: colors.onAccent, fontSize: 14,
     textTransform: 'uppercase', letterSpacing: 1.5,
   },
 

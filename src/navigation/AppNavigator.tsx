@@ -191,8 +191,8 @@ function PerfilStack() {
 const tabBarOptions = {
   headerShown: false,
   tabBarStyle: {
-    backgroundColor: '#1c1f27',
-    borderTopColor: '#2a2d38',
+    backgroundColor: '#0f1110',
+    borderTopColor: '#3e4140',
   },
   tabBarActiveTintColor:   colors.accent,
   tabBarInactiveTintColor: colors.iconInactive,
@@ -271,7 +271,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
             tabBarLabel: 'Citas',
             tabBarIcon: ({ color, size }) => <IconClipboardText size={size} color={color} />,
             tabBarBadge: citasBadge,
-            tabBarBadgeStyle: { backgroundColor: '#e8522a', fontSize: 10 },
+            tabBarBadgeStyle: { backgroundColor: '#48975a', fontSize: 10 },
           }}
         />
         <Tab.Screen
@@ -319,7 +319,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
         options={{
           tabBarIcon: ({ color, size }) => <IconBike size={size} color={color} />,
           tabBarBadge: (recordBadge ?? 0) + docBadge > 0 ? (recordBadge ?? 0) + docBadge : undefined,
-          tabBarBadgeStyle: { backgroundColor: docBadge > 0 ? colors.danger : '#e8522a', fontSize: 10 },
+          tabBarBadgeStyle: { backgroundColor: docBadge > 0 ? colors.danger : '#48975a', fontSize: 10 },
         }}
       />
       <Tab.Screen
@@ -447,7 +447,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.bgCard,
     borderRadius: radius.pill,
-    borderWidth: 1, borderColor: 'rgba(232,82,42,0.35)',
+    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
     paddingHorizontal: 10, paddingVertical: 5,
     zIndex: 50,
   },

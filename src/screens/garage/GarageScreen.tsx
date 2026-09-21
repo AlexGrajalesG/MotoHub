@@ -279,7 +279,7 @@ export default function GarageScreen({ navigation }: any) {
           onPress={() => navigation.navigate('AgregarVehiculo')}
           accessibilityLabel="Agregar vehículo"
         >
-          <IconPlus size={26} color="#fff" />
+          <IconPlus size={26} color={colors.onAccent} />
         </IconButton>
       )}
     </View>
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.bgSurface,
   },
   filtroChipActivo: {
-    backgroundColor: 'rgba(232,82,42,0.1)', borderColor: colors.accent,
+    backgroundColor: 'rgba(72,151,90,0.1)', borderColor: colors.accent,
   },
   filtroChipText: { fontFamily: fonts.bold, fontSize: 13, color: colors.textSecondary },
   filtroChipTextActivo: { color: colors.accent },
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
   },
   vencimientoBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(17,19,24,0.75)', borderRadius: radius.pill,
+    backgroundColor: 'rgba(2,2,2,0.75)', borderRadius: radius.pill,
     paddingHorizontal: 12, paddingVertical: 4,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
   },
@@ -403,5 +403,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg, paddingHorizontal: spacing.xxl,
     minHeight: 52, justifyContent: 'center',
   },
-  emptyBtnText: { fontFamily: fonts.bold, color: '#fff', fontSize: 16 },
+  emptyBtnText: { fontFamily: fonts.bold, color: colors.onAccent, fontSize: 16 },
 });

@@ -206,7 +206,7 @@ export default function CitasMecanicoScreen({ navigation }: any) {
                     onPress={() => marcarCompletada(item)}
                     disabled={busy === item.id}
                   >
-                    {busy === item.id ? <ActivityIndicator size="small" color="#fff" /> : <><IconCheck size={15} color="#fff" /><Text style={s.actionTextPrimary}>Completar</Text></>}
+                    {busy === item.id ? <ActivityIndicator size="small" color={colors.onAccent} /> : <><IconCheck size={15} color={colors.onAccent} /><Text style={s.actionTextPrimary}>Completar</Text></>}
                   </Pressable>
                 )}
                 {item.estado === 'completada' && item.mecanico_id === miMecanico?.id && (
@@ -247,7 +247,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: 4, borderWidth: 2, borderColor: colors.bgPrimary,
   },
-  bellBadgeText: { fontFamily: fonts.bold, color: '#fff', fontSize: 10 },
+  bellBadgeText: { fontFamily: fonts.bold, color: colors.onAccent, fontSize: 10 },
 
   filtros: { paddingBottom: spacing.md },
   chip: {
@@ -256,7 +256,7 @@ const s = StyleSheet.create({
   },
   chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
-  chipTextOn: { color: '#fff' },
+  chipTextOn: { color: colors.onAccent },
 
   list: { paddingHorizontal: spacing.xl, paddingBottom: 32, gap: spacing.md },
   card: {
@@ -278,10 +278,10 @@ const s = StyleSheet.create({
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     borderRadius: radius.md, minHeight: 42, borderWidth: 1,
   },
-  actionBtnOutline: { backgroundColor: 'transparent', borderColor: 'rgba(232,82,42,0.35)' },
+  actionBtnOutline: { backgroundColor: 'transparent', borderColor: 'rgba(72,151,90,0.35)' },
   actionTextOutline: { fontFamily: fonts.bold, fontSize: 12, color: colors.accent },
   actionBtnPrimary: { backgroundColor: colors.accent, borderColor: colors.accent },
-  actionTextPrimary: { fontFamily: fonts.bold, fontSize: 12, color: '#fff' },
+  actionTextPrimary: { fontFamily: fonts.bold, fontSize: 12, color: colors.onAccent },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.sm },
   emptyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, marginTop: spacing.sm },

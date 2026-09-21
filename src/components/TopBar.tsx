@@ -54,5 +54,5 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: 4, borderWidth: 2, borderColor: colors.bgPrimary,
   },
-  bellBadgeText: { fontFamily: fonts.bold, color: '#fff', fontSize: 10 },
+  bellBadgeText: { fontFamily: fonts.bold, color: colors.onAccent, fontSize: 10 },
 });

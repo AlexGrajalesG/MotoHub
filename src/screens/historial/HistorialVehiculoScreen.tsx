@@ -33,7 +33,7 @@ type Registro = {
 
 // accent colors per tipo for the badge
 const TIPO_COLOR: Record<string, string> = {
-  aceite:           '#e8522a',
+  aceite:           '#48975a',
   frenos:           '#e05555',
   cadena:           '#d48b24',
   llantas:          '#5b8dd9',
@@ -220,7 +220,7 @@ export default function HistorialVehiculoScreen({ route, navigation }: any) {
           style={s.nuevoBtn}
           onPress={() => navigation.navigate('AgregarHistorial', { vehiculo })}
         >
-          <IconPlus size={18} color="#fff" />
+          <IconPlus size={18} color={colors.onAccent} />
           <Text style={s.nuevoBtnText}>Agregar</Text>
         </Pressable>
       </View>
@@ -278,7 +278,7 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: spacing.md,
   },
-  nuevoBtnText: { color: '#fff', fontSize: 13, fontFamily: fonts.heading },
+  nuevoBtnText: { color: colors.onAccent, fontSize: 13, fontFamily: fonts.heading },
   shareBtn: {
     width: 38, height: 38, borderRadius: radius.md,
     backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
@@ -333,5 +333,5 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 32,
   },
-  emptyBtnText: { color: '#fff', fontFamily: fonts.bold, fontSize: 15 },
+  emptyBtnText: { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 15 },
 });

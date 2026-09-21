@@ -87,7 +87,7 @@ export default function ServiciosNegocioScreen({ route, navigation }: any) {
           hitSlop={8}
           accessibilityLabel="Agregar servicio"
         >
-          <IconPlus size={20} color="#fff" />
+          <IconPlus size={20} color={colors.onAccent} />
         </Pressable>
       </View>
 
@@ -101,7 +101,7 @@ export default function ServiciosNegocioScreen({ route, navigation }: any) {
             style={({ pressed }) => [s.ctaBtn, pressed && { opacity: 0.85 }]}
             onPress={() => navigation.navigate('EditarServicio', { negocioId, servicio: null })}
           >
-            <IconPlus size={16} color="#fff" />
+            <IconPlus size={16} color={colors.onAccent} />
             <Text style={s.ctaBtnText}>Agregar servicio</Text>
           </Pressable>
         </View>
@@ -215,5 +215,5 @@ const s = StyleSheet.create({
     paddingVertical: spacing.lg, paddingHorizontal: spacing.xxl,
     minHeight: 52, justifyContent: 'center',
   },
-  ctaBtnText: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
+  ctaBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 });

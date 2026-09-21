@@ -185,14 +185,14 @@ export default function EditarServicioScreen({ route, navigation }: any) {
               style={[s.chip, aplicaA.includes('motos') && s.chipOn]}
               onPress={() => toggleAplicaA('motos')}
             >
-              <IconBike size={13} color={aplicaA.includes('motos') ? '#fff' : colors.textSecondary} />
+              <IconBike size={13} color={aplicaA.includes('motos') ? colors.onAccent : colors.textSecondary} />
               <Text style={[s.chipText, aplicaA.includes('motos') && s.chipTextOn]}>Motos</Text>
             </Pressable>
             <Pressable
               style={[s.chip, aplicaA.includes('carros') && s.chipOn]}
               onPress={() => toggleAplicaA('carros')}
             >
-              <IconCar size={13} color={aplicaA.includes('carros') ? '#fff' : colors.textSecondary} />
+              <IconCar size={13} color={aplicaA.includes('carros') ? colors.onAccent : colors.textSecondary} />
               <Text style={[s.chipText, aplicaA.includes('carros') && s.chipTextOn]}>Carros</Text>
             </Pressable>
           </View>
@@ -280,7 +280,7 @@ export default function EditarServicioScreen({ route, navigation }: any) {
           disabled={!nombre.trim() || guardando}
         >
           {guardando
-            ? <ActivityIndicator color="#fff" size="small" />
+            ? <ActivityIndicator color={colors.onAccent} size="small" />
             : <Text style={s.sendBtnText}>{editando ? 'Guardar cambios' : 'Agregar servicio'}</Text>
           }
         </Pressable>
@@ -327,7 +327,7 @@ const s = StyleSheet.create({
   },
   chipOn:     { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText:   { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
-  chipTextOn: { color: '#fff' },
+  chipTextOn: { color: colors.onAccent },
   helpText: {
     fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary,
     marginTop: spacing.sm, lineHeight: 17,
@@ -353,5 +353,5 @@ const s = StyleSheet.create({
     marginTop: spacing.sm, minHeight: 54,
   },
   sendBtnOff:  { opacity: 0.45 },
-  sendBtnText: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
+  sendBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 });

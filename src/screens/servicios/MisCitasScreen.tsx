@@ -339,7 +339,7 @@ const s = StyleSheet.create({
   },
   chipOn:     { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText:   { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
-  chipTextOn: { color: '#fff' },
+  chipTextOn: { color: colors.onAccent },
 
   list: { paddingHorizontal: spacing.xl, paddingBottom: 32, gap: spacing.md },
 
@@ -379,7 +379,7 @@ const s = StyleSheet.create({
   },
   actionBtnDanger:  { backgroundColor: 'transparent', borderColor: colors.dangerActionBorder },
   actionTextDanger: { fontFamily: fonts.bold, fontSize: 13, color: colors.dangerAction },
-  actionBtnChat:    { backgroundColor: 'transparent', borderColor: 'rgba(232,82,42,0.35)' },
+  actionBtnChat:    { backgroundColor: 'transparent', borderColor: 'rgba(72,151,90,0.35)' },
   actionTextChat:   { fontFamily: fonts.bold, fontSize: 13, color: colors.accent },
 
   empty: {

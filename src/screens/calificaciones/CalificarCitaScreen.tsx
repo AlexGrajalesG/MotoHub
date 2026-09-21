@@ -154,7 +154,7 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
                     disabled={enviando === destino.id}
                   >
                     {enviando === destino.id
-                      ? <ActivityIndicator size="small" color="#fff" />
+                      ? <ActivityIndicator size="small" color={colors.onAccent} />
                       : <Text style={s.enviarText}>Enviar calificación</Text>
                     }
                   </Pressable>
@@ -199,7 +199,7 @@ const s = StyleSheet.create({
     paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: 60, textAlignVertical: 'top',
   },
   enviarBtn: { backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 46, justifyContent: 'center', alignItems: 'center' },
-  enviarText: { fontFamily: fonts.bold, fontSize: 14, color: '#fff' },
+  enviarText: { fontFamily: fonts.bold, fontSize: 14, color: colors.onAccent },
 
   doneRow: { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center', paddingVertical: spacing.sm },
   doneText: { fontFamily: fonts.heading, fontSize: 14, color: colors.success },

@@ -69,7 +69,7 @@ export default function DetalleProductoScreen({ route, navigation }: any) {
 
           {negocio.telefono && (
             <Pressable style={({ pressed }) => [s.contactarBtn, pressed && { opacity: 0.85 }]} onPress={() => openTel(negocio.telefono)}>
-              <IconMessageCircle size={18} color="#fff" />
+              <IconMessageCircle size={18} color={colors.onAccent} />
               <Text style={s.contactarText}>Contactar al negocio</Text>
             </Pressable>
           )}
@@ -116,5 +116,5 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: colors.accent, borderRadius: radius.lg, minHeight: 50, marginTop: spacing.xl,
   },
-  contactarText: { fontFamily: fonts.bold, fontSize: 15, color: '#fff' },
+  contactarText: { fontFamily: fonts.bold, fontSize: 15, color: colors.onAccent },
 });

@@ -344,7 +344,7 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
                       disabled={busy === item.id}
                     >
                       {busy === item.id
-                        ? <ActivityIndicator size="small" color="#fff" />
+                        ? <ActivityIndicator size="small" color={colors.onAccent} />
                         : <Text style={s.confirmarText}>CONFIRMAR</Text>
                       }
                     </Pressable>
@@ -368,7 +368,7 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
                       disabled={busy === item.id}
                     >
                       {busy === item.id
-                        ? <ActivityIndicator size="small" color="#fff" />
+                        ? <ActivityIndicator size="small" color={colors.onAccent} />
                         : <Text style={s.confirmarText}>COMPLETADA</Text>
                       }
                     </Pressable>
@@ -430,7 +430,7 @@ const s = StyleSheet.create({
     minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.dangerAction,
     justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
   },
-  tabBadgeText: { fontFamily: fonts.bold, color: '#fff', fontSize: 10 },
+  tabBadgeText: { fontFamily: fonts.bold, color: colors.onAccent, fontSize: 10 },
 
   list: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: 32, gap: spacing.md },
 
@@ -443,7 +443,7 @@ const s = StyleSheet.create({
 
   avatar: {
     width: 48, height: 48, borderRadius: 24, overflow: 'hidden',
-    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: 'rgba(232,82,42,0.2)',
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: 'rgba(72,151,90,0.2)',
     justifyContent: 'center', alignItems: 'center',
   },
   avatarImg: { width: '100%', height: '100%' },
@@ -490,7 +490,7 @@ const s = StyleSheet.create({
     flex: 1, backgroundColor: colors.accent, borderRadius: radius.md,
     minHeight: 42, justifyContent: 'center', alignItems: 'center',
   },
-  confirmarText: { fontFamily: fonts.bold, fontSize: 12, color: '#fff', letterSpacing: 0.5 },
+  confirmarText: { fontFamily: fonts.bold, fontSize: 12, color: colors.onAccent, letterSpacing: 0.5 },
   rechazarBtn: {
     flex: 1, backgroundColor: colors.bgSurface, borderRadius: radius.md,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',

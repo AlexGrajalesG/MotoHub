@@ -138,7 +138,7 @@ export default function MiEquipoScreen({ route, navigation }: any) {
           hitSlop={8}
           accessibilityLabel="Invitar mecánico"
         >
-          <IconUserPlus size={18} color="#fff" />
+          <IconUserPlus size={18} color={colors.onAccent} />
         </Pressable>
       </View>
 
@@ -242,7 +242,7 @@ export default function MiEquipoScreen({ route, navigation }: any) {
               </Pressable>
               <Pressable style={s.modalBtnGuardar} onPress={confirmarAgregar} disabled={buscando}>
                 {buscando
-                  ? <ActivityIndicator size="small" color="#fff" />
+                  ? <ActivityIndicator size="small" color={colors.onAccent} />
                   : <Text style={s.modalBtnGuardarText}>Invitar</Text>
                 }
               </Pressable>
@@ -314,5 +314,5 @@ const s = StyleSheet.create({
     flex: 1, paddingVertical: 12, borderRadius: radius.md,
     alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent,
   },
-  modalBtnGuardarText: { fontFamily: fonts.heading, color: '#fff', fontSize: 14 },
+  modalBtnGuardarText: { fontFamily: fonts.heading, color: colors.onAccent, fontSize: 14 },
 });

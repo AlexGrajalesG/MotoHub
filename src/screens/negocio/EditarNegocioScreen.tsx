@@ -155,7 +155,7 @@ export default function EditarNegocioScreen({ route, navigation }: any) {
           disabled={guardando}
         >
           {guardando
-            ? <ActivityIndicator size="small" color="#fff" />
+            ? <ActivityIndicator size="small" color={colors.onAccent} />
             : <Text style={s.saveBtnText}>Guardar</Text>
           }
         </Pressable>
@@ -179,8 +179,8 @@ export default function EditarNegocioScreen({ route, navigation }: any) {
             }
             <View style={s.cameraBadge}>
               {subiendoFoto
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <IconCamera size={15} color="#fff" />
+                ? <ActivityIndicator size="small" color={colors.onAccent} />
+                : <IconCamera size={15} color={colors.onAccent} />
               }
             </View>
           </TouchableOpacity>
@@ -224,14 +224,14 @@ export default function EditarNegocioScreen({ route, navigation }: any) {
               style={[s.chip, atiende.includes('motos') && s.chipOn]}
               onPress={() => toggleAtiende('motos')}
             >
-              <IconBike size={13} color={atiende.includes('motos') ? '#fff' : colors.textSecondary} />
+              <IconBike size={13} color={atiende.includes('motos') ? colors.onAccent : colors.textSecondary} />
               <Text style={[s.chipText, atiende.includes('motos') && s.chipTextOn]}>Motos</Text>
             </Pressable>
             <Pressable
               style={[s.chip, atiende.includes('carros') && s.chipOn]}
               onPress={() => toggleAtiende('carros')}
             >
-              <IconCar size={13} color={atiende.includes('carros') ? '#fff' : colors.textSecondary} />
+              <IconCar size={13} color={atiende.includes('carros') ? colors.onAccent : colors.textSecondary} />
               <Text style={[s.chipText, atiende.includes('carros') && s.chipTextOn]}>Carros</Text>
             </Pressable>
           </View>
@@ -368,7 +368,7 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   saveBtnOff:  { opacity: 0.6 },
-  saveBtnText: { fontFamily: fonts.bold, fontSize: 14, color: '#fff' },
+  saveBtnText: { fontFamily: fonts.bold, fontSize: 14, color: colors.onAccent },
 
   scroll: { paddingHorizontal: spacing.xl, paddingBottom: 48 },
 
@@ -378,7 +378,7 @@ const s = StyleSheet.create({
   foto:        { width: 96, height: 96, borderRadius: radius.lg },
   fotoPlaceholder: {
     width: 96, height: 96, borderRadius: radius.lg,
-    backgroundColor: 'rgba(232,82,42,0.12)',
+    backgroundColor: 'rgba(72,151,90,0.12)',
     justifyContent: 'center', alignItems: 'center',
   },
   cameraBadge: {
@@ -402,7 +402,7 @@ const s = StyleSheet.create({
   },
   chipOn:     { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText:   { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
-  chipTextOn: { color: '#fff' },
+  chipTextOn: { color: colors.onAccent },
 
   inputRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,

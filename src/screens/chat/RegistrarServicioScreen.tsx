@@ -187,7 +187,7 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
         />
 
         <Pressable style={[s.guardarBtn, guardando && s.guardarBtnDisabled]} onPress={handleGuardar} disabled={guardando}>
-          {guardando ? <ActivityIndicator color="#fff" /> : <Text style={s.guardarBtnText}>Enviar al cliente</Text>}
+          {guardando ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.guardarBtnText}>Enviar al cliente</Text>}
         </Pressable>
       </ScrollView>
     </View>
@@ -232,7 +232,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
     paddingVertical: 10, paddingHorizontal: spacing.md,
   },
-  tipoChipActive:  { borderColor: colors.accent, backgroundColor: 'rgba(232,82,42,0.12)' },
+  tipoChipActive:  { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.12)' },
   tipoLabel:       { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
   tipoLabelActive: { color: colors.accent, fontFamily: fonts.heading },
 
@@ -268,12 +268,12 @@ const s = StyleSheet.create({
   facturaBtnText: { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
   facturaRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(232,82,42,0.3)',
+    backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(72,151,90,0.3)',
     paddingVertical: 13, paddingHorizontal: spacing.md,
   },
   facturaText: { flex: 1, color: colors.textPrimary, fontSize: 13, fontFamily: fonts.body },
 
   guardarBtn: { backgroundColor: colors.accent, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: spacing.xl },
   guardarBtnDisabled: { opacity: 0.5 },
-  guardarBtnText: { color: '#fff', fontFamily: fonts.bold, fontSize: 16 },
+  guardarBtnText: { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 16 },
 });

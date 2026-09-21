@@ -151,7 +151,7 @@ export default function RegisterScreen({ navigation }: any) {
             disabled={loading}
           >
             {loading
-              ? <ActivityIndicator color="#fff" />
+              ? <ActivityIndicator color="#020202" />
               : <Text style={styles.buttonText}>Crear cuenta</Text>
             }
           </TouchableOpacity>
@@ -169,22 +169,22 @@ export default function RegisterScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#111318' },
+  container: { flex: 1, backgroundColor: '#020202' },
   content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 48 },
-  logo: { fontSize: 42, fontWeight: 'bold', color: '#e8522a', textAlign: 'center', marginBottom: 8 },
+  logo: { fontSize: 42, fontWeight: 'bold', color: '#48975a', textAlign: 'center', marginBottom: 8 },
   tagline: { fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 48 },
   form: { gap: 12, marginBottom: 32 },
   input: {
-    backgroundColor: '#1c1f27',
+    backgroundColor: '#0f1110',
     borderRadius: 12,
     padding: 16,
     color: '#fff',
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#2a2d38',
+    borderColor: '#3e4140',
   },
   button: {
-    backgroundColor: '#e8522a',
+    backgroundColor: '#48975a',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   usernameHint: { fontSize: 12, marginTop: 4, marginLeft: 4, color: '#666' },
   usernameHintOk: { color: '#34c759' },
   usernameHintError: { color: '#ff453a' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  buttonText: { color: '#020202', fontSize: 16, fontWeight: 'bold' },
   link: { color: '#666', textAlign: 'center', fontSize: 14 },
-  linkBold: { color: '#e8522a', fontWeight: 'bold' },
+  linkBold: { color: '#48975a', fontWeight: 'bold' },
 });

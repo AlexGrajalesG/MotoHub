@@ -196,7 +196,7 @@ export default function SolicitarCitaScreen({ route, navigation }: any) {
                   style={[s.chip, vehiculoId === v.id && s.chipOn]}
                   onPress={() => setVehiculoId(v.id)}
                 >
-                  <IconBike size={13} color={vehiculoId === v.id ? '#fff' : colors.textSecondary} />
+                  <IconBike size={13} color={vehiculoId === v.id ? colors.onAccent : colors.textSecondary} />
                   <Text style={[s.chipText, vehiculoId === v.id && s.chipTextOn]}>
                     {v.marca} {v.modelo}
                   </Text>
@@ -318,7 +318,7 @@ export default function SolicitarCitaScreen({ route, navigation }: any) {
           disabled={!fechaSel || !horaSel || enviando}
         >
           {enviando
-            ? <ActivityIndicator color="#fff" size="small" />
+            ? <ActivityIndicator color={colors.onAccent} size="small" />
             : <Text style={s.sendBtnText}>Enviar solicitud</Text>
           }
         </Pressable>
@@ -368,7 +368,7 @@ const s = StyleSheet.create({
   dayChipAbbr:     { fontFamily: fonts.heading, fontSize: 11, color: colors.textSecondary, textTransform: 'uppercase' },
   dayChipNum:      { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, letterSpacing: -0.3 },
   dayChipMes:      { fontFamily: fonts.body, fontSize: 10, color: colors.textTertiary, textTransform: 'uppercase' },
-  dayChipTextOn:   { color: '#fff' },
+  dayChipTextOn:   { color: colors.onAccent },
   dayChipTextOff:  { color: colors.textTertiary },
 
   /* ── Chips ── */
@@ -381,7 +381,7 @@ const s = StyleSheet.create({
   },
   chipOn:      { backgroundColor: colors.accent, borderColor: colors.accent },
   chipText:    { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
-  chipTextOn:  { color: '#fff' },
+  chipTextOn:  { color: colors.onAccent },
 
   /* ── Inputs ── */
   inputRow: {
@@ -407,7 +407,7 @@ const s = StyleSheet.create({
     marginTop: spacing.sm, minHeight: 54,
   },
   sendBtnOff:  { opacity: 0.45 },
-  sendBtnText: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
+  sendBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 
   /* ── Éxito ── */
   successWrap: {
@@ -437,5 +437,5 @@ const s = StyleSheet.create({
     paddingVertical: spacing.lg, paddingHorizontal: spacing.xxl,
     minHeight: 52, justifyContent: 'center',
   },
-  successBtnText: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
+  successBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 });
