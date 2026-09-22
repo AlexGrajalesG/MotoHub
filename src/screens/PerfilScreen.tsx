@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   IconPencil, IconCheck, IconLogout, IconPhone,
   IconMapPin, IconCamera, IconTools, IconBuildingStore, IconChevronRight, IconCar, IconTool, IconUserPlus,
-  IconShieldLock, IconShieldCheck, IconHelpCircle,
+  IconShieldLock, IconShieldCheck, IconHelpCircle, IconGavel,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
 import { contarInvitacionesRecibidas } from '../lib/invitaciones';
@@ -31,7 +31,7 @@ type Perfil = {
 
 export default function PerfilScreen({ navigation }: any) {
   const { session } = useAuth();
-  const { tieneNegocio, modoTaller, setModoTaller, esMecanico, miMecanico, modoMecanico, setModoMecanico, refreshEsMecanico, loadingModo } = useModo();
+  const { tieneNegocio, esModerador, modoTaller, setModoTaller, esMecanico, miMecanico, modoMecanico, setModoMecanico, refreshEsMecanico, loadingModo } = useModo();
   const [reputacion, setReputacion] = useState<Promedio>({ promedio: 0, total: 0 });
   const [perfil, setPerfil]             = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
   const [perfilOriginal, setPerfilOriginal] = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
@@ -422,6 +422,13 @@ export default function PerfilScreen({ navigation }: any) {
           <Text style={s.menuLabel}>Ayuda</Text>
           <IconChevronRight size={17} color={colors.textTertiary} />
         </Pressable>
+        {esModerador && (
+          <Pressable style={({ pressed }) => [s.menuItem, pressed && { opacity: 0.85 }]} onPress={() => navigation.navigate('Comunidad', { screen: 'Moderacion' })}>
+            <View style={s.menuIconWrap}><IconGavel size={20} color={colors.accent} /></View>
+            <Text style={s.menuLabel}>Moderación</Text>
+            <IconChevronRight size={17} color={colors.textTertiary} />
+          </Pressable>
+        )}
       </Animated.View>
 
       {/* ── Cancelar edición ── */}

@@ -12,6 +12,7 @@ type MiMecanico = { id: string; negocio_id: string; negocio_nombre: string };
 
 type ModoContextType = {
   tieneNegocio: boolean;
+  esModerador: boolean;
   negocioId: string | null;
   citasPendientes: number;
   modoTaller: boolean;
@@ -28,6 +29,7 @@ type ModoContextType = {
 
 const ModoContext = createContext<ModoContextType>({
   tieneNegocio: false,
+  esModerador: false,
   negocioId: null,
   citasPendientes: 0,
   modoTaller: false,
@@ -45,6 +47,7 @@ const ModoContext = createContext<ModoContextType>({
 export function ModoProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [tieneNegocio, setTieneNegocio] = useState(false);
+  const [esModerador, setEsModerador] = useState(false);
   const [negocioId, setNegocioId] = useState<string | null>(null);
   const [citasPendientes, setCitasPendientes] = useState(0);
   const [modoTaller, setModoTallerState] = useState(false);
@@ -58,7 +61,9 @@ export function ModoProvider({ children }: { children: React.ReactNode }) {
       supabase.from('usuarios').select('roles').eq('id', session.user.id).maybeSingle(),
       supabase.from('negocios').select('id').eq('propietario_id', session.user.id).maybeSingle(),
     ]);
-    setTieneNegocio(((usuario?.roles as string[]) ?? []).includes('negocio'));
+    const roles = (usuario?.roles as string[]) ?? [];
+    setTieneNegocio(roles.includes('negocio'));
+    setEsModerador(roles.includes('moderador'));
     setNegocioId(negocio?.id ?? null);
   }, [session?.user.id]);
 
@@ -123,7 +128,7 @@ export function ModoProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ModoContext.Provider value={{
-      tieneNegocio, negocioId, citasPendientes, modoTaller, esMecanico: !!miMecanico, miMecanico, modoMecanico, loadingModo,
+      tieneNegocio, esModerador, negocioId, citasPendientes, modoTaller, esMecanico: !!miMecanico, miMecanico, modoMecanico, loadingModo,
       setModoTaller, setModoMecanico, refreshTieneNegocio, refreshEsMecanico, refreshCitasPendientes,
     }}>
       {children}

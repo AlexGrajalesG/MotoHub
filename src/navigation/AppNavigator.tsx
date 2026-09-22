@@ -66,6 +66,10 @@ import RegistrarServicioScreen from '../screens/chat/RegistrarServicioScreen';
 
 import CalificarCitaScreen     from '../screens/calificaciones/CalificarCitaScreen';
 
+import ComunidadScreen  from '../screens/comunidad/ComunidadScreen';
+import CrearPostScreen  from '../screens/comunidad/CrearPostScreen';
+import ModeracionScreen from '../screens/comunidad/ModeracionScreen';
+
 const Tab          = createBottomTabNavigator();
 const GarageNav    = createNativeStackNavigator();
 const HistorialNav = createNativeStackNavigator();
@@ -76,6 +80,7 @@ const ServiciosTabNav = createNativeStackNavigator();
 const MecanicoNav  = createNativeStackNavigator();
 const PerfilNav    = createNativeStackNavigator();
 const AuthNav      = createNativeStackNavigator();
+const ComunidadNav = createNativeStackNavigator();
 const { colors, spacing, radius, fonts } = tokens;
 
 const PlaceholderScreen = ({ name }: { name: string }) => (
@@ -126,6 +131,17 @@ function ServiciosStack() {
       <ServiciosNav.Screen name="RegistrarServicio" component={RegistrarServicioScreen} />
       <ServiciosNav.Screen name="CalificarCita"     component={CalificarCitaScreen} />
     </ServiciosNav.Navigator>
+  );
+}
+
+function ComunidadStack() {
+  return (
+    <ComunidadNav.Navigator screenOptions={{ headerShown: false }}>
+      <ComunidadNav.Screen name="ComunidadHome" component={ComunidadScreen} />
+      <ComunidadNav.Screen name="CrearPost"     component={CrearPostScreen} />
+      <ComunidadNav.Screen name="Moderacion"    component={ModeracionScreen} />
+      <ComunidadNav.Screen name="Notificaciones" component={NotificacionesScreen} />
+    </ComunidadNav.Navigator>
   );
 }
 
@@ -345,7 +361,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
       />
       <Tab.Screen
         name="Comunidad"
-        children={() => <PlaceholderScreen name="Comunidad" />}
+        component={ComunidadStack}
         options={{ tabBarIcon: ({ color, size }) => <IconUsers size={size} color={color} /> }}
       />
       <Tab.Screen
