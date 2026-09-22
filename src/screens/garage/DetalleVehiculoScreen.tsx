@@ -19,6 +19,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { verificarRecordatoriosKm } from '../../lib/notificaciones';
+import { IconShieldCheck } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { getDocStatus, formatFechaCorta } from '../../lib/documentos';
 import { TIPO_LABEL, formatFecha } from '../../lib/historial';
@@ -444,6 +445,13 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
             <IconTool size={22} color={colors.iconInactive} />
             <Text style={s.accionTexto}>Servicio</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={s.accion}
+            onPress={() => navigation.navigate('FichaSeguridad', { vehiculo })}
+          >
+            <IconShieldCheck size={22} color={colors.iconInactive} />
+            <Text style={s.accionTexto}>Seguridad</Text>
+          </TouchableOpacity>
         </View>
 
         {/* ── Documentos inline ── */}
@@ -816,11 +824,11 @@ const s = StyleSheet.create({
   filaEditable: { color: colors.accent },
 
   acciones: {
-    flexDirection: 'row', marginHorizontal: spacing.xl,
+    flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: spacing.xl,
     gap: spacing.sm, marginBottom: spacing.xl,
   },
   accion: {
-    flex: 1, backgroundColor: colors.bgCard, borderRadius: radius.lg,
+    flexBasis: '47%', flexGrow: 1, backgroundColor: colors.bgCard, borderRadius: radius.lg,
     paddingVertical: spacing.md, alignItems: 'center', gap: 6,
     borderWidth: 1, borderColor: colors.bgSurface, minHeight: 72,
     justifyContent: 'center',

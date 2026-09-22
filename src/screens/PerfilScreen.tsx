@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   IconPencil, IconCheck, IconLogout, IconPhone,
   IconMapPin, IconCamera, IconTools, IconBuildingStore, IconChevronRight, IconCar, IconTool, IconUserPlus,
-  IconShieldLock, IconShieldCheck, IconHelpCircle, IconGavel,
+  IconShieldLock, IconShieldCheck, IconHelpCircle, IconGavel, IconAmbulance,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
 import { contarInvitacionesRecibidas } from '../lib/invitaciones';
@@ -27,14 +27,16 @@ type Perfil = {
   telefono: string;
   ciudad: string;
   foto_url: string | null;
+  contacto_emergencia_nombre: string;
+  contacto_emergencia_telefono: string;
 };
 
 export default function PerfilScreen({ navigation }: any) {
   const { session } = useAuth();
   const { tieneNegocio, esModerador, modoTaller, setModoTaller, esMecanico, miMecanico, modoMecanico, setModoMecanico, refreshEsMecanico, loadingModo } = useModo();
   const [reputacion, setReputacion] = useState<Promedio>({ promedio: 0, total: 0 });
-  const [perfil, setPerfil]             = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
-  const [perfilOriginal, setPerfilOriginal] = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null });
+  const [perfil, setPerfil]             = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null, contacto_emergencia_nombre: '', contacto_emergencia_telefono: '' });
+  const [perfilOriginal, setPerfilOriginal] = useState<Perfil>({ nombre: '', telefono: '', ciudad: '', foto_url: null, contacto_emergencia_nombre: '', contacto_emergencia_telefono: '' });
   const [nombreUsuario, setNombreUsuario] = useState('');
   const [usuarioEdit, setUsuarioEdit] = useState('');
   const [errorUsuario, setErrorUsuario] = useState<string | null>(null);
@@ -64,7 +66,7 @@ export default function PerfilScreen({ navigation }: any) {
     }
     const { data } = await supabase
       .from('usuarios')
-      .select('nombre, nombre_usuario, telefono, ciudad, foto_url')
+      .select('nombre, nombre_usuario, telefono, ciudad, foto_url, contacto_emergencia_nombre, contacto_emergencia_telefono')
       .eq('id', session?.user.id)
       .maybeSingle();
 
@@ -74,6 +76,8 @@ export default function PerfilScreen({ navigation }: any) {
       const cargado = {
         nombre:   data.nombre   ?? '',
         telefono: data.telefono ?? '',
+        contacto_emergencia_nombre: data.contacto_emergencia_nombre ?? '',
+        contacto_emergencia_telefono: data.contacto_emergencia_telefono ?? '',
         ciudad:   data.ciudad   ?? '',
         foto_url: data.foto_url ?? null,
       };
@@ -112,11 +116,15 @@ export default function PerfilScreen({ navigation }: any) {
       nombre:   perfil.nombre.trim(),
       telefono: perfil.telefono.trim(),
       ciudad:   perfil.ciudad.trim(),
+      contacto_emergencia_nombre:   perfil.contacto_emergencia_nombre.trim(),
+      contacto_emergencia_telefono: perfil.contacto_emergencia_telefono.trim(),
     };
     const { error } = await supabase.from('usuarios').update({
       nombre:   actualizado.nombre,
       telefono: actualizado.telefono,
       ciudad:   actualizado.ciudad,
+      contacto_emergencia_nombre:   actualizado.contacto_emergencia_nombre,
+      contacto_emergencia_telefono: actualizado.contacto_emergencia_telefono,
       ...(cambioUsuario ? { nombre_usuario: usuarioNuevo } : {}),
     }).eq('id', session!.user.id);
     setGuardando(false);
@@ -283,9 +291,31 @@ export default function PerfilScreen({ navigation }: any) {
           valor={perfil.ciudad}
           editando={editando}
           placeholder="Bucaramanga"
-          isLast
           icon={<IconMapPin size={13} color={colors.textSecondary} />}
           onChange={v => setPerfil(p => ({ ...p, ciudad: v }))}
+        />
+      </Animated.View>
+
+      {/* ── Contacto de emergencia (opcional, un plus) ── */}
+      <Animated.View style={[s.card, { opacity: contentOp }]}>
+        <Text style={s.contactoTitulo}>Contacto de emergencia</Text>
+        <Text style={s.contactoSub}>Opcional. A quién avisar si tienes un accidente.</Text>
+        <CampoFila
+          label="Nombre"
+          valor={perfil.contacto_emergencia_nombre}
+          editando={editando}
+          placeholder="Ej: María Gómez"
+          onChange={v => setPerfil(p => ({ ...p, contacto_emergencia_nombre: v }))}
+        />
+        <CampoFila
+          label="Teléfono"
+          valor={perfil.contacto_emergencia_telefono}
+          editando={editando}
+          placeholder="+57 300 000 0000"
+          keyboardType="phone-pad"
+          isLast
+          icon={<IconAmbulance size={13} color={colors.textSecondary} />}
+          onChange={v => setPerfil(p => ({ ...p, contacto_emergencia_telefono: v }))}
         />
       </Animated.View>
       {editando && !!errorUsuario && (
@@ -539,6 +569,8 @@ const s = StyleSheet.create({
     borderRadius: radius.xl, borderWidth: 1, borderColor: colors.bgSurface,
     marginBottom: spacing.md, paddingHorizontal: spacing.sm, overflow: 'hidden',
   },
+  contactoTitulo: { fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary, paddingHorizontal: spacing.md, paddingTop: spacing.md },
+  contactoSub: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, paddingHorizontal: spacing.md, marginBottom: spacing.xs },
 
   modoCard: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,

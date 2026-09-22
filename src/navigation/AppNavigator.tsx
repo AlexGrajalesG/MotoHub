@@ -29,6 +29,7 @@ import AgregarVehiculoScreen  from '../screens/garage/AgregarVehiculoScreen';
 import DetalleVehiculoScreen  from '../screens/garage/DetalleVehiculoScreen';
 import DocumentosScreen       from '../screens/garage/DocumentosScreen';
 import EditarVehiculoScreen   from '../screens/garage/EditarVehiculoScreen';
+import FichaSeguridadScreen   from '../screens/garage/FichaSeguridadScreen';
 import RecordatoriosScreen    from '../screens/garage/RecordatoriosScreen';
 import CrearRecordatorioScreen from '../screens/garage/CrearRecordatorioScreen';
 
@@ -98,6 +99,7 @@ function GarageStack() {
       <GarageNav.Screen name="DetalleVehiculo"   component={DetalleVehiculoScreen} />
       <GarageNav.Screen name="Documentos"        component={DocumentosScreen} />
       <GarageNav.Screen name="EditarVehiculo"    component={EditarVehiculoScreen} />
+      <GarageNav.Screen name="FichaSeguridad"   component={FichaSeguridadScreen} />
       <GarageNav.Screen name="Recordatorios"     component={RecordatoriosScreen} />
       <GarageNav.Screen name="CrearRecordatorio" component={CrearRecordatorioScreen} />
       <GarageNav.Screen name="Notificaciones"    component={NotificacionesScreen} />
