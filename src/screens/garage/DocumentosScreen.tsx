@@ -1,14 +1,19 @@
 import { useState, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Alert, ScrollView, Linking
-} from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, ScrollView, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
+import {
+  IconShieldCheck, IconClipboardText, IconTool, IconFileText, IconFileTypePdf,
+  IconPhoto, IconTrash, IconPlus,
+} from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { tokens } from '../../lib/tokens';
+import CabeceraPantalla from '../../components/CabeceraPantalla';
+
+const { colors, spacing, radius, fonts } = tokens;
 
 type Documento = {
   id: string;
@@ -21,10 +26,10 @@ type Documento = {
 };
 
 const TIPOS = [
-  { key: 'soat', label: 'SOAT', emoji: '🛡️' },
-  { key: 'tarjeta_propiedad', label: 'Tarjeta de Propiedad', emoji: '📋' },
-  { key: 'tecnomecanica', label: 'Tecnomecanica', emoji: '🔧' },
-  { key: 'otro', label: 'Otro', emoji: '📄' },
+  { key: 'soat', label: 'SOAT', Icon: IconShieldCheck },
+  { key: 'tarjeta_propiedad', label: 'Tarjeta de Propiedad', Icon: IconClipboardText },
+  { key: 'tecnomecanica', label: 'Tecnomecánica', Icon: IconTool },
+  { key: 'otro', label: 'Otro', Icon: IconFileText },
 ];
 
 function extraerPath(urlOrPath: string): string {
@@ -42,11 +47,7 @@ export default function DocumentosScreen({ route, navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<string | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchDocumentos();
-    }, [])
-  );
+  useFocusEffect(useCallback(() => { fetchDocumentos(); }, []));
 
   async function fetchDocumentos() {
     try {
@@ -65,7 +66,6 @@ export default function DocumentosScreen({ route, navigation }: any) {
             .from('documentos')
             .createSignedUrl(path, 3600);
           if (signError) console.error('[Docs] createSignedUrl error:', signError.message, '| path:', path);
-          else console.log('[Docs] signed URL ok para:', path);
           return { ...doc, signedUrl: signed?.signedUrl };
         })
       );
@@ -78,7 +78,7 @@ export default function DocumentosScreen({ route, navigation }: any) {
     }
   }
 
-  async function handleSubir(tipo: string) {
+  function handleSubir(tipo: string) {
     Alert.alert('Subir documento', 'Elige el tipo de archivo', [
       { text: 'Foto / Imagen', onPress: () => subirImagen(tipo) },
       { text: 'PDF', onPress: () => subirPDF(tipo) },
@@ -87,10 +87,7 @@ export default function DocumentosScreen({ route, navigation }: any) {
   }
 
   async function subirImagen(tipo: string) {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      quality: 0.8,
-    });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.8 });
     if (result.canceled) return;
     const asset = result.assets[0];
     const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
@@ -109,44 +106,30 @@ export default function DocumentosScreen({ route, navigation }: any) {
     setUploading(tipo);
     try {
       const path = `${session?.user.id}/${vehiculo.id}/${tipo}_${Date.now()}.${ext}`;
-
       const response = await fetch(uri);
       const arrayBuffer = await response.arrayBuffer();
+      if (arrayBuffer.byteLength === 0) throw new Error('No se pudo leer el archivo. Intenta de nuevo.');
 
-      if (arrayBuffer.byteLength === 0) {
-        throw new Error('No se pudo leer el archivo. Intenta de nuevo.');
-      }
-
-      console.log('[Upload]', tipo, arrayBuffer.byteLength, 'bytes');
-
-      const { error: uploadError } = await supabase.storage
-        .from('documentos')
-        .upload(path, arrayBuffer, { contentType: mimeType });
-
+      const { error: uploadError } = await supabase.storage.from('documentos').upload(path, arrayBuffer, { contentType: mimeType });
       if (uploadError) throw uploadError;
 
       await supabase.from('documentos').insert({
-        vehiculo_id: vehiculo.id,
-        tipo,
-        nombre: `${tipo}_${Date.now()}`,
-        archivo_url: path,
+        vehiculo_id: vehiculo.id, tipo, nombre: `${tipo}_${Date.now()}`, archivo_url: path,
       });
 
       await fetchDocumentos();
-      Alert.alert('Listo', 'Documento subido correctamente');
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      Alert.alert('No se pudo subir', e.message);
     } finally {
       setUploading(null);
     }
   }
 
-  async function handleEliminar(doc: Documento) {
+  function handleEliminar(doc: Documento) {
     Alert.alert('Eliminar', '¿Eliminar este documento?', [
       { text: 'Cancelar', style: 'cancel' },
       {
-        text: 'Eliminar',
-        style: 'destructive',
+        text: 'Eliminar', style: 'destructive',
         onPress: async () => {
           const path = extraerPath(doc.archivo_url);
           await supabase.storage.from('documentos').remove([path]);
@@ -162,159 +145,110 @@ export default function DocumentosScreen({ route, navigation }: any) {
   }
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator color="#48975a" size="large" />
-      </View>
-    );
+    return <View style={s.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.back}>‹ Volver</Text>
-        </TouchableOpacity>
-        <Text style={styles.title}>Documentos</Text>
-        <Text style={styles.subtitle}>{vehiculo.marca} {vehiculo.modelo}</Text>
-      </View>
+    <View style={s.container}>
+      <CabeceraPantalla titulo="Documentos" onBack={() => navigation.goBack()} />
 
-      {TIPOS.map((tipo) => {
-        const docs = docsPorTipo(tipo.key);
-        const subiendo = uploading === tipo.key;
+      <ScrollView contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+        <Text style={s.subtitulo}>{vehiculo.marca} {vehiculo.modelo}</Text>
 
-        return (
-          <View key={tipo.key} style={styles.seccion}>
-            <View style={styles.seccionHeader}>
-              <Text style={styles.seccionEmoji}>{tipo.emoji}</Text>
-              <Text style={styles.seccionLabel}>{tipo.label}</Text>
-              <TouchableOpacity
-                style={[styles.subirBtn, subiendo && styles.subirBtnDisabled]}
-                onPress={() => handleSubir(tipo.key)}
-                disabled={subiendo}
-              >
-                {subiendo
-                  ? <ActivityIndicator color="#020202" size="small" />
-                  : <Text style={styles.subirBtnText}>+ Subir</Text>
-                }
-              </TouchableOpacity>
-            </View>
+        {TIPOS.map(({ key, label, Icon }) => {
+          const docs = docsPorTipo(key);
+          const subiendo = uploading === key;
 
-            {docs.length === 0 ? (
-              <Text style={styles.vacio}>Sin documentos</Text>
-            ) : (
-              docs.map((doc) => {
-                const esPDF = extraerPath(doc.archivo_url).endsWith('.pdf');
-                return (
-                  <TouchableOpacity
-                    key={doc.id}
-                    style={styles.docCard}
-                    onPress={() => doc.signedUrl && Linking.openURL(doc.signedUrl)}
-                  >
-                    {esPDF ? (
-                      <View style={styles.pdfPreview}>
-                        <Text style={styles.pdfIcon}>PDF</Text>
-                      </View>
-                    ) : doc.signedUrl ? (
-                      <Image
-                        source={doc.signedUrl}
-                        style={styles.imgPreview}
-                        contentFit="cover"
-                        onError={(e) => console.error('[Docs] Image load error:', e, '| url:', doc.signedUrl?.slice(0, 80))}
-                      />
-                    ) : (
-                      <View style={styles.pdfPreview}>
-                        <Text style={styles.pdfIcon}>🖼️</Text>
-                      </View>
-                    )}
-                    <View style={styles.docMeta}>
-                      <Text style={styles.docNombre}>
-                        {esPDF ? 'Ver PDF' : 'Ver imagen'}
-                      </Text>
-                      <Text style={styles.docFecha}>
-                        {doc.created_at
-                          ? new Date(doc.created_at).toLocaleDateString('es-CO')
-                          : ''}
-                      </Text>
-                    </View>
-                    <TouchableOpacity
-                      style={styles.eliminarBtn}
-                      onPress={() => handleEliminar(doc)}
+          return (
+            <View key={key} style={s.seccion}>
+              <View style={s.seccionHeader}>
+                <Icon size={18} color={colors.accent} />
+                <Text style={s.seccionLabel}>{label}</Text>
+                <Pressable
+                  style={({ pressed }) => [s.subirBtn, subiendo && { opacity: 0.6 }, pressed && { opacity: 0.85 }]}
+                  onPress={() => handleSubir(key)}
+                  disabled={subiendo}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Subir ${label}`}
+                >
+                  {subiendo
+                    ? <ActivityIndicator color={colors.onAccent} size="small" />
+                    : <><IconPlus size={14} color={colors.onAccent} /><Text style={s.subirBtnText}>Subir</Text></>}
+                </Pressable>
+              </View>
+
+              {docs.length === 0 ? (
+                <Text style={s.vacio}>Sin documentos</Text>
+              ) : (
+                docs.map((doc) => {
+                  const esPDF = extraerPath(doc.archivo_url).endsWith('.pdf');
+                  return (
+                    <Pressable
+                      key={doc.id}
+                      style={({ pressed }) => [s.docCard, pressed && { opacity: 0.85 }]}
+                      onPress={() => doc.signedUrl && Linking.openURL(doc.signedUrl)}
+                      accessibilityRole="button"
+                      accessibilityLabel={esPDF ? 'Ver PDF' : 'Ver imagen'}
                     >
-                      <Text style={styles.eliminar}>🗑️</Text>
-                    </TouchableOpacity>
-                  </TouchableOpacity>
-                );
-              })
-            )}
-          </View>
-        );
-      })}
-    </ScrollView>
+                      {esPDF ? (
+                        <View style={s.pdfPreview}><IconFileTypePdf size={24} color={colors.accent} /></View>
+                      ) : doc.signedUrl ? (
+                        <Image source={doc.signedUrl} style={s.imgPreview} contentFit="cover" />
+                      ) : (
+                        <View style={s.pdfPreview}><IconPhoto size={24} color={colors.textTertiary} /></View>
+                      )}
+                      <View style={s.docMeta}>
+                        <Text style={s.docNombre}>{esPDF ? 'Ver PDF' : 'Ver imagen'}</Text>
+                        <Text style={s.docFecha}>{doc.created_at ? new Date(doc.created_at).toLocaleDateString('es-CO') : ''}</Text>
+                      </View>
+                      <Pressable
+                        style={s.eliminarBtn}
+                        onPress={() => handleEliminar(doc)}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel="Eliminar documento"
+                      >
+                        <IconTrash size={18} color={colors.dangerAction} />
+                      </Pressable>
+                    </Pressable>
+                  );
+                })
+              )}
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#020202' },
-  content: { padding: 24, paddingTop: 56 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#020202' },
-  header: { marginBottom: 32 },
-  back: { color: '#48975a', fontSize: 16, marginBottom: 8 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#fff' },
-  subtitle: { fontSize: 14, color: '#666', marginTop: 4 },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bgPrimary },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
+  content: { paddingHorizontal: spacing.xl, paddingBottom: 40 },
+  subtitulo: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, marginBottom: spacing.lg },
+
   seccion: {
-    backgroundColor: '#0f1110',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#3e4140',
+    backgroundColor: colors.bgCard, borderRadius: radius.lg, padding: spacing.lg,
+    marginBottom: spacing.md, borderWidth: 1, borderColor: colors.bgSurface,
   },
-  seccionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  seccionEmoji: { fontSize: 20, marginRight: 8 },
-  seccionLabel: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#fff' },
+  seccionHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
+  seccionLabel: { flex: 1, fontFamily: fonts.heading, fontSize: 15, color: colors.textPrimary },
   subirBtn: {
-    backgroundColor: '#48975a',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    minWidth: 70,
-    alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.accent,
+    borderRadius: radius.md, minHeight: 32, paddingHorizontal: spacing.md,
   },
-  subirBtnDisabled: { opacity: 0.6 },
-  subirBtnText: { color: '#020202', fontSize: 13, fontWeight: 'bold' },
-  vacio: { color: '#444', fontSize: 13, paddingLeft: 4 },
+  subirBtnText: { fontFamily: fonts.bold, fontSize: 13, color: colors.onAccent },
+  vacio: { fontFamily: fonts.body, fontSize: 13, color: colors.textTertiary, paddingLeft: 2 },
+
   docCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#242424',
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 8,
-    gap: 12,
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    backgroundColor: colors.bgElevated, borderRadius: radius.md, padding: spacing.sm, marginTop: spacing.sm,
   },
-  imgPreview: {
-    width: 56,
-    height: 56,
-    borderRadius: 8,
-    backgroundColor: '#333',
-  },
-  pdfPreview: {
-    width: 56,
-    height: 56,
-    borderRadius: 8,
-    backgroundColor: '#2a1a1a',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pdfIcon: { color: '#48975a', fontWeight: 'bold', fontSize: 12 },
+  imgPreview: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.bgSurface },
+  pdfPreview: { width: 56, height: 56, borderRadius: radius.sm, backgroundColor: colors.bgSurface, justifyContent: 'center', alignItems: 'center' },
   docMeta: { flex: 1 },
-  docNombre: { color: '#fff', fontSize: 14 },
-  docFecha: { color: '#666', fontSize: 12, marginTop: 2 },
-  eliminarBtn: { padding: 4 },
-  eliminar: { fontSize: 18 },
+  docNombre: { fontFamily: fonts.body, fontSize: 14, color: colors.textPrimary },
+  docFecha: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: 2 },
+  eliminarBtn: { padding: spacing.xs },
 });
