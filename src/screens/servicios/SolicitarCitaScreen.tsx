@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import {
   IconArrowLeft, IconCalendar, IconClock,
-  IconBike, IconCheck, IconNotes,
+  IconBike, IconCheck, IconNotes, IconCalendarCheck, IconChevronRight,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -154,6 +154,19 @@ export default function SolicitarCitaScreen({ route, navigation }: any) {
         <Text style={s.successSub}>
           {negocio.nombre} recibirá tu solicitud.{'\n'}Te confirmarán la cita pronto.
         </Text>
+
+        <Pressable
+          style={({ pressed }) => [s.siguientePasoBtn, pressed && { opacity: 0.85 }]}
+          onPress={() => navigation.navigate('MisCitas')}
+        >
+          <View style={s.siguientePasoIcono}><IconCalendarCheck size={22} color={colors.accent} /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.siguientePasoTitulo}>Ver mi cita</Text>
+            <Text style={s.siguientePasoSub}>Sigue el estado y chatea con el taller</Text>
+          </View>
+          <IconChevronRight size={20} color={colors.accent} />
+        </Pressable>
+
         <Pressable
           style={({ pressed }) => [s.successBtn, pressed && { opacity: 0.85 }]}
           onPress={() => navigation.goBack()}
@@ -430,12 +443,23 @@ const s = StyleSheet.create({
   successSub: {
     fontFamily: fonts.body, fontSize: 15,
     color: colors.textSecondary, textAlign: 'center',
-    lineHeight: 22, marginBottom: spacing.xxl,
+    lineHeight: 22, marginBottom: spacing.xl,
   },
+  siguientePasoBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, alignSelf: 'stretch',
+    backgroundColor: colors.accentDark, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.accent, padding: spacing.md, marginBottom: spacing.md,
+  },
+  siguientePasoIcono: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(2,2,2,0.35)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  siguientePasoTitulo: { fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary },
+  siguientePasoSub: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary, marginTop: 2 },
   successBtn: {
-    backgroundColor: colors.accent, borderRadius: radius.lg,
+    borderWidth: 1, borderColor: colors.bgSurface, borderRadius: radius.lg,
     paddingVertical: spacing.lg, paddingHorizontal: spacing.xxl,
-    minHeight: 52, justifyContent: 'center',
+    minHeight: 52, justifyContent: 'center', alignSelf: 'stretch', alignItems: 'center',
   },
-  successBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
+  successBtnText: { fontFamily: fonts.heading, fontSize: 15, color: colors.textSecondary },
 });

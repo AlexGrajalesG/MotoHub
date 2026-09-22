@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { IconArrowLeft, IconCamera, IconX, IconFileText } from '@tabler/icons-react-native';
+import { IconArrowLeft, IconCamera, IconX, IconFileText, IconCircleCheck } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
 import { TIPO_LABEL } from '../../lib/historial';
@@ -31,6 +31,7 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
   const [fotos, setFotos] = useState<string[]>([]);
   const [facturaUri, setFacturaUri] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
 
   useEffect(() => {
     supabase.from('vehiculos').select('kilometraje').eq('id', vehiculoId).single()
@@ -89,12 +90,28 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
       });
       if (error) throw error;
 
-      navigation.goBack();
+      setEnviado(true);
     } catch (e: any) {
       Alert.alert('Error', e.message ?? 'No se pudo registrar el servicio');
     } finally {
       setGuardando(false);
     }
+  }
+
+  // ── Confirmacion: el cliente aun tiene que aceptarlo, no queda en su historial todavia ──
+  if (enviado) {
+    return (
+      <View style={s.container}>
+        <View style={s.exito}>
+          <View style={s.exitoIcono}><IconCircleCheck size={44} color={colors.accent} /></View>
+          <Text style={s.exitoTitulo}>Registro enviado</Text>
+          <Text style={s.exitoSub}>Tu cliente lo verá en el chat y debe aceptarlo para que quede en su historial.</Text>
+          <Pressable style={({ pressed }) => [s.exitoBtn, pressed && { opacity: 0.85 }]} onPress={() => navigation.goBack()}>
+            <Text style={s.exitoBtnTexto}>Volver al chat</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
   }
 
   return (
@@ -276,4 +293,14 @@ const s = StyleSheet.create({
   guardarBtn: { backgroundColor: colors.accent, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: spacing.xl },
   guardarBtnDisabled: { opacity: 0.5 },
   guardarBtnText: { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 16 },
+
+  exito: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl },
+  exitoIcono: {
+    width: 88, height: 88, borderRadius: 44, backgroundColor: colors.accentDark,
+    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.lg,
+  },
+  exitoTitulo: { fontFamily: fonts.display, fontSize: 24, color: colors.textPrimary, letterSpacing: -0.4 },
+  exitoSub: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm, marginBottom: spacing.xl, lineHeight: 20 },
+  exitoBtn: { borderWidth: 1, borderColor: colors.bgSurface, borderRadius: radius.lg, minHeight: 52, paddingHorizontal: spacing.xxl, justifyContent: 'center', alignSelf: 'stretch', alignItems: 'center' },
+  exitoBtnTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.textSecondary },
 });

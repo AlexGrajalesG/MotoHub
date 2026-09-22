@@ -24,6 +24,7 @@ import { marcarCitaLeida } from '../../lib/lecturas';
 import { determinarRolEnChatCita } from '../../lib/roles';
 import { openUrl } from '../../lib/openUrl';
 import EstrellasDisplay from '../../components/EstrellasDisplay';
+import EstadoCitaLinea from '../../components/EstadoCitaLinea';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -53,15 +54,6 @@ const ROL_LABEL: Record<RolAutor, string> = {
 };
 const ROL_COLOR: Record<RolAutor, string> = {
   propietario: '#5ac8fa', negocio: colors.accent, mecanico: '#34c759',
-};
-
-const ESTADO_LABELS: Record<string, string> = {
-  pendiente: 'Pendiente', confirmada: 'Confirmada',
-  completada: 'Completada', cancelada: 'Cancelada',
-};
-const ESTADO_COLORS: Record<string, string> = {
-  pendiente: '#f5a623', confirmada: '#5ac8fa',
-  completada: '#34c759', cancelada: colors.dangerAction,
 };
 
 function formatHora(iso: string): string {
@@ -320,10 +312,10 @@ export default function ChatCitaScreen({ route, navigation }: any) {
             </View>
           )}
         </View>
-        <View style={[s.estadoBadge, { backgroundColor: `${ESTADO_COLORS[cita.estado]}22` }]}>
-          <View style={[s.estadoDot, { backgroundColor: ESTADO_COLORS[cita.estado] }]} />
-          <Text style={[s.estadoText, { color: ESTADO_COLORS[cita.estado] }]}>{ESTADO_LABELS[cita.estado]}</Text>
-        </View>
+      </View>
+
+      <View style={s.lineaTiempoWrap}>
+        <EstadoCitaLinea estado={cita.estado as any} compacto />
       </View>
 
       <FlatList
@@ -483,18 +475,13 @@ const s = StyleSheet.create({
   },
   headerCenter:  { flex: 1 },
   headerTitle:   { fontFamily: fonts.bold, fontSize: 16, color: colors.textPrimary },
+  lineaTiempoWrap: { paddingHorizontal: spacing.xl, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.bgSurface },
   headerSubtitle:{ fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: 1 },
   walkinBadge: {
     alignSelf: 'flex-start', backgroundColor: colors.bgCard, borderRadius: radius.sm,
     paddingHorizontal: 6, paddingVertical: 2, marginTop: 3,
   },
   walkinBadgeText: { fontFamily: fonts.heading, fontSize: 10, color: colors.textTertiary },
-  estadoBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 4,
-  },
-  estadoDot:  { width: 6, height: 6, borderRadius: 3 },
-  estadoText: { fontFamily: fonts.heading, fontSize: 11 },
 
   list: { padding: spacing.lg, gap: spacing.sm, flexGrow: 1 },
 
