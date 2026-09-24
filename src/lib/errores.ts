@@ -30,6 +30,9 @@ export function mensajeErrorAuth(error: unknown): ErrorAuth {
   if (m.includes('different from the old') || m.includes('same_password')) {
     return { mensaje: 'La nueva contraseña debe ser distinta de la actual.' };
   }
+  if (m.includes('otp_expired') || m.includes('token has expired') || m.includes('invalid token') || m.includes('otp')) {
+    return { mensaje: 'El código no es válido o ya venció. Pide uno nuevo.' };
+  }
   if (m.includes('unable to validate email') || m.includes('invalid email')) {
     return { mensaje: 'Ese correo no parece válido. Revísalo.' };
   }

@@ -4,6 +4,7 @@ import { IconMailCheck, IconAlertCircle } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
 import { mensajeErrorAuth } from '../../lib/errores';
+import FondoAuth from '../../components/FondoAuth';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -39,6 +40,7 @@ export default function CheckEmailScreen({ route, navigation }: any) {
   }
 
   return (
+    <FondoAuth>
     <View style={s.container}>
       <View style={s.centro}>
         <View style={s.icono}>
@@ -96,11 +98,12 @@ export default function CheckEmailScreen({ route, navigation }: any) {
         </Pressable>
       </View>
     </View>
+    </FondoAuth>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgPrimary },
+  container: { flex: 1 },
   centro: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl },
 
   icono: {
@@ -131,7 +134,7 @@ const s = StyleSheet.create({
 
   footer: {
     paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.sm,
-    borderTopWidth: 1, borderTopColor: colors.bgCard, backgroundColor: colors.bgPrimary,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(2,2,2,0.55)',
   },
   boton: {
     backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54,

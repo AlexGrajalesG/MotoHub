@@ -23,6 +23,7 @@ import PrivacidadScreen from '../screens/cuenta/PrivacidadScreen';
 import AyudaScreen from '../screens/cuenta/AyudaScreen';
 import CuentaGate from '../components/CuentaGate';
 import CheckEmailScreen       from '../screens/auth/CheckEmailScreen';
+import RecuperarClaveScreen   from '../screens/auth/RecuperarClaveScreen';
 
 import GarageScreen           from '../screens/garage/GarageScreen';
 import AgregarVehiculoScreen  from '../screens/garage/AgregarVehiculoScreen';
@@ -33,7 +34,6 @@ import FichaSeguridadScreen   from '../screens/garage/FichaSeguridadScreen';
 import RecordatoriosScreen    from '../screens/garage/RecordatoriosScreen';
 import CrearRecordatorioScreen from '../screens/garage/CrearRecordatorioScreen';
 
-import HistorialScreen        from '../screens/historial/HistorialScreen';
 import HistorialVehiculoScreen from '../screens/historial/HistorialVehiculoScreen';
 import AgregarHistorialScreen  from '../screens/historial/AgregarHistorialScreen';
 import DetalleHistorialScreen  from '../screens/historial/DetalleHistorialScreen';
@@ -73,7 +73,6 @@ import ModeracionScreen from '../screens/comunidad/ModeracionScreen';
 
 const Tab          = createBottomTabNavigator();
 const GarageNav    = createNativeStackNavigator();
-const HistorialNav = createNativeStackNavigator();
 const ServiciosNav = createNativeStackNavigator();
 const NegocioNav   = createNativeStackNavigator();
 const CitasTabNav   = createNativeStackNavigator();
@@ -107,17 +106,6 @@ function GarageStack() {
       <GarageNav.Screen name="AgregarHistorial"  component={AgregarHistorialScreen} />
       <GarageNav.Screen name="DetalleHistorial"  component={DetalleHistorialScreen} />
     </GarageNav.Navigator>
-  );
-}
-
-function HistorialStack() {
-  return (
-    <HistorialNav.Navigator screenOptions={{ headerShown: false }}>
-      <HistorialNav.Screen name="HistorialHome"      component={HistorialScreen} />
-      <HistorialNav.Screen name="HistorialVehiculo" component={HistorialVehiculoScreen} />
-      <HistorialNav.Screen name="AgregarHistorial"  component={AgregarHistorialScreen} />
-      <HistorialNav.Screen name="DetalleHistorial"  component={DetalleHistorialScreen} />
-    </HistorialNav.Navigator>
   );
 }
 
@@ -352,11 +340,6 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
         }}
       />
       <Tab.Screen
-        name="Historial"
-        component={HistorialStack}
-        options={{ tabBarIcon: ({ color, size }) => <IconClipboardText size={size} color={color} /> }}
-      />
-      <Tab.Screen
         name="Servicios"
         component={ServiciosStack}
         options={{ tabBarIcon: ({ color, size }) => <IconBuildingStore size={size} color={color} /> }}
@@ -445,6 +428,7 @@ function AuthStack() {
       <AuthNav.Screen name="Login"      component={LoginScreen} />
       <AuthNav.Screen name="Register"   component={RegisterScreen} />
       <AuthNav.Screen name="CheckEmail" component={CheckEmailScreen} />
+      <AuthNav.Screen name="RecuperarClave" component={RecuperarClaveScreen} />
       <AuthNav.Screen name="Legal"      component={LegalScreen} />
     </AuthNav.Navigator>
   );

@@ -8,6 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
 import { mensajeErrorAuth, type ErrorAuth } from '../../lib/errores';
 import RodixLogo from '../../components/RodixLogo';
+import FondoAuth from '../../components/FondoAuth';
 import { Campo, Entrada } from '../../components/FormField';
 
 const { colors, spacing, radius, fonts } = tokens;
@@ -51,6 +52,7 @@ export default function LoginScreen({ navigation }: any) {
   }
 
   return (
+    <FondoAuth>
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={s.logo}>
@@ -116,6 +118,15 @@ export default function LoginScreen({ navigation }: any) {
               onSubmitEditing={handleLogin}
             />
           </Campo>
+
+          <Pressable
+            onPress={() => navigation.navigate('RecuperarClave', { email: email.trim() })}
+            hitSlop={8}
+            style={s.olvide}
+            accessibilityRole="link"
+          >
+            <Text style={s.olvideTexto}>¿Olvidaste tu contraseña?</Text>
+          </Pressable>
         </View>
       </ScrollView>
 
@@ -137,11 +148,12 @@ export default function LoginScreen({ navigation }: any) {
         </Pressable>
       </View>
     </KeyboardAvoidingView>
+    </FondoAuth>
   );
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgPrimary },
+  container: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, paddingTop: 60, paddingBottom: spacing.xl },
 
   logo: { alignItems: 'center', marginBottom: spacing.xxl },
@@ -161,8 +173,10 @@ const s = StyleSheet.create({
 
   footer: {
     paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.md,
-    backgroundColor: colors.bgPrimary, borderTopWidth: 1, borderTopColor: colors.bgCard,
+    backgroundColor: 'rgba(2,2,2,0.55)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)',
   },
+  olvide: { alignSelf: 'flex-end', minHeight: 44, justifyContent: 'center' },
+  olvideTexto: { fontFamily: fonts.bold, fontSize: 14, color: colors.accent },
   boton: {
     backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54,
     justifyContent: 'center', alignItems: 'center',
