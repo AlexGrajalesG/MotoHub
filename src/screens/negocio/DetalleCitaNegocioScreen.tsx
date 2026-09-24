@@ -14,6 +14,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
+import { useVisorImagenes } from '../../components/VisorImagenes';
 import { fetchMecanicosDeNegocio, type Mecanico } from '../../lib/mecanicos';
 import {
   fetchMensajes, enviarMensajeTexto, uploadAdjuntoCita,
@@ -54,6 +55,7 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
   const [mecanicos, setMecanicos] = useState<Mecanico[]>([]);
   const [fotos, setFotos]       = useState<string[]>([]);
   const [subiendo, setSubiendo] = useState(false);
+  const { abrir: abrirFotos, visor: visorFotos } = useVisorImagenes();
 
   useFocusEffect(useCallback(() => { fetchCita(); fetchFotos(); }, [citaId]));
 
@@ -151,7 +153,7 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
     if (!cita || !session) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') { Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
     if (result.canceled || !result.assets[0]) return;
     const uri = result.assets[0].uri;
     const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
@@ -185,10 +187,14 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
         <Text style={s.headerTitle}>RODIX</Text>
       </View>
 
+      {visorFotos}
+
       {/* ── Hero del vehículo ── */}
       <View style={s.hero}>
         {cita.vehiculo?.fotos?.[0] ? (
-          <Image source={{ uri: cita.vehiculo.fotos[0] }} style={s.heroImg} contentFit="cover" />
+          <Pressable onPress={() => abrirFotos(cita.vehiculo!.fotos!, 0)} accessibilityRole="imagebutton" accessibilityLabel="Ver foto del vehículo">
+            <Image source={{ uri: cita.vehiculo.fotos[0] }} style={s.heroImg} contentFit="cover" />
+          </Pressable>
         ) : (
           <View style={[s.heroImg, s.heroPlaceholder]}>
             <IconBike size={56} color={colors.bgSurface} />
@@ -236,7 +242,9 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
         </View>
         <View style={s.fotosGrid}>
           {fotos.map((url, i) => (
-            <Image key={i} source={{ uri: url }} style={s.fotoTile} contentFit="cover" />
+            <Pressable key={i} onPress={() => abrirFotos(fotos, i)} accessibilityRole="imagebutton" accessibilityLabel={`Ver foto ${i + 1}`}>
+              <Image source={{ uri: url }} style={s.fotoTile} contentFit="cover" />
+            </Pressable>
           ))}
           <Pressable style={({ pressed }) => [s.subirTile, pressed && { opacity: 0.7 }]} onPress={anexarFoto} disabled={subiendo}>
             {subiendo

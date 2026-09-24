@@ -39,7 +39,7 @@ export default function EditarProductoScreen({ route, navigation }: any) {
       Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, allowsEditing: true });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
     if (!result.canceled && result.assets[0]) setFotosNuevas(prev => [...prev, result.assets[0].uri]);
   }
 

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { IconArrowLeft, IconPackage, IconMessageCircle, IconBuildingStore } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
+import { useVisorImagenes } from '../../components/VisorImagenes';
 import { openTel } from '../../lib/openUrl';
 import { formatCOP } from '../../lib/precio';
 import type { Producto } from '../../lib/productos';
@@ -12,6 +13,7 @@ const { colors, spacing, radius, fonts } = tokens;
 export default function DetalleProductoScreen({ route, navigation }: any) {
   const { producto, negocio } = route.params as { producto: Producto; negocio: { id: string; nombre: string; telefono: string | null } };
   const [fotoActiva, setFotoActiva] = useState(0);
+  const { abrir: abrirFotos, visor: visorFotos } = useVisorImagenes();
 
   return (
     <View style={s.container}>
@@ -27,9 +29,14 @@ export default function DetalleProductoScreen({ route, navigation }: any) {
         <Text style={s.headerTitle} numberOfLines={1}>{producto.nombre}</Text>
       </View>
 
+      {visorFotos}
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         {producto.fotos.length > 0
-          ? <Image source={{ uri: producto.fotos[fotoActiva] }} style={s.fotoGrande} contentFit="cover" />
+          ? (
+            <Pressable onPress={() => abrirFotos(producto.fotos, fotoActiva)} accessibilityRole="imagebutton" accessibilityLabel="Ver foto ampliada">
+              <Image source={{ uri: producto.fotos[fotoActiva] }} style={s.fotoGrande} contentFit="cover" />
+            </Pressable>
+          )
           : <View style={[s.fotoGrande, s.fotoPlaceholder]}><IconPackage size={48} color={colors.textTertiary} /></View>
         }
         {producto.fotos.length > 1 && (

@@ -2,21 +2,23 @@ import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, FlatList, Pressable, ScrollView, Modal,
-  Alert, RefreshControl, Linking, AccessibilityInfo, Animated,
+  Alert, RefreshControl, AccessibilityInfo, Animated,
 } from 'react-native';
 import { Image } from 'expo-image';
 import {
   IconWorld, IconMotorbike, IconBuildingStore, IconDots, IconFlag, IconUserOff,
-  IconBrandTiktok, IconBrandInstagram, IconExternalLink, IconPlus, IconShieldCheck, IconX,
+  IconPlus, IconShieldCheck, IconX,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useModo } from '../../context/ModoContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
 import { tokens } from '../../lib/tokens';
-import { fetchFeed, reportarPost, bloquearUsuario, eliminarPost, type Post, type Pestana } from '../../lib/comunidad';
+import { fetchFeed, reportarPost, bloquearUsuario, eliminarPost, CATEGORIAS, type Post, type Pestana } from '../../lib/comunidad';
 import TopBar from '../../components/TopBar';
 import PressableCard from '../../components/PressableCard';
+import FotosPost from '../../components/comunidad/FotosPost';
+import VideoPost from '../../components/comunidad/VideoPost';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -73,7 +75,9 @@ const PostCard = memo(function PostCard({
 }: { item: Post; index: number; reduceMotion: boolean; miId?: string; esModerador: boolean; onMenu: (p: Post) => void }) {
   const nombre = item.negocio?.nombre ?? item.autor?.nombre ?? 'Usuario de Rodix';
   const esTaller = item.rol_autor === 'negocio';
-  const VideoIcon = item.video_plataforma === 'instagram' ? IconBrandInstagram : IconBrandTiktok;
+  const categoria = CATEGORIAS.find(c => c.key === item.categoria);
+  const [expandido, setExpandido] = useState(false);
+  const largo = (item.contenido?.length ?? 0) > 220;
 
   return (
     <PressableCard index={index} reduceMotion={reduceMotion} onPress={() => {}} style={s.card} scaleTo={1}>
@@ -101,28 +105,24 @@ const PostCard = memo(function PostCard({
         </Pressable>
       </View>
 
-      {!!item.contenido && <Text style={s.contenido}>{item.contenido}</Text>}
-
-      {item.fotos_urls && item.fotos_urls.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.fotosScroll}>
-          {item.fotos_urls.map((url, i) => (
-            <Image key={i} source={{ uri: url }} style={s.foto} contentFit="cover" />
-          ))}
-        </ScrollView>
+      {!!categoria && categoria.key !== 'general' && (
+        <View style={s.categoria}><Text style={s.categoriaTexto}>{categoria.label}</Text></View>
       )}
 
-      {item.video_url && (
-        <Pressable
-          style={({ pressed }) => [s.videoLink, pressed && { opacity: 0.85 }]}
-          onPress={() => Linking.openURL(item.video_url!)}
-          accessibilityRole="button"
-          accessibilityLabel={`Abrir en ${item.video_plataforma === 'instagram' ? 'Instagram' : 'TikTok'}`}
-        >
-          <VideoIcon size={20} color={colors.accent} />
-          <Text style={s.videoLinkTexto}>Abrir en {item.video_plataforma === 'instagram' ? 'Instagram' : 'TikTok'}</Text>
-          <IconExternalLink size={16} color={colors.textTertiary} />
-        </Pressable>
+      {!!item.contenido && (
+        <>
+          <Text style={s.contenido} numberOfLines={expandido ? undefined : 6}>{item.contenido}</Text>
+          {largo && (
+            <Pressable onPress={() => setExpandido(v => !v)} hitSlop={8} style={s.verMas} accessibilityRole="button">
+              <Text style={s.verMasTexto}>{expandido ? 'Ver menos' : 'Ver más'}</Text>
+            </Pressable>
+          )}
+        </>
       )}
+
+      {item.fotos_urls && item.fotos_urls.length > 0 && <FotosPost urls={item.fotos_urls} />}
+
+      {item.video_url && item.video_plataforma && <VideoPost url={item.video_url} plataforma={item.video_plataforma} />}
     </PressableCard>
   );
 });
@@ -347,14 +347,10 @@ const s = StyleSheet.create({
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: 1 },
 
   contenido: { fontFamily: fonts.body, fontSize: 15, color: colors.textPrimary, lineHeight: 21 },
-  fotosScroll: { marginTop: spacing.md },
-  foto: { width: 140, height: 140, borderRadius: radius.md, marginRight: spacing.sm, backgroundColor: colors.bgSurface },
-  videoLink: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md,
-    backgroundColor: colors.accentDark, borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
-    minHeight: 46, paddingHorizontal: spacing.md,
-  },
-  videoLinkTexto: { flex: 1, fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
+  categoria: { alignSelf: 'flex-start', marginBottom: spacing.sm, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: colors.accentDark },
+  categoriaTexto: { fontFamily: fonts.bold, fontSize: 11, color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.6 },
+  verMas: { alignSelf: 'flex-start', minHeight: 32, justifyContent: 'center' },
+  verMasTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.accent },
 
   esqLinea: { height: 12, borderRadius: 6, backgroundColor: colors.bgSurface },
 

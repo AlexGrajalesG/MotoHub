@@ -14,6 +14,7 @@ import { tokens } from '../../lib/tokens';
 import {
   crearPost, subirFotoComunidad, detectarPlataforma, CATEGORIAS, type Categoria, type VideoPlataforma,
 } from '../../lib/comunidad';
+import VideoPost from '../../components/comunidad/VideoPost';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
 
 const { colors, spacing, radius, fonts } = tokens;
@@ -46,7 +47,7 @@ export default function CrearPostScreen({ navigation }: any) {
       return;
     }
     const resultado = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images', quality: 0.7, allowsMultipleSelection: true, selectionLimit: MAX_FOTOS - fotos.length,
+      mediaTypes: 'images', quality: 0.9, allowsMultipleSelection: true, selectionLimit: MAX_FOTOS - fotos.length,
     });
     if (resultado.canceled) return;
 
@@ -151,6 +152,9 @@ export default function CrearPostScreen({ navigation }: any) {
               <IconAlertCircle size={13} color={colors.dangerAction} />
               <Text style={s.errorInline}>Solo aceptamos enlaces de TikTok o Instagram Reels</Text>
             </View>
+          )}
+          {!!plataforma && !enlaceInvalido && !!enlace.trim() && (
+            <VideoPost url={enlace.trim()} plataforma={plataforma} />
           )}
         </View>
 

@@ -18,6 +18,7 @@ import {
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import VisorImagenes, { useVisorImagenes } from '../../components/VisorImagenes';
 import { verificarRecordatoriosKm } from '../../lib/notificaciones';
 import { IconShieldCheck } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
@@ -92,6 +93,7 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
   const [loadingDocs, setLoadingDocs] = useState(true);
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
   const [viewingImg, setViewingImg]   = useState<string | null>(null);
+  const { abrir: abrirFotos, visor: visorFotos } = useVisorImagenes();
 
   /* Fecha de vencimiento (SOAT/Tecno) */
   const [pendingUpload, setPendingUpload] = useState<{ tipo: string; uri: string; mimeType: string; ext: string } | null>(null);
@@ -140,6 +142,7 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
       .from('historial_mantenimiento')
       .select('id,tipo,descripcion,fecha,km_en_servicio,taller,negocio_nombre')
       .eq('vehiculo_id', inicial.id)
+      .or('creado_por.eq.propietario,aprobado_propietario.eq.true')
       .order('fecha', { ascending: false })
       .limit(2);
     setHistorialPreview(data ?? []);
@@ -344,6 +347,7 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
           {vehiculo.fotos.length > 0 ? (
             <TouchableOpacity
               activeOpacity={0.92} style={s.hero}
+              onPress={() => abrirFotos(vehiculo.fotos, 0)}
               onLongPress={() => handleLongPressFoto(vehiculo.fotos[0])}
             >
               <Image source={vehiculo.fotos[0]} style={s.heroFoto} contentFit="cover" />
@@ -371,7 +375,7 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
           {vehiculo.fotos.length > 1 || vehiculo.fotos.length < 5 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.thumbs}>
               {vehiculo.fotos.slice(1).map((url, idx) => (
-                <TouchableOpacity key={idx} onLongPress={() => handleLongPressFoto(url)} activeOpacity={0.88} style={s.thumbItem}>
+                <TouchableOpacity key={idx} onPress={() => abrirFotos(vehiculo.fotos, idx + 1)} onLongPress={() => handleLongPressFoto(url)} activeOpacity={0.88} style={s.thumbItem}>
                   <Image source={url} style={s.thumbFoto} contentFit="cover" />
                 </TouchableOpacity>
               ))}
@@ -476,17 +480,9 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
 
       </ScrollView>
 
-      {/* ── Modal imagen fullscreen ── */}
-      <Modal visible={!!viewingImg} transparent animationType="fade" onRequestClose={() => setViewingImg(null)}>
-        <Pressable style={s.modalBg} onPress={() => setViewingImg(null)}>
-          {viewingImg && (
-            <Image source={{ uri: viewingImg }} style={s.modalImg} contentFit="contain" />
-          )}
-          <TouchableOpacity style={s.modalClose} onPress={() => setViewingImg(null)}>
-            <IconX size={20} color="#fff" />
-          </TouchableOpacity>
-        </Pressable>
-      </Modal>
+      {/* ── Visor de imágenes ── */}
+      {visorFotos}
+      <VisorImagenes urls={viewingImg ? [viewingImg] : []} inicio={viewingImg ? 0 : null} onCerrar={() => setViewingImg(null)} />
 
       {/* ── Modal actualizar kilometraje ── */}
       <Modal visible={editandoKm} transparent animationType="fade" onRequestClose={() => setEditandoKm(false)}>
