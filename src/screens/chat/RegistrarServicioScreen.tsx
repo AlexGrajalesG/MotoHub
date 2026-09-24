@@ -1,30 +1,31 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
-  TextInput, ActivityIndicator, Alert, Image,
+  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
-import { IconArrowLeft, IconCamera, IconX, IconFileText, IconCircleCheck } from '@tabler/icons-react-native';
+import { IconArrowLeft, IconFileText, IconX, IconCircleCheck, IconSend, IconUserCheck, IconNotebook } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
-import { TIPO_LABEL } from '../../lib/historial';
 import { uploadAdjuntoCita, registrarServicioPendiente } from '../../lib/mensajesCita';
+import { Campo, Entrada } from '../../components/FormField';
+import { Seccion, SelectorTipo, SelectorFecha, FotosServicio } from '../../components/historial/piezas';
+import { metaTipo, fechaAISO, conMiles, soloDigitos } from '../../lib/historialTipos';
 
 const { colors, fonts, spacing, radius } = tokens;
 
-const TIPOS = Object.keys(TIPO_LABEL).filter(k => k !== 'personalizado').concat('personalizado');
+const MAX_FOTOS = 4;
 
-function hoyISO(): string {
-  return new Date().toISOString().split('T')[0];
-}
+type Vehiculo = { marca: string; modelo: string; placa: string | null; kilometraje: number | null };
 
+/** El taller o el mecánico registra el servicio hecho; el cliente debe aceptarlo. */
 export default function RegistrarServicioScreen({ route, navigation }: any) {
   const { citaId, vehiculoId, creadoPor = 'negocio' } = route.params as { citaId: string; vehiculoId: string; creadoPor?: 'negocio' | 'mecanico' };
 
+  const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null);
   const [tipo, setTipo] = useState('aceite');
   const [descripcion, setDescripcion] = useState('');
-  const [fecha] = useState(hoyISO());
+  const [fecha, setFecha] = useState(fechaAISO(new Date()));
   const [km, setKm] = useState('');
   const [costo, setCosto] = useState('');
   const [notas, setNotas] = useState('');
@@ -32,40 +33,42 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
   const [facturaUri, setFacturaUri] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [intento, setIntento] = useState(false);
 
   useEffect(() => {
-    supabase.from('vehiculos').select('kilometraje').eq('id', vehiculoId).single()
-      .then(({ data }) => { if (data?.kilometraje) setKm(String(data.kilometraje)); });
+    supabase.from('vehiculos').select('marca, modelo, placa, kilometraje').eq('id', vehiculoId).maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        setVehiculo(data as Vehiculo);
+        if (data.kilometraje) setKm(conMiles(String(data.kilometraje)));
+      });
   }, [vehiculoId]);
 
-  async function pickFoto() {
-    if (fotos.length >= 3) return;
+  const meta = metaTipo(tipo);
+  const errorDescripcion = tipo === 'personalizado' && !descripcion.trim() ? 'Cuéntale al cliente qué servicio fue' : undefined;
+
+  async function agregarFoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7, allowsEditing: true });
+    if (status !== 'granted') { Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
     if (!result.canceled && result.assets[0]) setFotos(prev => [...prev, result.assets[0].uri]);
   }
 
-  function removeFoto(index: number) {
-    setFotos(prev => prev.filter((_, i) => i !== index));
-  }
-
-  async function pickFactura() {
+  async function elegirFactura() {
     const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'] });
     if (!result.canceled && result.assets[0]) setFacturaUri(result.assets[0].uri);
   }
 
-  async function handleGuardar() {
+  async function enviar() {
+    setIntento(true);
+    if (errorDescripcion) return;
+
     setGuardando(true);
     try {
       const fotosUrls: string[] = [];
       for (const uri of fotos) {
         const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-        const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
-        const url = await uploadAdjuntoCita(uri, citaId, safeExt);
+        const url = await uploadAdjuntoCita(uri, citaId, ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg');
         if (url) fotosUrls.push(url);
       }
 
@@ -79,35 +82,33 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
         cita_id: citaId,
         vehiculo_id: vehiculoId,
         tipo,
-        descripcion: tipo === 'personalizado' ? (descripcion.trim() || null) : null,
+        descripcion: tipo === 'personalizado' ? descripcion.trim() : null,
         fecha,
-        km_en_servicio: km ? parseInt(km) : null,
-        costo: costo ? parseFloat(costo) : null,
+        km_en_servicio: soloDigitos(km),
+        costo: soloDigitos(costo),
         notas: notas.trim() || null,
         fotos: fotosUrls,
         factura_url: facturaUrl,
         creado_por: creadoPor,
       });
       if (error) throw error;
-
       setEnviado(true);
-    } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo registrar el servicio');
+    } catch {
+      Alert.alert('No se pudo enviar', 'Revisa tu conexión e intenta de nuevo.');
     } finally {
       setGuardando(false);
     }
   }
 
-  // ── Confirmacion: el cliente aun tiene que aceptarlo, no queda en su historial todavia ──
   if (enviado) {
     return (
       <View style={s.container}>
         <View style={s.exito}>
           <View style={s.exitoIcono}><IconCircleCheck size={44} color={colors.accent} /></View>
-          <Text style={s.exitoTitulo}>Registro enviado</Text>
-          <Text style={s.exitoSub}>Tu cliente lo verá en el chat y debe aceptarlo para que quede en su historial.</Text>
-          <Pressable style={({ pressed }) => [s.exitoBtn, pressed && { opacity: 0.85 }]} onPress={() => navigation.goBack()}>
-            <Text style={s.exitoBtnTexto}>Volver al chat</Text>
+          <Text style={s.exitoTitulo}>Enviado al cliente</Text>
+          <Text style={s.exitoSub}>Lo verá en el chat. Cuando lo acepte, queda en el historial de su vehículo.</Text>
+          <Pressable style={({ pressed }) => [s.botonPri, { alignSelf: 'stretch' }, pressed && { opacity: 0.85 }]} onPress={() => navigation.goBack()} accessibilityRole="button">
+            <Text style={s.botonPriTexto}>Volver al chat</Text>
           </Pressable>
         </View>
       </View>
@@ -117,190 +118,158 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Pressable style={s.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
-          <IconArrowLeft size={22} color={colors.accent} />
-          <Text style={s.backText}>Cancelar</Text>
+        <Pressable style={({ pressed }) => [s.back, pressed && { opacity: 0.7 }]} onPress={() => navigation.goBack()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Volver">
+          <IconArrowLeft size={22} color={colors.textPrimary} />
         </Pressable>
-        <Text style={s.title}>Registrar servicio</Text>
-        <Pressable style={[s.guardarHeaderBtn, guardando && s.guardarHeaderDisabled]} onPress={handleGuardar} disabled={guardando}>
-          {guardando ? <ActivityIndicator size="small" color={colors.accent} /> : <Text style={s.guardarHeaderText}>Enviar</Text>}
-        </Pressable>
+        <View style={{ flex: 1 }}>
+          <Text style={s.titulo}>Servicio realizado</Text>
+          {vehiculo && <Text style={s.subtitulo} numberOfLines={1}>{vehiculo.marca} {vehiculo.modelo}{vehiculo.placa ? ` · ${vehiculo.placa.toUpperCase()}` : ''}</Text>}
+        </View>
       </View>
 
-      <ScrollView style={s.scroll} contentContainerStyle={s.form} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <Text style={s.note}>El cliente verá este registro en el chat y debe aceptarlo para que entre a su historial.</Text>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={s.form} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
-        <Text style={s.sectionLabel}>Tipo de mantenimiento</Text>
-        <View style={s.tiposGrid}>
-          {TIPOS.map(t => (
-            <Pressable key={t} style={[s.tipoChip, tipo === t && s.tipoChipActive]} onPress={() => setTipo(t)}>
-              <Text style={[s.tipoLabel, tipo === t && s.tipoLabelActive]}>{TIPO_LABEL[t]}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        {tipo === 'personalizado' && (
-          <>
-            <Text style={s.fieldLabel}>Descripción</Text>
-            <TextInput style={s.input} placeholder="Ej: Revisión de suspensión" placeholderTextColor={colors.textTertiary} value={descripcion} onChangeText={setDescripcion} />
-          </>
-        )}
-
-        <View style={s.rowTwo}>
-          <View style={s.rowItem}>
-            <Text style={s.fieldLabel}>Km al servicio</Text>
-            <TextInput style={s.input} placeholder="Ej: 15000" placeholderTextColor={colors.textTertiary} value={km} onChangeText={setKm} keyboardType="numeric" />
+          <View style={s.pasos}>
+            <Paso Icono={IconSend} texto="Lo envías" activo />
+            <View style={s.pasoLinea} />
+            <Paso Icono={IconUserCheck} texto="El cliente lo acepta" />
+            <View style={s.pasoLinea} />
+            <Paso Icono={IconNotebook} texto="Queda en su historial" />
           </View>
-          <View style={s.rowItem}>
-            <Text style={s.fieldLabel}>Costo (COP)</Text>
-            <TextInput style={s.input} placeholder="Ej: 85000" placeholderTextColor={colors.textTertiary} value={costo} onChangeText={setCosto} keyboardType="decimal-pad" />
-          </View>
-        </View>
 
-        <Text style={[s.sectionLabel, { marginTop: spacing.xl }]}>Fotos</Text>
-        <View style={s.fotosRow}>
-          {fotos.map((uri, idx) => (
-            <View key={uri + idx} style={s.fotoSlot}>
-              <Image source={{ uri }} style={s.fotoThumb} resizeMode="cover" />
-              <Pressable style={s.fotoRemove} onPress={() => removeFoto(idx)} hitSlop={10} accessibilityLabel="Quitar foto">
-                <IconX size={14} color="#fff" />
-              </Pressable>
+          <Seccion numero={1} titulo="¿Qué se hizo?">
+            <SelectorTipo valor={tipo} onChange={setTipo} />
+            {tipo === 'personalizado' && (
+              <Campo label="¿Qué servicio fue?" requerido error={intento ? errorDescripcion : undefined}>
+                <Entrada value={descripcion} onChangeText={setDescripcion} error={!!(intento && errorDescripcion)} placeholder="Ej. Revisión de suspensión" autoCapitalize="sentences" />
+              </Campo>
+            )}
+          </Seccion>
+
+          <Seccion numero={2} titulo="Datos del servicio">
+            <Campo label="Fecha"><SelectorFecha valor={fecha} onChange={setFecha} /></Campo>
+            <View style={s.dosCol}>
+              <View style={{ flex: 1 }}>
+                <Campo label="Kilometraje" ayuda="km del tablero">
+                  <Entrada value={km} onChangeText={v => setKm(conMiles(v))} placeholder="15.000" keyboardType="number-pad" />
+                </Campo>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Campo label="Costo" ayuda="lo que se cobró">
+                  <Entrada value={costo} onChangeText={v => setCosto(conMiles(v))} placeholder="85.000" keyboardType="number-pad" icono={<Text style={s.pesos}>$</Text>} />
+                </Campo>
+              </View>
             </View>
-          ))}
-          {fotos.length < 3 && (
-            <Pressable style={s.fotoAdd} onPress={pickFoto}>
-              <IconCamera size={24} color={colors.textSecondary} />
-              <Text style={s.fotoAddText}>Agregar</Text>
-            </Pressable>
-          )}
-        </View>
+          </Seccion>
 
-        <Text style={s.fieldLabel}>Factura</Text>
-        {facturaUri ? (
-          <View style={s.facturaRow}>
-            <IconFileText size={18} color={colors.accent} />
-            <Text style={s.facturaText} numberOfLines={1}>Factura adjunta</Text>
-            <Pressable onPress={() => setFacturaUri(null)} hitSlop={10} accessibilityLabel="Quitar factura">
-              <IconX size={16} color={colors.textTertiary} />
-            </Pressable>
+          <Seccion numero={3} titulo="Evidencia" ayuda="Ayuda al cliente a confiar en el trabajo.">
+            <FotosServicio uris={fotos} max={MAX_FOTOS} onAgregar={agregarFoto} onQuitar={i => setFotos(prev => prev.filter((_, j) => j !== i))} />
+            {facturaUri ? (
+              <View style={s.factura}>
+                <IconFileText size={18} color={colors.accent} />
+                <Text style={s.facturaTexto}>Factura adjunta</Text>
+                <Pressable onPress={() => setFacturaUri(null)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Quitar factura">
+                  <IconX size={16} color={colors.textTertiary} />
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable style={({ pressed }) => [s.facturaBtn, pressed && { opacity: 0.85 }]} onPress={elegirFactura} accessibilityRole="button">
+                <IconFileText size={18} color={colors.textSecondary} />
+                <Text style={s.facturaBtnTexto}>Adjuntar factura (PDF o imagen)</Text>
+              </Pressable>
+            )}
+          </Seccion>
+
+          <Seccion numero={4} titulo="Nota para el cliente" ayuda="Lo que hiciste y lo que conviene revisar después.">
+            <Entrada
+              value={notas}
+              onChangeText={setNotas}
+              placeholder="Ej. Se cambió el aceite y el filtro. Revisar la cadena en 1.000 km."
+              multiline
+              style={{ minHeight: 84, textAlignVertical: 'top', paddingTop: 12 }}
+            />
+          </Seccion>
+
+          <View style={s.vista}>
+            <Text style={s.vistaTitulo}>Así lo verá tu cliente</Text>
+            <View style={s.vistaFila}>
+              <View style={[s.vistaIcono, { backgroundColor: `${meta.color}22` }]}><meta.Icon size={20} color={meta.color} /></View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.vistaTexto} numberOfLines={1}>{tipo === 'personalizado' && descripcion.trim() ? descripcion.trim() : meta.label}</Text>
+                <Text style={s.vistaSub} numberOfLines={1}>
+                  {[soloDigitos(km) ? `${soloDigitos(km)!.toLocaleString('es-CO')} km` : null, soloDigitos(costo) ? `$${soloDigitos(costo)!.toLocaleString('es-CO')}` : null].filter(Boolean).join('  ·  ') || 'Sin kilometraje ni costo'}
+                </Text>
+              </View>
+            </View>
+            <Text style={s.vistaNota}>Él decide si lo acepta o lo rechaza. Solo lo que acepte entra a su historial.</Text>
           </View>
-        ) : (
-          <Pressable style={s.facturaBtn} onPress={pickFactura}>
-            <IconFileText size={18} color={colors.textSecondary} />
-            <Text style={s.facturaBtnText}>Adjuntar factura (PDF o imagen)</Text>
+        </ScrollView>
+
+        <View style={s.footer}>
+          <Pressable
+            style={({ pressed }) => [s.botonPri, guardando && { opacity: 0.6 }, pressed && { opacity: 0.85 }]}
+            onPress={enviar}
+            disabled={guardando}
+            accessibilityRole="button"
+          >
+            {guardando ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.botonPriTexto}>Enviar al cliente</Text>}
           </Pressable>
-        )}
+        </View>
+      </KeyboardAvoidingView>
+    </View>
+  );
+}
 
-        <Text style={s.fieldLabel}>Notas</Text>
-        <TextInput
-          style={[s.input, s.inputMultiline]}
-          placeholder="Detalles del servicio realizado…"
-          placeholderTextColor={colors.textTertiary}
-          value={notas}
-          onChangeText={setNotas}
-          multiline
-          numberOfLines={3}
-          textAlignVertical="top"
-        />
-
-        <Pressable style={[s.guardarBtn, guardando && s.guardarBtnDisabled]} onPress={handleGuardar} disabled={guardando}>
-          {guardando ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.guardarBtnText}>Enviar al cliente</Text>}
-        </Pressable>
-      </ScrollView>
+function Paso({ Icono, texto, activo }: { Icono: any; texto: string; activo?: boolean }) {
+  return (
+    <View style={s.paso}>
+      <View style={[s.pasoCirculo, activo && s.pasoCirculoOn]}>
+        <Icono size={16} color={activo ? colors.onAccent : colors.textSecondary} />
+      </View>
+      <Text style={[s.pasoTexto, activo && { color: colors.textPrimary }]}>{texto}</Text>
     </View>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: spacing.md },
+  back: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface, justifyContent: 'center', alignItems: 'center' },
+  titulo: { fontFamily: fonts.display, fontSize: 22, color: colors.textPrimary, letterSpacing: -0.4 },
+  subtitulo: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 1 },
 
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: spacing.xl, paddingTop: 56, paddingBottom: spacing.lg,
-    borderBottomWidth: 1, borderBottomColor: colors.bgSurface,
-  },
-  backBtn:  { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 80 },
-  backText: { color: colors.accent, fontSize: 15, fontFamily: fonts.heading },
-  title:    { color: colors.textPrimary, fontSize: 17, fontFamily: fonts.bold },
+  form: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm, paddingBottom: spacing.xxl, gap: spacing.xxl },
 
-  guardarHeaderBtn:      { minWidth: 80, alignItems: 'flex-end' },
-  guardarHeaderDisabled: { opacity: 0.4 },
-  guardarHeaderText:     { color: colors.accent, fontSize: 15, fontFamily: fonts.heading },
+  pasos: { flexDirection: 'row', alignItems: 'flex-start', padding: spacing.md, backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface },
+  paso: { flex: 1, alignItems: 'center', gap: 6 },
+  pasoCirculo: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.bgSurface, justifyContent: 'center', alignItems: 'center' },
+  pasoCirculoOn: { backgroundColor: colors.accent },
+  pasoTexto: { fontFamily: fonts.heading, fontSize: 11, color: colors.textSecondary, textAlign: 'center' },
+  pasoLinea: { height: 1, width: 16, backgroundColor: colors.bgSurface, marginTop: 17 },
 
-  scroll: { flex: 1 },
-  form:   { padding: spacing.xl, gap: spacing.sm, paddingBottom: 60 },
+  dosCol: { flexDirection: 'row', gap: spacing.md },
+  pesos: { fontFamily: fonts.bold, fontSize: 16, color: colors.textSecondary },
 
-  note: {
-    fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary,
-    backgroundColor: colors.bgCard, borderRadius: radius.md, padding: spacing.sm, marginBottom: spacing.sm,
-  },
+  facturaBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.md, backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface },
+  facturaBtnTexto: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary },
+  factura: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.md, backgroundColor: colors.accentDark, borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)' },
+  facturaTexto: { flex: 1, fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
 
-  sectionLabel: {
-    color: colors.textSecondary, fontSize: 11, fontFamily: fonts.heading,
-    textTransform: 'uppercase', letterSpacing: 0.8, marginTop: spacing.lg, marginBottom: spacing.sm,
-  },
-  fieldLabel: {
-    color: colors.textSecondary, fontSize: 11, fontFamily: fonts.heading,
-    textTransform: 'uppercase', letterSpacing: 0.8, marginTop: spacing.md, marginBottom: 4,
-  },
+  vista: { gap: spacing.md, padding: spacing.lg, backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface },
+  vistaTitulo: { fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6 },
+  vistaFila: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  vistaIcono: { width: 42, height: 42, borderRadius: radius.md, justifyContent: 'center', alignItems: 'center' },
+  vistaTexto: { fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary },
+  vistaSub: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 1 },
+  vistaNota: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, lineHeight: 17 },
 
-  tiposGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  tipoChip: {
-    backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
-    paddingVertical: 10, paddingHorizontal: spacing.md,
-  },
-  tipoChipActive:  { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.12)' },
-  tipoLabel:       { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
-  tipoLabelActive: { color: colors.accent, fontFamily: fonts.heading },
+  footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, borderTopWidth: 1, borderTopColor: colors.bgSurface, backgroundColor: colors.bgPrimary },
+  botonPri: { minHeight: 54, borderRadius: radius.md, backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center' },
+  botonPriTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 
-  rowTwo:  { flexDirection: 'row', gap: spacing.md },
-  rowItem: { flex: 1 },
-
-  input: {
-    backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
-    color: colors.textPrimary, fontSize: 15, fontFamily: fonts.body,
-    paddingVertical: 13, paddingHorizontal: spacing.md,
-  },
-  inputMultiline: { minHeight: 80, paddingTop: 13 },
-
-  fotosRow:  { flexDirection: 'row', gap: spacing.md },
-  fotoSlot:  { position: 'relative' },
-  fotoThumb: { width: 88, height: 88, borderRadius: radius.md },
-  fotoRemove: {
-    position: 'absolute', top: -6, right: -6, backgroundColor: 'rgba(0,0,0,0.75)',
-    borderRadius: 999, width: 22, height: 22, alignItems: 'center', justifyContent: 'center',
-  },
-  fotoAdd: {
-    width: 88, height: 88, borderRadius: radius.md, backgroundColor: colors.bgCard,
-    borderWidth: 1, borderColor: colors.bgSurface, borderStyle: 'dashed',
-    alignItems: 'center', justifyContent: 'center', gap: 4,
-  },
-  fotoAddText: { color: colors.textTertiary, fontSize: 11, fontFamily: fonts.body },
-
-  facturaBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
-    paddingVertical: 13, paddingHorizontal: spacing.md,
-  },
-  facturaBtnText: { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
-  facturaRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(72,151,90,0.3)',
-    paddingVertical: 13, paddingHorizontal: spacing.md,
-  },
-  facturaText: { flex: 1, color: colors.textPrimary, fontSize: 13, fontFamily: fonts.body },
-
-  guardarBtn: { backgroundColor: colors.accent, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: spacing.xl },
-  guardarBtnDisabled: { opacity: 0.5 },
-  guardarBtnText: { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 16 },
-
-  exito: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl },
-  exitoIcono: {
-    width: 88, height: 88, borderRadius: 44, backgroundColor: colors.accentDark,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.lg,
-  },
+  exito: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl, gap: spacing.md },
+  exitoIcono: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.accentDark, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center' },
   exitoTitulo: { fontFamily: fonts.display, fontSize: 24, color: colors.textPrimary, letterSpacing: -0.4 },
-  exitoSub: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm, marginBottom: spacing.xl, lineHeight: 20 },
-  exitoBtn: { borderWidth: 1, borderColor: colors.bgSurface, borderRadius: radius.lg, minHeight: 52, paddingHorizontal: spacing.xxl, justifyContent: 'center', alignSelf: 'stretch', alignItems: 'center' },
-  exitoBtnTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.textSecondary },
+  exitoSub: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21, marginBottom: spacing.lg },
 });

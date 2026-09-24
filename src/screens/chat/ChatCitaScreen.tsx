@@ -25,6 +25,8 @@ import { determinarRolEnChatCita } from '../../lib/roles';
 import { openUrl } from '../../lib/openUrl';
 import EstrellasDisplay from '../../components/EstrellasDisplay';
 import EstadoCitaLinea from '../../components/EstadoCitaLinea';
+import RegistroCard from '../../components/historial/RegistroCard';
+import { useVisorImagenes } from '../../components/VisorImagenes';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -63,6 +65,7 @@ function formatHora(iso: string): string {
 export default function ChatCitaScreen({ route, navigation }: any) {
   const { citaId } = route.params as { citaId: string };
   const { session } = useAuth();
+  const { abrir: abrirFotos, visor: visorFotos } = useVisorImagenes();
 
   const [cita, setCita] = useState<CitaInfo | null>(null);
   const [mensajes, setMensajes] = useState<MensajeCita[]>([]);
@@ -190,7 +193,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
       Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.7 });
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
     if (result.canceled || !result.assets[0]) return;
     const uri = result.assets[0].uri;
     const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
@@ -248,7 +251,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     }
 
     if (item.tipo_mensaje === 'registro_servicio' && item.historial) {
-      return <RegistroCard h={item.historial} rolPropio={rolPropio} busy={resolviendo} onResolver={handleResolver} />;
+      return <RegistroCard h={item.historial} esCliente={rolPropio === 'propietario'} busy={resolviendo} onResolver={handleResolver} onVerFoto={abrirFotos} />;
     }
 
     const isMine = item.autor_id === session?.user.id;
@@ -261,7 +264,11 @@ export default function ChatCitaScreen({ route, navigation }: any) {
           <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleOther]}>
           {item.adjuntos?.map((a, i) => (
             a.tipo === 'foto'
-              ? <Image key={i} source={{ uri: a.url }} style={s.adjuntoFoto} resizeMode="cover" />
+              ? (
+                <Pressable key={i} onPress={() => { const fotos = item.adjuntos.filter(x => x.tipo === 'foto'); abrirFotos(fotos.map(x => x.url), fotos.indexOf(a)); }} accessibilityRole="imagebutton" accessibilityLabel="Ver foto">
+                  <Image source={{ uri: a.url }} style={s.adjuntoFoto} resizeMode="cover" />
+                </Pressable>
+              )
               : (
                 <Pressable key={i} style={s.adjuntoDoc} onPress={() => openUrl(a.url)}>
                   <IconFileText size={16} color={isMine ? colors.onAccent : colors.accent} />
@@ -368,94 +375,8 @@ export default function ChatCitaScreen({ route, navigation }: any) {
           {enviando ? <ActivityIndicator size="small" color={colors.onAccent} /> : <IconSend size={18} color={colors.onAccent} />}
         </Pressable>
       </View>
+      {visorFotos}
     </KeyboardAvoidingView>
-  );
-}
-
-function RegistroCard({
-  h, rolPropio, busy, onResolver,
-}: { h: NonNullable<MensajeCita['historial']>; rolPropio: RolAutor; busy: string | null; onResolver: (id: string, aceptar: boolean) => void }) {
-  const pendiente = h.aprobado_propietario === null;
-
-  if (!pendiente) {
-    return (
-      <View style={s.registroResuelto}>
-        {h.aprobado_propietario
-          ? <IconCircleCheck size={16} color={colors.success} />
-          : <IconCircleX size={16} color={colors.danger} />
-        }
-        <Text style={[s.registroResueltoText, { color: h.aprobado_propietario ? colors.success : colors.danger }]}>
-          {h.aprobado_propietario ? 'Aceptado · agregado a tu historial' : 'Rechazado'}
-        </Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={s.registroCard}>
-      <View style={s.registroBadge}>
-        <IconClock size={13} color={colors.accent} />
-        <Text style={s.registroBadgeText}>Esperando tu confirmación</Text>
-      </View>
-
-      <Text style={s.registroTitulo}>{TIPO_LABEL[h.tipo] ?? h.tipo}</Text>
-
-      <View style={s.registroTabla}>
-        <View style={s.registroFila}>
-          <Text style={s.registroLabel}>Fecha</Text>
-          <Text style={s.registroValor}>{h.fecha}</Text>
-        </View>
-        {h.km_en_servicio != null && (
-          <View style={s.registroFila}>
-            <Text style={s.registroLabel}>Km</Text>
-            <Text style={s.registroValor}>{h.km_en_servicio.toLocaleString('es-CO')}</Text>
-          </View>
-        )}
-        {h.costo != null && (
-          <View style={s.registroFila}>
-            <Text style={s.registroLabel}>Costo</Text>
-            <Text style={s.registroValor}>{formatCOP(h.costo)}</Text>
-          </View>
-        )}
-      </View>
-
-      {(h.fotos?.length > 0 || h.factura_url) && (
-        <View style={s.registroAdjuntos}>
-          {h.fotos?.map((url, i) => (
-            <Image key={i} source={{ uri: url }} style={s.registroFoto} resizeMode="cover" />
-          ))}
-          {h.factura_url && (
-            <Pressable style={s.registroFacturaChip} onPress={() => openUrl(h.factura_url!)}>
-              <IconReceipt size={14} color={colors.accent} />
-              <Text style={s.registroFacturaText}>Factura</Text>
-            </Pressable>
-          )}
-        </View>
-      )}
-
-      {rolPropio === 'propietario' && (
-        <View style={s.registroAcciones}>
-          <Pressable
-            style={({ pressed }) => [s.registroBtnPrimario, pressed && { opacity: 0.85 }]}
-            onPress={() => onResolver(h.id, true)}
-            disabled={busy === h.id}
-          >
-            {busy === h.id
-              ? <ActivityIndicator size="small" color={colors.onAccent} />
-              : <><IconCheck size={16} color={colors.onAccent} /><Text style={s.registroBtnPrimarioText}>Aceptar y agregar a mi historial</Text></>
-            }
-          </Pressable>
-          <Pressable
-            style={({ pressed }) => [s.registroBtnSecundario, pressed && { opacity: 0.85 }]}
-            onPress={() => onResolver(h.id, false)}
-            disabled={busy === h.id}
-          >
-            <IconX size={16} color={colors.textSecondary} />
-            <Text style={s.registroBtnSecundarioText}>Rechazar</Text>
-          </Pressable>
-        </View>
-      )}
-    </View>
   );
 }
 
@@ -511,53 +432,6 @@ const s = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: radius.md, padding: spacing.sm,
   },
   adjuntoDocText: { fontFamily: fonts.heading, fontSize: 13 },
-
-  registroResuelto: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: colors.bgCard, borderRadius: radius.md,
-    paddingHorizontal: spacing.md, paddingVertical: spacing.sm, alignSelf: 'center',
-  },
-  registroResueltoText: { fontFamily: fonts.heading, fontSize: 12 },
-
-  registroCard: {
-    backgroundColor: colors.bgCard, borderRadius: radius.lg,
-    borderLeftWidth: 4, borderLeftColor: colors.accent,
-    padding: spacing.md, gap: spacing.sm,
-  },
-  registroBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
-    backgroundColor: 'rgba(72,151,90,0.12)', borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm, paddingVertical: 3,
-  },
-  registroBadgeText: { fontFamily: fonts.heading, fontSize: 11, color: colors.accent },
-  registroTitulo: { fontFamily: fonts.display, fontSize: 17, color: colors.textPrimary },
-
-  registroTabla: { gap: 4 },
-  registroFila: { flexDirection: 'row', justifyContent: 'space-between' },
-  registroLabel: { fontFamily: fonts.body, fontSize: 13, color: colors.textTertiary },
-  registroValor: { fontFamily: fonts.heading, fontSize: 13, color: colors.textPrimary },
-
-  registroAdjuntos: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
-  registroFoto: { width: 64, height: 64, borderRadius: radius.md },
-  registroFacturaChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: colors.bgSurface, borderRadius: radius.md,
-    paddingHorizontal: spacing.sm, height: 64,
-  },
-  registroFacturaText: { fontFamily: fonts.heading, fontSize: 12, color: colors.accent },
-
-  registroAcciones: { gap: spacing.sm, marginTop: spacing.xs },
-  registroBtnPrimario: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 46,
-  },
-  registroBtnPrimarioText: { fontFamily: fonts.bold, fontSize: 13, color: colors.onAccent },
-  registroBtnSecundario: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    backgroundColor: 'transparent', borderRadius: radius.md, minHeight: 46,
-    borderWidth: 1, borderColor: colors.bgSurface,
-  },
-  registroBtnSecundarioText: { fontFamily: fonts.bold, fontSize: 13, color: colors.textSecondary },
 
   inputRow: {
     flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm,

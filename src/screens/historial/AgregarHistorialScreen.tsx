@@ -1,210 +1,126 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
-  TextInput, ActivityIndicator, Alert, Image,
+  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import {
-  IconArrowLeft, IconCamera, IconX, IconUser, IconBuildingStore,
-} from '@tabler/icons-react-native';
+import { IconArrowLeft, IconBellRinging, IconLock } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
+import { Campo, Entrada } from '../../components/FormField';
+import { Seccion, SelectorTipo, SelectorFecha, FotosServicio } from '../../components/historial/piezas';
+import {
+  metaTipo, fechaAISO, fechaLarga, isoAFecha, conMiles, soloDigitos,
+} from '../../lib/historialTipos';
 
 const { colors, fonts, spacing, radius } = tokens;
 
-// ─── tipos ────────────────────────────────────────────────────────────────────
-const TIPOS = [
-  { key: 'aceite',           label: 'Aceite'       },
-  { key: 'frenos',           label: 'Frenos'       },
-  { key: 'cadena',           label: 'Cadena'       },
-  { key: 'llantas',          label: 'Llantas'      },
-  { key: 'bateria',          label: 'Batería'      },
-  { key: 'revision_tecnica', label: 'Rev. Técnica' },
-  { key: 'soat',             label: 'SOAT'         },
-  { key: 'lavado',           label: 'Lavado'       },
-  { key: 'personalizado',    label: 'Otro'         },
-];
-
-// ─── aceite sub-types ─────────────────────────────────────────────────────────
 const ACEITE_TIPOS = [
-  { key: 'mineral',       label: 'Mineral'       },
-  { key: 'sintetico',     label: 'Sintético'     },
-  { key: 'semisintetico', label: 'Semisintético'  },
+  { key: 'mineral', label: 'Mineral' },
+  { key: 'sintetico', label: 'Sintético' },
+  { key: 'semisintetico', label: 'Semisintético' },
 ];
 
-// ─── auto-recordatorio intervals ──────────────────────────────────────────────
-const INTERVALOS: Record<string, { tipo: 'km' | 'dias'; valor: number; label: string }> = {
-  aceite:           { tipo: 'km',   valor: 2500,  label: 'cambio de aceite'    },
-  cadena:           { tipo: 'km',   valor: 2000,  label: 'servicio de cadena'  },
-  frenos:           { tipo: 'km',   valor: 10000, label: 'revisión de frenos'  },
-  llantas:          { tipo: 'km',   valor: 20000, label: 'cambio de llantas'   },
-  bateria:          { tipo: 'dias', valor: 365,   label: 'revisión de batería' },
-  revision_tecnica: { tipo: 'dias', valor: 365,   label: 'revisión técnica'    },
-  soat:             { tipo: 'dias', valor: 365,   label: 'renovación SOAT'     },
-};
+const MAX_FOTOS = 4;
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-function hoyDisplay(): string {
-  const now = new Date();
-  const d = String(now.getDate()).padStart(2, '0');
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const y = now.getFullYear();
-  return `${d}/${m}/${y}`;
-}
-
-function displayToISO(display: string): string | null {
-  const parts = display.split('/');
-  if (parts.length !== 3) return null;
-  const [d, m, y] = parts;
-  if (d.length !== 2 || m.length !== 2 || y.length !== 4) return null;
-  return `${y}-${m}-${d}`;
-}
-
-function formatFechaISO(iso: string): string {
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
-}
-
-// ─── component ────────────────────────────────────────────────────────────────
+/**
+ * Anotar un servicio en el historial de un vehículo, o editar uno propio.
+ * Params: `vehiculo` y, para editar, `registro`.
+ */
 export default function AgregarHistorialScreen({ route, navigation }: any) {
-  const { vehiculo } = route.params;
+  const { vehiculo, registro } = route.params;
+  const editando = !!registro;
   const { session } = useAuth();
 
-  // core fields
-  const [tipo, setTipo] = useState('aceite');
-  const [descripcion, setDescripcion] = useState('');
-  const [fecha, setFecha] = useState(hoyDisplay());
-  const [km, setKm] = useState(String(vehiculo.kilometraje ?? ''));
-  const [tallerNombre, setTallerNombre] = useState('');
-  const [mecanicoNombre, setMecanicoNombre] = useState('');
-  const [costo, setCosto] = useState('');
-  const [notas, setNotas] = useState('');
+  const [tipo, setTipo] = useState<string>(registro?.tipo ?? 'aceite');
+  const [descripcion, setDescripcion] = useState<string>(registro?.descripcion ?? '');
+  const [fecha, setFecha] = useState<string>(registro?.fecha ?? fechaAISO(new Date()));
+  const [km, setKm] = useState<string>(conMiles(String(registro?.km_en_servicio ?? vehiculo.kilometraje ?? '')));
+  const [costo, setCosto] = useState<string>(conMiles(String(registro?.costo ?? '')));
+  const [taller, setTaller] = useState<string>(registro?.negocio_nombre ?? registro?.taller ?? '');
+  const [mecanico, setMecanico] = useState<string>(registro?.mecanico_nombre ?? '');
+  const [notas, setNotas] = useState<string>(registro?.notas ?? '');
   const [fotos, setFotos] = useState<string[]>([]);
+  const [tipoAceite, setTipoAceite] = useState<string>(registro?.detalles?.tipo_aceite ?? '');
+  const [marcaAceite, setMarcaAceite] = useState<string>(registro?.detalles?.marca ?? '');
+  const [viscosidad, setViscosidad] = useState<string>(registro?.detalles?.viscosidad ?? '');
+  const [recordar, setRecordar] = useState(true);
   const [guardando, setGuardando] = useState(false);
+  const [intento, setIntento] = useState(false);
 
-  // aceite detail fields
-  const [tipoAceite, setTipoAceite] = useState('');
-  const [marcaAceite, setMarcaAceite] = useState('');
-  const [viscosidad, setViscosidad] = useState('');
+  const meta = metaTipo(tipo);
+  const kmNum = soloDigitos(km);
+  const intervalo = meta.intervalo;
 
-  // ─── foto picker ────────────────────────────────────────────────────────────
-  async function pickFoto() {
-    if (fotos.length >= 3) return;
+  const errorDescripcion = tipo === 'personalizado' && !descripcion.trim() ? 'Cuéntanos qué servicio fue' : undefined;
+
+  // Vista previa del recordatorio que se creará al guardar.
+  let textoRecordatorio: string | null = null;
+  let puedeRecordar = false;
+  if (!editando && intervalo) {
+    if (intervalo.tipo === 'km') {
+      if (kmNum) { puedeRecordar = true; textoRecordatorio = `Te avisamos a los ${(kmNum + intervalo.valor).toLocaleString('es-CO')} km`; }
+      else textoRecordatorio = 'Escribe el kilometraje para poder programarlo';
+    } else {
+      const proxima = isoAFecha(fecha);
+      proxima.setDate(proxima.getDate() + intervalo.valor);
+      puedeRecordar = true;
+      textoRecordatorio = `Te avisamos el ${fechaLarga(fechaAISO(proxima))}`;
+    }
+  }
+
+  async function agregarFoto() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para agregar fotos.');
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.7,
-      allowsEditing: true,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setFotos(prev => [...prev, result.assets[0].uri]);
-    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
+    if (!result.canceled && result.assets[0]) setFotos(prev => [...prev, result.assets[0].uri]);
   }
 
-  function removeFoto(index: number) {
-    setFotos(prev => prev.filter((_, i) => i !== index));
-  }
-
-  // ─── upload ─────────────────────────────────────────────────────────────────
-  async function uploadFotos(localUris: string[]): Promise<string[]> {
+  async function subirFotos(uris: string[]): Promise<string[]> {
     if (!session) return [];
     const urls: string[] = [];
-    for (const uri of localUris) {
-      const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    for (let i = 0; i < uris.length; i++) {
+      const ext = uris[i].split('.').pop()?.toLowerCase() ?? 'jpg';
       const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
-      const path = `${session.user.id}/historial/${vehiculo.id}/${Date.now()}.${safeExt}`;
+      const path = `${session.user.id}/historial/${vehiculo.id}/${Date.now()}_${i}.${safeExt}`;
       try {
-        const response = await fetch(uri);
+        const response = await fetch(uris[i]);
         const ab = await response.arrayBuffer();
         if (ab.byteLength === 0) continue;
-        const { error } = await supabase.storage
-          .from('fotos')
-          .upload(path, ab, { contentType: `image/${safeExt}` });
-        if (!error) {
-          const { data } = supabase.storage.from('fotos').getPublicUrl(path);
-          urls.push(data.publicUrl);
-        }
+        const { error } = await supabase.storage.from('fotos').upload(path, ab, { contentType: `image/${safeExt}` });
+        if (!error) urls.push(supabase.storage.from('fotos').getPublicUrl(path).data.publicUrl);
       } catch {
-        // skip individual failed uploads
+        // una foto que falle no debe tumbar el registro
       }
     }
     return urls;
   }
 
-  // ─── auto-recordatorio ──────────────────────────────────────────────────────
-  function ofrecerRecordatorio(kmServicio: number | null): Promise<void> {
-    const intervalo = INTERVALOS[tipo];
-    if (!intervalo) return Promise.resolve();
-
-    return new Promise(resolve => {
-      if (intervalo.tipo === 'km') {
-        if (!kmServicio) return resolve();
-        const proximoKm = kmServicio + intervalo.valor;
-        Alert.alert(
-          `¿Programar próximo ${intervalo.label}?`,
-          `Se creará un recordatorio para los ${proximoKm.toLocaleString('es-CO')} km`,
-          [
-            { text: 'Omitir', style: 'cancel', onPress: () => resolve() },
-            {
-              text: 'Programar',
-              onPress: async () => {
-                await supabase.from('recordatorios').insert({
-                  vehiculo_id: vehiculo.id,
-                  tipo,
-                  km_limite: proximoKm,
-                  km_aviso: 500,
-                  estado: 'pendiente',
-                });
-                resolve();
-              },
-            },
-          ]
-        );
-      } else {
-        const proxima = new Date();
-        proxima.setDate(proxima.getDate() + intervalo.valor);
-        const fechaStr = proxima.toISOString().split('T')[0];
-        Alert.alert(
-          `¿Programar ${intervalo.label}?`,
-          `Se creará un recordatorio para el ${formatFechaISO(fechaStr)}`,
-          [
-            { text: 'Omitir', style: 'cancel', onPress: () => resolve() },
-            {
-              text: 'Programar',
-              onPress: async () => {
-                await supabase.from('recordatorios').insert({
-                  vehiculo_id: vehiculo.id,
-                  tipo,
-                  fecha_limite: fechaStr,
-                  km_aviso: null,
-                  estado: 'pendiente',
-                });
-                resolve();
-              },
-            },
-          ]
-        );
-      }
-    });
+  async function programarRecordatorio() {
+    if (!intervalo) return;
+    if (intervalo.tipo === 'km' && kmNum) {
+      await supabase.from('recordatorios').insert({
+        vehiculo_id: vehiculo.id, tipo, km_limite: kmNum + intervalo.valor, km_aviso: 500, estado: 'pendiente',
+      });
+    } else if (intervalo.tipo === 'dias') {
+      const proxima = isoAFecha(fecha);
+      proxima.setDate(proxima.getDate() + intervalo.valor);
+      await supabase.from('recordatorios').insert({
+        vehiculo_id: vehiculo.id, tipo, fecha_limite: fechaAISO(proxima), km_aviso: null, estado: 'pendiente',
+      });
+    }
   }
 
-  // ─── save ───────────────────────────────────────────────────────────────────
-  async function handleGuardar() {
-    const fechaISO = displayToISO(fecha);
-    if (!fechaISO) {
-      Alert.alert('Fecha inválida', 'Usa el formato DD/MM/AAAA');
-      return;
-    }
+  async function guardar() {
+    setIntento(true);
+    if (errorDescripcion) return;
 
     setGuardando(true);
     try {
-      const fotosUrls = await uploadFotos(fotos);
-
       const detalles: Record<string, string> = {};
       if (tipo === 'aceite') {
         if (tipoAceite) detalles.tipo_aceite = tipoAceite;
@@ -212,406 +128,208 @@ export default function AgregarHistorialScreen({ route, navigation }: any) {
         if (viscosidad.trim()) detalles.viscosidad = viscosidad.trim();
       }
 
-      const kmNum = km ? parseInt(km) : null;
-
-      const { error } = await supabase.from('historial_mantenimiento').insert({
-        vehiculo_id:    vehiculo.id,
+      const campos = {
         tipo,
-        descripcion:    tipo === 'personalizado' ? (descripcion.trim() || null) : null,
-        fecha:          fechaISO,
+        descripcion: tipo === 'personalizado' ? descripcion.trim() : null,
+        fecha,
         km_en_servicio: kmNum,
-        taller:         tallerNombre.trim() || null,
-        negocio_nombre: tallerNombre.trim() || null,
-        mecanico_nombre: mecanicoNombre.trim() || null,
-        costo:          costo ? parseFloat(costo) : null,
-        notas:          notas.trim() || null,
-        fotos:          fotosUrls,
-        detalles:       Object.keys(detalles).length > 0 ? detalles : null,
-        creado_por:     'propietario',
-      });
+        taller: taller.trim() || null,
+        negocio_nombre: taller.trim() || null,
+        mecanico_nombre: mecanico.trim() || null,
+        costo: soloDigitos(costo),
+        notas: notas.trim() || null,
+        detalles: Object.keys(detalles).length > 0 ? detalles : null,
+      };
 
-      if (error) throw error;
-
-      await ofrecerRecordatorio(kmNum);
+      if (editando) {
+        const { error } = await supabase.from('historial_mantenimiento').update(campos).eq('id', registro.id);
+        if (error) throw error;
+      } else {
+        const fotosUrls = await subirFotos(fotos);
+        const { error } = await supabase.from('historial_mantenimiento').insert({
+          ...campos, vehiculo_id: vehiculo.id, fotos: fotosUrls, creado_por: 'propietario',
+        });
+        if (error) throw error;
+        if (recordar && puedeRecordar) await programarRecordatorio();
+      }
       navigation.goBack();
     } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo guardar el registro');
+      Alert.alert('No se pudo guardar', 'Revisa tu conexión e intenta de nuevo.');
     } finally {
       setGuardando(false);
     }
   }
 
-  // ─── render ─────────────────────────────────────────────────────────────────
   return (
     <View style={s.container}>
-      {/* header */}
       <View style={s.header}>
-        <Pressable style={s.backBtn} onPress={() => navigation.goBack()} hitSlop={8}>
-          <IconArrowLeft size={22} color={colors.accent} />
-          <Text style={s.backText}>Cancelar</Text>
+        <Pressable style={({ pressed }) => [s.back, pressed && { opacity: 0.7 }]} onPress={() => navigation.goBack()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Volver">
+          <IconArrowLeft size={22} color={colors.textPrimary} />
         </Pressable>
-        <View style={s.headerCenter}>
-          <Text style={s.title}>Nuevo registro</Text>
-          <Text style={s.subtitle}>{vehiculo.marca} {vehiculo.modelo}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={s.titulo} numberOfLines={1}>{editando ? 'Editar registro' : 'Anotar servicio'}</Text>
+          <Text style={s.subtitulo} numberOfLines={1}>{vehiculo.marca} {vehiculo.modelo}{vehiculo.placa ? ` · ${String(vehiculo.placa).toUpperCase()}` : ''}</Text>
         </View>
-        <Pressable
-          style={[s.guardarHeaderBtn, guardando && s.guardarHeaderDisabled]}
-          onPress={handleGuardar}
-          disabled={guardando}
-        >
-          {guardando
-            ? <ActivityIndicator size="small" color={colors.accent} />
-            : <Text style={s.guardarHeaderText}>Guardar</Text>
-          }
-        </Pressable>
       </View>
 
-      <ScrollView
-        style={s.scroll}
-        contentContainerStyle={s.form}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* tipo */}
-        <Text style={s.sectionLabel}>Tipo de mantenimiento</Text>
-        <View style={s.tiposGrid}>
-          {TIPOS.map(t => (
-            <Pressable
-              key={t.key}
-              style={[s.tipoChip, tipo === t.key && s.tipoChipActive]}
-              onPress={() => setTipo(t.key)}
-            >
-              <Text style={[s.tipoLabel, tipo === t.key && s.tipoLabelActive]}>
-                {t.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={s.form} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <View style={s.privado}>
+            <IconLock size={14} color={colors.textTertiary} />
+            <Text style={s.privadoTexto}>Solo tú ves este registro. Lo puedes compartir cuando quieras.</Text>
+          </View>
 
-        {/* detalles aceite */}
-        {tipo === 'aceite' && (
-          <View style={s.detallesBox}>
-            <Text style={s.sectionLabel}>Tipo de aceite</Text>
-            <View style={s.chipRow}>
-              {ACEITE_TIPOS.map(ta => (
-                <Pressable
-                  key={ta.key}
-                  style={[s.smallChip, tipoAceite === ta.key && s.smallChipActive]}
-                  onPress={() => setTipoAceite(prev => prev === ta.key ? '' : ta.key)}
-                >
-                  <Text style={[s.smallChipLabel, tipoAceite === ta.key && s.smallChipLabelActive]}>
-                    {ta.label}
-                  </Text>
-                </Pressable>
-              ))}
+          <Seccion numero={1} titulo="¿Qué le hiciste?">
+            <SelectorTipo valor={tipo} onChange={setTipo} />
+
+            {tipo === 'personalizado' && (
+              <Campo label="¿Qué servicio fue?" requerido error={intento ? errorDescripcion : undefined}>
+                <Entrada value={descripcion} onChangeText={setDescripcion} error={!!(intento && errorDescripcion)} placeholder="Ej. Revisión de suspensión" autoCapitalize="sentences" />
+              </Campo>
+            )}
+
+            {tipo === 'aceite' && (
+              <View style={s.detalleAceite}>
+                <Text style={s.miniTitulo}>Detalles del aceite <Text style={s.opcional}>opcional</Text></Text>
+                <View style={s.chips}>
+                  {ACEITE_TIPOS.map(a => {
+                    const activo = tipoAceite === a.key;
+                    return (
+                      <Pressable
+                        key={a.key}
+                        style={[s.chip, activo && s.chipOn]}
+                        onPress={() => setTipoAceite(prev => (prev === a.key ? '' : a.key))}
+                        accessibilityRole="radio"
+                        accessibilityState={{ selected: activo }}
+                      >
+                        <Text style={[s.chipTexto, activo && s.chipTextoOn]}>{a.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <View style={s.dosCol}>
+                  <View style={{ flex: 1 }}>
+                    <Campo label="Marca"><Entrada value={marcaAceite} onChangeText={setMarcaAceite} placeholder="Mobil, Castrol" /></Campo>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Campo label="Viscosidad"><Entrada value={viscosidad} onChangeText={setViscosidad} placeholder="10W40" autoCapitalize="characters" /></Campo>
+                  </View>
+                </View>
+              </View>
+            )}
+          </Seccion>
+
+          <Seccion numero={2} titulo="Cuándo y cuánto">
+            <Campo label="Fecha del servicio"><SelectorFecha valor={fecha} onChange={setFecha} /></Campo>
+            <View style={s.dosCol}>
+              <View style={{ flex: 1 }}>
+                <Campo label="Kilometraje" ayuda="km del tablero">
+                  <Entrada value={km} onChangeText={v => setKm(conMiles(v))} placeholder="15.000" keyboardType="number-pad" />
+                </Campo>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Campo label="Costo" ayuda="en pesos">
+                  <Entrada
+                    value={costo}
+                    onChangeText={v => setCosto(conMiles(v))}
+                    placeholder="85.000"
+                    keyboardType="number-pad"
+                    icono={<Text style={s.pesos}>$</Text>}
+                  />
+                </Campo>
+              </View>
             </View>
-            <Text style={s.fieldLabel}>Marca</Text>
-            <TextInput
-              style={s.input}
-              placeholder="Ej: Mobil, Castrol, Shell"
-              placeholderTextColor={colors.textTertiary}
-              value={marcaAceite}
-              onChangeText={setMarcaAceite}
-            />
-            <Text style={s.fieldLabel}>Viscosidad</Text>
-            <TextInput
-              style={s.input}
-              placeholder="Ej: 10W40, 20W50"
-              placeholderTextColor={colors.textTertiary}
-              value={viscosidad}
-              onChangeText={setViscosidad}
-              autoCapitalize="characters"
-            />
-          </View>
-        )}
+          </Seccion>
 
-        {/* descripcion personalizado */}
-        {tipo === 'personalizado' && (
-          <>
-            <Text style={s.fieldLabel}>Descripción</Text>
-            <TextInput
-              style={s.input}
-              placeholder="Ej: Revisión de suspensión"
-              placeholderTextColor={colors.textTertiary}
-              value={descripcion}
-              onChangeText={setDescripcion}
-            />
-          </>
-        )}
+          <Seccion numero={3} titulo="¿Dónde?" ayuda="Si lo hiciste tú mismo, déjalo en blanco.">
+            <Campo label="Taller o lugar"><Entrada value={taller} onChangeText={setTaller} placeholder="Ej. Taller Los Andes" autoCapitalize="words" /></Campo>
+            <Campo label="Mecánico"><Entrada value={mecanico} onChangeText={setMecanico} placeholder="Nombre de quien lo hizo" autoCapitalize="words" /></Campo>
+          </Seccion>
 
-        {/* fecha + km */}
-        <View style={s.rowTwo}>
-          <View style={s.rowItem}>
-            <Text style={s.fieldLabel}>Fecha</Text>
-            <TextInput
-              style={s.input}
-              placeholder="DD/MM/AAAA"
-              placeholderTextColor={colors.textTertiary}
-              value={fecha}
-              onChangeText={setFecha}
-              keyboardType="numeric"
-              maxLength={10}
-            />
-          </View>
-          <View style={s.rowItem}>
-            <Text style={s.fieldLabel}>Km al servicio</Text>
-            <TextInput
-              style={s.input}
-              placeholder="Ej: 15000"
-              placeholderTextColor={colors.textTertiary}
-              value={km}
-              onChangeText={setKm}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        {/* taller */}
-        <Text style={s.fieldLabel}>Taller / Lugar</Text>
-        <View style={s.inputIcon}>
-          <IconBuildingStore size={18} color={colors.textTertiary} style={s.inputIconIcon} />
-          <TextInput
-            style={s.inputWithIcon}
-            placeholder="Ej: MotoExpress, taller de barrio"
-            placeholderTextColor={colors.textTertiary}
-            value={tallerNombre}
-            onChangeText={setTallerNombre}
-          />
-        </View>
-
-        {/* mecánico */}
-        <Text style={s.fieldLabel}>Nombre del mecánico</Text>
-        <View style={s.inputIcon}>
-          <IconUser size={18} color={colors.textTertiary} style={s.inputIconIcon} />
-          <TextInput
-            style={s.inputWithIcon}
-            placeholder="Ej: Jhon Pérez"
-            placeholderTextColor={colors.textTertiary}
-            value={mecanicoNombre}
-            onChangeText={setMecanicoNombre}
-          />
-        </View>
-
-        {/* costo */}
-        <Text style={s.fieldLabel}>Costo (COP)</Text>
-        <TextInput
-          style={s.input}
-          placeholder="Ej: 85000"
-          placeholderTextColor={colors.textTertiary}
-          value={costo}
-          onChangeText={setCosto}
-          keyboardType="decimal-pad"
-        />
-
-        {/* fotos */}
-        <Text style={[s.sectionLabel, { marginTop: spacing.xl }]}>
-          Fotos del servicio
-        </Text>
-        <Text style={s.fotosHint}>Hasta 3 fotos — factura, piezas, estado</Text>
-        <View style={s.fotosRow}>
-          {fotos.map((uri, idx) => (
-            <View key={uri + idx} style={s.fotoSlot}>
-              <Image source={{ uri }} style={s.fotoThumb} resizeMode="cover" />
-              <Pressable style={s.fotoRemove} onPress={() => removeFoto(idx)} hitSlop={10} accessibilityLabel="Quitar foto">
-                <IconX size={14} color="#fff" />
-              </Pressable>
-            </View>
-          ))}
-          {fotos.length < 3 && (
-            <Pressable style={s.fotoAdd} onPress={pickFoto}>
-              <IconCamera size={24} color={colors.textSecondary} />
-              <Text style={s.fotoAddText}>Agregar</Text>
-            </Pressable>
+          {!editando && (
+            <Seccion numero={4} titulo="Fotos" ayuda="La pieza cambiada, la factura o el resultado.">
+              <FotosServicio uris={fotos} max={MAX_FOTOS} onAgregar={agregarFoto} onQuitar={i => setFotos(prev => prev.filter((_, j) => j !== i))} />
+            </Seccion>
           )}
+
+          <Seccion numero={editando ? 4 : 5} titulo="Notas">
+            <Entrada
+              value={notas}
+              onChangeText={setNotas}
+              placeholder="Qué se hizo, qué se notó, qué quedó pendiente"
+              multiline
+              style={{ minHeight: 84, textAlignVertical: 'top', paddingTop: 12 }}
+            />
+          </Seccion>
+
+          {!editando && intervalo && (
+            <View style={[s.recordatorio, !puedeRecordar && { opacity: 0.6 }]}>
+              <IconBellRinging size={22} color={colors.accent} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.recordatorioTitulo}>Recordarme el próximo {intervalo.etiqueta}</Text>
+                <Text style={s.recordatorioTexto}>{textoRecordatorio}</Text>
+              </View>
+              <Switch
+                value={recordar && puedeRecordar}
+                onValueChange={setRecordar}
+                disabled={!puedeRecordar}
+                trackColor={{ false: colors.bgSurface, true: colors.accent }}
+                thumbColor="#fff"
+                accessibilityLabel="Programar recordatorio"
+              />
+            </View>
+          )}
+        </ScrollView>
+
+        <View style={s.footer}>
+          <Pressable
+            style={({ pressed }) => [s.guardar, guardando && { opacity: 0.6 }, pressed && { opacity: 0.85 }]}
+            onPress={guardar}
+            disabled={guardando}
+            accessibilityRole="button"
+          >
+            {guardando ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.guardarTexto}>{editando ? 'Guardar cambios' : 'Guardar en el historial'}</Text>}
+          </Pressable>
         </View>
-
-        {/* notas */}
-        <Text style={s.fieldLabel}>Notas</Text>
-        <TextInput
-          style={[s.input, s.inputMultiline]}
-          placeholder="Observaciones, piezas cambiadas, recomendaciones…"
-          placeholderTextColor={colors.textTertiary}
-          value={notas}
-          onChangeText={setNotas}
-          multiline
-          numberOfLines={3}
-          textAlignVertical="top"
-        />
-
-        {/* guardar */}
-        <Pressable
-          style={[s.guardarBtn, guardando && s.guardarBtnDisabled]}
-          onPress={handleGuardar}
-          disabled={guardando}
-        >
-          {guardando
-            ? <ActivityIndicator color={colors.onAccent} />
-            : <Text style={s.guardarBtnText}>Guardar registro</Text>
-          }
-        </Pressable>
-      </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
-// ─── styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: colors.bgPrimary },
+  container: { flex: 1, backgroundColor: colors.bgPrimary },
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: spacing.md },
+  back: {
+    width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  titulo: { fontFamily: fonts.display, fontSize: 22, color: colors.textPrimary, letterSpacing: -0.4 },
+  subtitulo: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 1 },
 
-  header: {
-    flexDirection:    'row',
-    alignItems:       'center',
-    justifyContent:   'space-between',
-    paddingHorizontal: spacing.xl,
-    paddingTop:       56,
-    paddingBottom:    spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.bgSurface,
-  },
-  backBtn:      { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 80 },
-  backText:     { color: colors.accent, fontSize: 15, fontFamily: fonts.heading },
-  headerCenter: { alignItems: 'center', flex: 1 },
-  title:        { color: colors.textPrimary, fontSize: 17, fontFamily: fonts.bold },
-  subtitle:     { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body, marginTop: 2 },
+  form: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm, paddingBottom: spacing.xxl, gap: spacing.xxl },
+  privado: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  privadoTexto: { flex: 1, fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
 
-  guardarHeaderBtn:      { minWidth: 80, alignItems: 'flex-end' },
-  guardarHeaderDisabled: { opacity: 0.4 },
-  guardarHeaderText:     { color: colors.accent, fontSize: 15, fontFamily: fonts.heading },
+  detalleAceite: { gap: spacing.md, padding: spacing.md, borderRadius: radius.md, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface },
+  miniTitulo: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
+  opcional: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: { minHeight: 40, paddingHorizontal: spacing.md, borderRadius: radius.pill, justifyContent: 'center', backgroundColor: colors.bgPrimary, borderWidth: 1, borderColor: colors.bgSurface },
+  chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipTexto: { fontFamily: fonts.body, fontSize: 13, color: colors.textPrimary },
+  chipTextoOn: { fontFamily: fonts.bold, color: colors.onAccent },
 
-  scroll: { flex: 1 },
-  form:   { padding: spacing.xl, gap: spacing.sm, paddingBottom: 60 },
+  dosCol: { flexDirection: 'row', gap: spacing.md },
+  pesos: { fontFamily: fonts.bold, fontSize: 16, color: colors.textSecondary },
 
-  sectionLabel: {
-    color:          colors.textSecondary,
-    fontSize:       11,
-    fontFamily:     fonts.heading,
-    textTransform:  'uppercase',
-    letterSpacing:  0.8,
-    marginTop:      spacing.lg,
-    marginBottom:   spacing.sm,
+  recordatorio: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md,
+    backgroundColor: colors.accentDark, borderRadius: radius.lg, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
   },
-  fieldLabel: {
-    color:          colors.textSecondary,
-    fontSize:       11,
-    fontFamily:     fonts.heading,
-    textTransform:  'uppercase',
-    letterSpacing:  0.8,
-    marginTop:      spacing.md,
-    marginBottom:   4,
-  },
+  recordatorioTitulo: { fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
+  recordatorioTexto: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary, marginTop: 2 },
 
-  tiposGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  tipoChip: {
-    backgroundColor:  colors.bgCard,
-    borderRadius:     radius.md,
-    borderWidth:      1,
-    borderColor:      colors.bgSurface,
-    paddingVertical:  10,
-    paddingHorizontal: spacing.md,
-  },
-  tipoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.12)' },
-  tipoLabel:      { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
-  tipoLabelActive:{ color: colors.accent, fontFamily: fonts.heading },
-
-  detallesBox: {
-    backgroundColor: colors.bgCard,
-    borderRadius:    radius.lg,
-    padding:         spacing.md,
-    borderWidth:     1,
-    borderColor:     'rgba(72,151,90,0.2)',
-    marginTop:       spacing.sm,
-  },
-
-  chipRow: { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap' },
-  smallChip: {
-    backgroundColor: colors.bgSurface,
-    borderRadius:    radius.sm,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.md,
-    borderWidth:     1,
-    borderColor:     'transparent',
-  },
-  smallChipActive:      { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.1)' },
-  smallChipLabel:       { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
-  smallChipLabelActive: { color: colors.accent, fontFamily: fonts.heading },
-
-  rowTwo:   { flexDirection: 'row', gap: spacing.md },
-  rowItem:  { flex: 1 },
-
-  input: {
-    backgroundColor: colors.bgCard,
-    borderRadius:    radius.md,
-    borderWidth:     1,
-    borderColor:     colors.bgSurface,
-    color:           colors.textPrimary,
-    fontSize:        15,
-    fontFamily:      fonts.body,
-    paddingVertical: 13,
-    paddingHorizontal: spacing.md,
-  },
-  inputMultiline: { minHeight: 80, paddingTop: 13 },
-
-  inputIcon: {
-    flexDirection:   'row',
-    alignItems:      'center',
-    backgroundColor: colors.bgCard,
-    borderRadius:    radius.md,
-    borderWidth:     1,
-    borderColor:     colors.bgSurface,
-  },
-  inputIconIcon:  { marginLeft: spacing.md },
-  inputWithIcon: {
-    flex:            1,
-    color:           colors.textPrimary,
-    fontSize:        15,
-    fontFamily:      fonts.body,
-    paddingVertical: 13,
-    paddingLeft:     spacing.sm,
-    paddingRight:    spacing.md,
-  },
-
-  fotosHint: {
-    color:      colors.textTertiary,
-    fontSize:   12,
-    fontFamily: fonts.body,
-    marginTop:  -spacing.sm,
-    marginBottom: spacing.sm,
-  },
-  fotosRow:  { flexDirection: 'row', gap: spacing.md },
-  fotoSlot:  { position: 'relative' },
-  fotoThumb: { width: 88, height: 88, borderRadius: radius.md },
-  fotoRemove:{
-    position:        'absolute',
-    top:             -6,
-    right:           -6,
-    backgroundColor: 'rgba(0,0,0,0.75)',
-    borderRadius:    999,
-    width:           22,
-    height:          22,
-    alignItems:      'center',
-    justifyContent:  'center',
-  },
-  fotoAdd: {
-    width:           88,
-    height:          88,
-    borderRadius:    radius.md,
-    backgroundColor: colors.bgCard,
-    borderWidth:     1,
-    borderColor:     colors.bgSurface,
-    borderStyle:     'dashed',
-    alignItems:      'center',
-    justifyContent:  'center',
-    gap:             4,
-  },
-  fotoAddText: { color: colors.textTertiary, fontSize: 11, fontFamily: fonts.body },
-
-  guardarBtn: {
-    backgroundColor: colors.accent,
-    borderRadius:    radius.lg,
-    paddingVertical: 16,
-    alignItems:      'center',
-    marginTop:       spacing.xl,
-  },
-  guardarBtnDisabled: { opacity: 0.5 },
-  guardarBtnText:     { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 16 },
+  footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, borderTopWidth: 1, borderTopColor: colors.bgSurface, backgroundColor: colors.bgPrimary },
+  guardar: { minHeight: 54, borderRadius: radius.md, backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center' },
+  guardarTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 });

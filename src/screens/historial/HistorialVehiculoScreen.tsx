@@ -1,20 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable,
-  ActivityIndicator, Alert, Image, Share,
+  View, Text, StyleSheet, SectionList, ScrollView, Pressable, ActivityIndicator, Share,
 } from 'react-native';
 import {
-  IconArrowLeft, IconPlus, IconTrash, IconUser,
-  IconBuildingStore, IconTool, IconShare2,
+  IconArrowLeft, IconPlus, IconShare2, IconChevronRight, IconCamera, IconBuildingStore, IconRosetteDiscountCheck, IconNotebook,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
-import { TIPO_LABEL, formatFecha, formatHistorialCompartible } from '../../lib/historial';
+import { formatHistorialCompartible } from '../../lib/historial';
+import { formatCOP } from '../../lib/precio';
+import { TIPOS_SERVICIO, metaTipo, tituloRegistro, fechaCorta, mesAnio, haceDias } from '../../lib/historialTipos';
 
 const { colors, fonts, spacing, radius } = tokens;
 
-// ─── types ────────────────────────────────────────────────────────────────────
 type Registro = {
   id: string;
   tipo: string;
@@ -27,311 +26,268 @@ type Registro = {
   costo: number | null;
   notas: string | null;
   fotos: string[] | null;
+  anexos: string[] | null;
+  factura_url: string | null;
   detalles: Record<string, string> | null;
   recomendaciones: string[] | null;
+  creado_por: string | null;
+  aprobado_propietario: boolean | null;
 };
 
-// accent colors per tipo for the badge
-const TIPO_COLOR: Record<string, string> = {
-  aceite:           '#48975a',
-  frenos:           '#e05555',
-  cadena:           '#d48b24',
-  llantas:          '#5b8dd9',
-  bateria:          '#59a45c',
-  revision_tecnica: '#9b6de0',
-  soat:             '#3badd4',
-  lavado:           '#4fb8b0',
-  personalizado:    '#888',
-};
+const COLUMNAS = 'id,tipo,descripcion,fecha,km_en_servicio,taller,negocio_nombre,mecanico_nombre,costo,notas,fotos,anexos,factura_url,detalles,recomendaciones,creado_por,aprobado_propietario';
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-function detallesTexto(tipo: string, d: Record<string, string> | null): string | null {
-  if (!d) return null;
-  if (tipo === 'aceite') {
-    const parts = [d.tipo_aceite, d.marca, d.viscosidad].filter(Boolean);
-    return parts.length > 0 ? parts.join(' · ') : null;
-  }
-  return null;
-}
-
-// ─── component ────────────────────────────────────────────────────────────────
 export default function HistorialVehiculoScreen({ route, navigation }: any) {
   const { vehiculo } = route.params;
   const [registros, setRegistros] = useState<Registro[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtro, setFiltro] = useState<string>('todos');
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchHistorial();
-    }, [])
+  useFocusEffect(useCallback(() => { cargar(); }, []));
+
+  async function cargar() {
+    // Lo que envía un taller solo cuenta cuando el dueño lo aceptó.
+    const { data } = await supabase
+      .from('historial_mantenimiento')
+      .select(COLUMNAS)
+      .eq('vehiculo_id', vehiculo.id)
+      .or('creado_por.eq.propietario,aprobado_propietario.eq.true')
+      .order('fecha', { ascending: false });
+    setRegistros((data ?? []) as Registro[]);
+    setLoading(false);
+  }
+
+  const visibles = useMemo(
+    () => (filtro === 'todos' ? registros : registros.filter(r => r.tipo === filtro)),
+    [registros, filtro],
   );
 
-  async function fetchHistorial() {
-    try {
-      const { data } = await supabase
-        .from('historial_mantenimiento')
-        .select('id,tipo,descripcion,fecha,km_en_servicio,taller,negocio_nombre,mecanico_nombre,costo,notas,fotos,detalles,recomendaciones')
-        .eq('vehiculo_id', vehiculo.id)
-        .order('fecha', { ascending: false });
-      setRegistros(data ?? []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  }
+  const secciones = useMemo(() => {
+    const mapa = new Map<string, Registro[]>();
+    visibles.forEach(r => {
+      const clave = mesAnio(r.fecha);
+      mapa.set(clave, [...(mapa.get(clave) ?? []), r]);
+    });
+    return [...mapa.entries()].map(([titulo, data]) => ({
+      titulo, data, subtotal: data.reduce((suma, r) => suma + (r.costo ?? 0), 0),
+    }));
+  }, [visibles]);
 
-  async function compartirHistorial() {
+  const total = registros.reduce((suma, r) => suma + (r.costo ?? 0), 0);
+  const conteoPorTipo = useMemo(() => {
+    const c = new Map<string, number>();
+    registros.forEach(r => c.set(r.tipo, (c.get(r.tipo) ?? 0) + 1));
+    return c;
+  }, [registros]);
+
+  async function compartir() {
     if (registros.length === 0) return;
-    const texto = formatHistorialCompartible(vehiculo, registros);
-    try {
-      await Share.share({ message: texto });
-    } catch (e) {
-      console.error(e);
-    }
+    try { await Share.share({ message: formatHistorialCompartible(vehiculo, registros) }); } catch { /* cancelado */ }
   }
 
-  async function eliminar(id: string) {
-    Alert.alert('Eliminar registro', '¿Eliminar este registro del historial?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar', style: 'destructive',
-        onPress: async () => {
-          await supabase.from('historial_mantenimiento').delete().eq('id', id);
-          setRegistros(rs => rs.filter(r => r.id !== id));
-        },
-      },
-    ]);
-  }
+  const anotar = () => navigation.navigate('AgregarHistorial', { vehiculo });
 
-  // ─── card ────────────────────────────────────────────────────────────────────
-  function renderCard({ item }: { item: Registro }) {
-    const label       = item.tipo === 'personalizado' && item.descripcion
-      ? item.descripcion
-      : (TIPO_LABEL[item.tipo] ?? item.tipo);
-    const badgeColor  = TIPO_COLOR[item.tipo] ?? '#888';
-    const tallerTexto = item.negocio_nombre || item.taller;
-    const detStr      = detallesTexto(item.tipo, item.detalles);
-    const primeraFoto = item.fotos?.[0] ?? null;
+  if (loading) return <View style={s.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
 
-    return (
-      <Pressable
-        style={s.card}
-        onPress={() => navigation.navigate('DetalleHistorial', { registro: item, vehiculo })}
-      >
-        {/* tipo badge + top row */}
-        <View style={s.cardHeader}>
-          <View style={[s.tipoBadge, { backgroundColor: badgeColor + '22', borderColor: badgeColor + '55' }]}>
-            <Text style={[s.tipoBadgeText, { color: badgeColor }]}>{TIPO_LABEL[item.tipo] ?? item.tipo}</Text>
-          </View>
-          <Text style={s.cardFecha}>{formatFecha(item.fecha)}</Text>
-        </View>
-
-        {/* title */}
-        <Text style={s.cardTitle}>{label}</Text>
-
-        {/* detalles aceite */}
-        {detStr ? (
-          <Text style={s.cardDetalle}>{detStr}</Text>
-        ) : null}
-
-        {/* meta row */}
-        <View style={s.metaRow}>
-          {item.km_en_servicio ? (
-            <View style={s.metaChip}>
-              <Text style={s.metaText}>🛣 {item.km_en_servicio.toLocaleString('es-CO')} km</Text>
-            </View>
-          ) : null}
-          {item.costo ? (
-            <View style={s.metaChip}>
-              <Text style={s.metaText}>${item.costo.toLocaleString('es-CO', { minimumFractionDigits: 0 })}</Text>
-            </View>
-          ) : null}
-        </View>
-
-        {/* taller + mecánico */}
-        {(tallerTexto || item.mecanico_nombre) ? (
-          <View style={s.proveedorRow}>
-            {tallerTexto ? (
-              <View style={s.proveedorChip}>
-                <IconBuildingStore size={12} color={colors.textTertiary} />
-                <Text style={s.proveedorText} numberOfLines={1}>{tallerTexto}</Text>
-              </View>
-            ) : null}
-            {item.mecanico_nombre ? (
-              <View style={s.proveedorChip}>
-                <IconUser size={12} color={colors.textTertiary} />
-                <Text style={s.proveedorText} numberOfLines={1}>{item.mecanico_nombre}</Text>
-              </View>
-            ) : null}
-          </View>
-        ) : null}
-
-        {/* notas */}
-        {item.notas ? (
-          <Text style={s.notasText} numberOfLines={2}>{item.notas}</Text>
-        ) : null}
-
-        {/* fotos strip */}
-        {primeraFoto ? (
-          <View style={s.fotosStrip}>
-            {(item.fotos ?? []).slice(0, 3).map((url, idx) => (
-              <Image key={idx} source={{ uri: url }} style={s.fotoThumb} resizeMode="cover" />
-            ))}
-          </View>
-        ) : null}
-
-        {/* delete */}
-        <Pressable style={s.deleteBtn} onPress={() => eliminar(item.id)} hitSlop={8} accessibilityLabel="Eliminar registro">
-          <IconTrash size={16} color={colors.textTertiary} />
-        </Pressable>
-      </Pressable>
-    );
-  }
-
-  // ─── loading ─────────────────────────────────────────────────────────────────
-  if (loading) {
-    return (
-      <View style={s.center}>
-        <ActivityIndicator color={colors.accent} size="large" />
-      </View>
-    );
-  }
-
-  // ─── main ────────────────────────────────────────────────────────────────────
   return (
     <View style={s.container}>
       <View style={s.header}>
-        <Pressable style={s.backBtn} onPress={() => navigation.goBack()} hitSlop={8} accessibilityLabel="Volver">
-          <IconArrowLeft size={22} color={colors.accent} />
+        <Pressable style={({ pressed }) => [s.iconBtn, pressed && { opacity: 0.7 }]} onPress={() => navigation.goBack()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Volver">
+          <IconArrowLeft size={22} color={colors.textPrimary} />
         </Pressable>
-        <View style={s.headerCenter}>
-          <Text style={s.title}>{vehiculo.marca} {vehiculo.modelo}</Text>
-          <Text style={s.subtitle}>
-            {registros.length} registro{registros.length !== 1 ? 's' : ''}
-          </Text>
+        <View style={{ flex: 1 }}>
+          <Text style={s.titulo} numberOfLines={1}>Historial</Text>
+          <Text style={s.subtitulo} numberOfLines={1}>{vehiculo.marca} {vehiculo.modelo}{vehiculo.placa ? ` · ${String(vehiculo.placa).toUpperCase()}` : ''}</Text>
         </View>
         {registros.length > 0 && (
-          <Pressable style={s.shareBtn} onPress={compartirHistorial} hitSlop={8} accessibilityLabel="Compartir historial">
-            <IconShare2 size={20} color={colors.textSecondary} />
+          <Pressable style={({ pressed }) => [s.iconBtn, pressed && { opacity: 0.7 }]} onPress={compartir} hitSlop={8} accessibilityRole="button" accessibilityLabel="Compartir historial">
+            <IconShare2 size={20} color={colors.textPrimary} />
           </Pressable>
         )}
-        <Pressable
-          style={s.nuevoBtn}
-          onPress={() => navigation.navigate('AgregarHistorial', { vehiculo })}
-        >
-          <IconPlus size={18} color={colors.onAccent} />
-          <Text style={s.nuevoBtnText}>Agregar</Text>
-        </Pressable>
       </View>
 
-      <FlatList
-        data={registros}
-        keyExtractor={item => item.id}
-        contentContainerStyle={s.lista}
-        renderItem={renderCard}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={s.empty}>
-            <IconTool size={52} color={colors.bgSurface} />
-            <Text style={s.emptyTitle}>Sin registros aún</Text>
-            <Text style={s.emptySubtitle}>
-              Registra el primer mantenimiento de tu {vehiculo.tipo} para llevar el control
-            </Text>
-            <Pressable
-              style={s.emptyBtn}
-              onPress={() => navigation.navigate('AgregarHistorial', { vehiculo })}
-            >
-              <Text style={s.emptyBtnText}>Agregar registro</Text>
+      {registros.length === 0 ? (
+        <View style={s.vacio}>
+          <View style={s.vacioIcono}><IconNotebook size={36} color={colors.textTertiary} /></View>
+          <Text style={s.vacioTitulo}>Aquí vive la hoja de vida de tu {vehiculo.tipo === 'carro' ? 'carro' : 'moto'}</Text>
+          <Text style={s.vacioTexto}>Anota cada aceite, revisión o arreglo. Así sabes cuándo toca el siguiente y, si lo vendes, demuestras cómo lo cuidaste.</Text>
+          <Pressable style={({ pressed }) => [s.botonPri, pressed && { opacity: 0.85 }]} onPress={anotar} accessibilityRole="button">
+            <IconPlus size={18} color={colors.onAccent} />
+            <Text style={s.botonPriTexto}>Anotar el primer servicio</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <>
+          <SectionList
+            sections={secciones}
+            keyExtractor={r => r.id}
+            stickySectionHeadersEnabled={false}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={s.lista}
+            ListHeaderComponent={
+              <View style={{ gap: spacing.lg }}>
+                <View style={s.resumen}>
+                  <Dato valor={String(registros.length)} etiqueta={registros.length === 1 ? 'Servicio' : 'Servicios'} />
+                  <View style={s.divisor} />
+                  <Dato valor={total > 0 ? formatCOP(total) : '-'} etiqueta="Invertido" />
+                  <View style={s.divisor} />
+                  <Dato valor={haceDias(registros[0].fecha)} etiqueta="Último" />
+                </View>
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.filtros} style={{ flexGrow: 0 }}>
+                  <Chip texto={`Todos ${registros.length}`} activo={filtro === 'todos'} onPress={() => setFiltro('todos')} />
+                  {TIPOS_SERVICIO.filter(t => conteoPorTipo.has(t.key)).map(t => (
+                    <Chip key={t.key} texto={`${t.corto} ${conteoPorTipo.get(t.key)}`} activo={filtro === t.key} onPress={() => setFiltro(t.key)} />
+                  ))}
+                </ScrollView>
+              </View>
+            }
+            renderSectionHeader={({ section }) => (
+              <View style={s.mes}>
+                <Text style={s.mesTitulo}>{section.titulo}</Text>
+                {section.subtotal > 0 && <Text style={s.mesSubtotal}>{formatCOP(section.subtotal)}</Text>}
+              </View>
+            )}
+            renderItem={({ item }) => <Tarjeta r={item} onPress={() => navigation.navigate('DetalleHistorial', { registro: item, vehiculo })} />}
+            SectionSeparatorComponent={() => <View style={{ height: 0 }} />}
+            ItemSeparatorComponent={() => <View style={{ height: spacing.sm }} />}
+          />
+
+          <View style={s.footer}>
+            <Pressable style={({ pressed }) => [s.botonPri, pressed && { opacity: 0.85 }]} onPress={anotar} accessibilityRole="button">
+              <IconPlus size={18} color={colors.onAccent} />
+              <Text style={s.botonPriTexto}>Anotar servicio</Text>
             </Pressable>
           </View>
-        }
-      />
+        </>
+      )}
     </View>
   );
 }
 
-// ─── styles ───────────────────────────────────────────────────────────────────
+function Dato({ valor, etiqueta }: { valor: string; etiqueta: string }) {
+  return (
+    <View style={s.dato}>
+      <Text style={s.datoValor} numberOfLines={1} adjustsFontSizeToFit>{valor}</Text>
+      <Text style={s.datoEtiqueta}>{etiqueta}</Text>
+    </View>
+  );
+}
+
+function Chip({ texto, activo, onPress }: { texto: string; activo: boolean; onPress: () => void }) {
+  return (
+    <Pressable style={[s.chip, activo && s.chipOn]} onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: activo }}>
+      <Text style={[s.chipTexto, activo && s.chipTextoOn]}>{texto}</Text>
+    </Pressable>
+  );
+}
+
+function Tarjeta({ r, onPress }: { r: Registro; onPress: () => void }) {
+  const meta = metaTipo(r.tipo);
+  const lugar = r.negocio_nombre || r.taller;
+  const deTaller = r.creado_por === 'negocio' || r.creado_por === 'mecanico';
+  const nFotos = (r.fotos?.length ?? 0) + (r.anexos?.length ?? 0) + (r.factura_url ? 1 : 0);
+  const linea = [fechaCorta(r.fecha), r.km_en_servicio ? `${r.km_en_servicio.toLocaleString('es-CO')} km` : null].filter(Boolean).join('  ·  ');
+
+  return (
+    <Pressable style={({ pressed }) => [s.tarjeta, pressed && { opacity: 0.85 }]} onPress={onPress} accessibilityRole="button" accessibilityLabel={`${tituloRegistro(r)}, ${fechaCorta(r.fecha)}`}>
+      <View style={[s.tipoIcono, { backgroundColor: `${meta.color}22` }]}>
+        <meta.Icon size={22} color={meta.color} />
+      </View>
+      <View style={{ flex: 1, gap: 3 }}>
+        <Text style={s.tarjetaTitulo} numberOfLines={1}>{tituloRegistro(r)}</Text>
+        <Text style={s.tarjetaLinea}>{linea}</Text>
+        {(lugar || deTaller || nFotos > 0) && (
+          <View style={s.pie}>
+            {!!lugar && (
+              <View style={s.pieItem}>
+                <IconBuildingStore size={12} color={colors.textTertiary} />
+                <Text style={s.pieTexto} numberOfLines={1}>{lugar}</Text>
+              </View>
+            )}
+            {deTaller && (
+              <View style={s.pieItem}>
+                <IconRosetteDiscountCheck size={13} color={colors.accent} />
+                <Text style={[s.pieTexto, { color: colors.accent }]}>Del taller</Text>
+              </View>
+            )}
+            {nFotos > 0 && (
+              <View style={s.pieItem}>
+                <IconCamera size={12} color={colors.textTertiary} />
+                <Text style={s.pieTexto}>{nFotos}</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+      <View style={s.derecha}>
+        {r.costo != null && r.costo > 0 && <Text style={s.costo}>{formatCOP(r.costo)}</Text>}
+        <IconChevronRight size={18} color={colors.textTertiary} />
+      </View>
+    </Pressable>
+  );
+}
+
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
-  center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
 
-  header: {
-    flexDirection:    'row',
-    alignItems:       'center',
-    paddingHorizontal: spacing.xl,
-    paddingTop:       56,
-    paddingBottom:    spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.bgSurface,
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: spacing.md },
+  iconBtn: {
+    width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
+    justifyContent: 'center', alignItems: 'center',
   },
-  backBtn:     { padding: 4 },
-  headerCenter:{ flex: 1, marginLeft: spacing.md },
-  title:       { color: colors.textPrimary, fontSize: 18, fontFamily: fonts.bold },
-  subtitle:    { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body, marginTop: 2 },
-  nuevoBtn:    {
-    flexDirection:   'row',
-    alignItems:      'center',
-    gap:             4,
-    backgroundColor: colors.accent,
-    borderRadius:    radius.md,
-    paddingVertical: 8,
-    paddingHorizontal: spacing.md,
+  titulo: { fontFamily: fonts.display, fontSize: 22, color: colors.textPrimary, letterSpacing: -0.4 },
+  subtitulo: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 1 },
+
+  lista: { paddingHorizontal: spacing.xl, paddingBottom: 110 },
+
+  resumen: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md,
+    backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface,
   },
-  nuevoBtnText: { color: colors.onAccent, fontSize: 13, fontFamily: fonts.heading },
-  shareBtn: {
-    width: 38, height: 38, borderRadius: radius.md,
-    backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
-    justifyContent: 'center', alignItems: 'center', marginRight: spacing.sm,
+  dato: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: 4 },
+  datoValor: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary },
+  datoEtiqueta: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary },
+  divisor: { width: 1, height: 30, backgroundColor: colors.bgSurface },
+
+  filtros: { gap: spacing.sm, paddingBottom: spacing.xs },
+  chip: { minHeight: 38, paddingHorizontal: spacing.md, borderRadius: radius.pill, justifyContent: 'center', backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface },
+  chipOn: { backgroundColor: colors.accent, borderColor: colors.accent },
+  chipTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
+  chipTextoOn: { fontFamily: fonts.bold, color: colors.onAccent },
+
+  mes: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginTop: spacing.xl, marginBottom: spacing.sm },
+  mesTitulo: { fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary },
+  mesSubtotal: { fontFamily: fonts.body, fontSize: 13, color: colors.textTertiary },
+
+  tarjeta: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, minHeight: 72,
+    backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface,
   },
+  tipoIcono: { width: 46, height: 46, borderRadius: radius.md, justifyContent: 'center', alignItems: 'center' },
+  tarjetaTitulo: { fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary },
+  tarjetaLinea: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary },
+  pie: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: spacing.md, marginTop: 1 },
+  pieItem: { flexDirection: 'row', alignItems: 'center', gap: 4, maxWidth: 150 },
+  pieTexto: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
+  derecha: { alignItems: 'flex-end', gap: 4 },
+  costo: { fontFamily: fonts.bold, fontSize: 14, color: colors.textPrimary },
 
-  lista: { padding: spacing.lg, gap: spacing.md, paddingBottom: 48 },
-
-  card: {
-    backgroundColor: colors.bgCard,
-    borderRadius:    radius.lg,
-    padding:         spacing.md,
-    borderWidth:     1,
-    borderColor:     colors.bgSurface,
-    gap:             6,
-    position:        'relative',
+  footer: {
+    position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl,
+    backgroundColor: colors.bgPrimary, borderTopWidth: 1, borderTopColor: colors.bgSurface,
   },
-
-  cardHeader:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  tipoBadge: {
-    borderRadius:    radius.sm,
-    borderWidth:     1,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
+  botonPri: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, minHeight: 54,
+    borderRadius: radius.md, backgroundColor: colors.accent, paddingHorizontal: spacing.xl,
   },
-  tipoBadgeText: { fontSize: 11, fontFamily: fonts.heading },
-  cardFecha:     { color: colors.textTertiary, fontSize: 12, fontFamily: fonts.body },
-  cardTitle:     { color: colors.textPrimary, fontSize: 15, fontFamily: fonts.bold },
-  cardDetalle:   { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body },
+  botonPriTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 
-  metaRow:   { flexDirection: 'row', gap: spacing.md, flexWrap: 'wrap' },
-  metaChip:  { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText:  { color: colors.textSecondary, fontSize: 12, fontFamily: fonts.body },
-
-  proveedorRow:  { flexDirection: 'row', gap: spacing.sm, flexWrap: 'wrap', marginTop: 2 },
-  proveedorChip: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  proveedorText: { color: colors.textTertiary, fontSize: 12, fontFamily: fonts.body, maxWidth: 160 },
-
-  notasText: { color: colors.textTertiary, fontSize: 12, fontFamily: fonts.body, fontStyle: 'italic' },
-
-  fotosStrip: { flexDirection: 'row', gap: spacing.sm, marginTop: 4 },
-  fotoThumb:  { width: 72, height: 72, borderRadius: radius.md },
-
-  deleteBtn: { position: 'absolute', top: spacing.md, right: spacing.md },
-
-  empty:        { alignItems: 'center', marginTop: 60, padding: 32 },
-  emptyTitle:   { color: colors.textPrimary, fontSize: 20, fontFamily: fonts.bold, marginTop: spacing.lg, marginBottom: spacing.sm },
-  emptySubtitle:{ color: colors.textSecondary, fontSize: 14, fontFamily: fonts.body, textAlign: 'center', lineHeight: 20, marginBottom: spacing.xl },
-  emptyBtn: {
-    backgroundColor: colors.accent,
-    borderRadius:    radius.lg,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
+  vacio: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl, paddingBottom: 60, gap: spacing.sm },
+  vacioIcono: {
+    width: 84, height: 84, borderRadius: radius.xl, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
+    justifyContent: 'center', alignItems: 'center', marginBottom: spacing.md,
   },
-  emptyBtnText: { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 15 },
+  vacioTitulo: { fontFamily: fonts.display, fontSize: 21, color: colors.textPrimary, textAlign: 'center', letterSpacing: -0.3 },
+  vacioTexto: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21, marginBottom: spacing.lg },
 });
