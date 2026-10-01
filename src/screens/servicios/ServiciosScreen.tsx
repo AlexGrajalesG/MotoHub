@@ -2,36 +2,29 @@ import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View, Text, StyleSheet, FlatList, Pressable, ScrollView, TextInput,
-  AccessibilityInfo, RefreshControl, Animated,
+  AccessibilityInfo, RefreshControl, Animated, Modal,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   IconBuildingStore, IconMapPin, IconSearch, IconTool, IconX, IconClock,
-  IconChevronRight, IconFilterOff,
+  IconChevronRight, IconFilterOff, IconAdjustmentsHorizontal, IconMotorbike, IconCar, IconPackage,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
 import { tokens } from '../../lib/tokens';
 import { fetchPromediosBatch, type Promedio } from '../../lib/calificaciones';
+import { formatCOP, formatPrecioServicio } from '../../lib/precio';
+import {
+  buscarProductos, buscarServicios, coincideVehiculo, tipoVehiculoPlural, imagenReferenciaNegocio,
+  type Negocio, type ProductoConNegocio, type ServicioConNegocio, type TipoVehiculo,
+} from '../../lib/buscadorServicios';
 import EstrellasDisplay from '../../components/EstrellasDisplay';
 import TopBar from '../../components/TopBar';
 import PressableCard from '../../components/PressableCard';
 
 const { colors, spacing, radius, fonts } = tokens;
-
-type Negocio = {
-  id: string;
-  nombre: string;
-  tipo: 'taller' | 'tienda' | 'concesionario' | 'mixto';
-  descripcion: string | null;
-  direccion: string | null;
-  ciudad: string | null;
-  atiende: string[];
-  horario: Record<string, { abre: string; cierra: string } | null> | null;
-  telefono: string | null;
-  foto_url: string | null;
-};
 
 const DIAS = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
 
@@ -57,6 +50,12 @@ const FILTROS = [
   { key: 'Todos',  label: 'Todos',    Icon: null },
   { key: 'taller', label: 'Talleres', Icon: IconTool },
   { key: 'tienda', label: 'Tiendas',  Icon: IconBuildingStore },
+];
+
+const FILTROS_VEHICULO: { key: TipoVehiculo | 'Todos'; label: string; Icon: typeof IconMotorbike | null }[] = [
+  { key: 'Todos', label: 'Todos', Icon: null },
+  { key: 'moto',  label: 'Moto',  Icon: IconMotorbike },
+  { key: 'carro', label: 'Carro', Icon: IconCar },
 ];
 
 // ─── Esqueleto de carga ─────────────────────────────────────────────────────
@@ -98,21 +97,9 @@ const NegocioCard = memo(function NegocioCard({
       onPress={() => navigation.navigate('NegocioDetalle', { negocio: item })}
       style={s.card}
     >
-      {/* Foto */}
+      {/* Foto (de referencia por rubro mientras el negocio no suba la suya) */}
       <View style={s.foto}>
-        {item.foto_url ? (
-          <Image source={{ uri: item.foto_url }} style={StyleSheet.absoluteFill} contentFit="cover" />
-        ) : (
-          <>
-            <LinearGradient
-              colors={[colors.accentDark, colors.bgSurface]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFill}
-              pointerEvents="none"
-            />
-            <IconBuildingStore size={44} color="rgba(72,151,90,0.35)" />
-          </>
-        )}
+        <Image source={item.foto_url ? { uri: item.foto_url } : imagenReferenciaNegocio(item.tipo)} style={StyleSheet.absoluteFill} contentFit="cover" />
         <LinearGradient colors={['transparent', colors.bgCard]} style={s.fotoDegradado} pointerEvents="none" />
 
         <View style={[s.insignia, s.insigniaIzq]}>
@@ -164,22 +151,85 @@ const NegocioCard = memo(function NegocioCard({
   );
 });
 
+// ─── Tarjetas de resultado (producto / servicio) ───────────────────────────
+
+const ResultadoProductoCard = memo(function ResultadoProductoCard({ item, index, reduceMotion, navigation }: { item: ProductoConNegocio; index: number; reduceMotion: boolean; navigation: any }) {
+  return (
+    <PressableCard
+      index={index}
+      reduceMotion={reduceMotion}
+      onPress={() => navigation.navigate('DetalleProducto', {
+        producto: item,
+        negocio: { id: item.negocio.id, nombre: item.negocio.nombre, telefono: item.negocio.telefono },
+      })}
+      style={s.filaResultado}
+    >
+      <View style={s.filaFoto}>
+        {item.fotos?.[0]
+          ? <Image source={{ uri: item.fotos[0] }} style={StyleSheet.absoluteFill} contentFit="cover" />
+          : <IconPackage size={22} color={colors.textTertiary} />}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.filaNombre} numberOfLines={1}>{item.nombre}</Text>
+        <Text style={s.filaMeta} numberOfLines={1}>{item.negocio.nombre}</Text>
+      </View>
+      <Text style={s.filaPrecio}>{formatCOP(item.precio)}</Text>
+    </PressableCard>
+  );
+});
+
+const ResultadoServicioCard = memo(function ResultadoServicioCard({ item, index, reduceMotion, navigation }: { item: ServicioConNegocio; index: number; reduceMotion: boolean; navigation: any }) {
+  return (
+    <PressableCard
+      index={index}
+      reduceMotion={reduceMotion}
+      onPress={() => navigation.navigate('NegocioDetalle', { negocio: item.negocio })}
+      style={s.filaResultado}
+    >
+      <View style={s.filaFoto}>
+        <IconTool size={20} color={colors.textTertiary} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.filaNombre} numberOfLines={1}>{item.nombre}</Text>
+        <Text style={s.filaMeta} numberOfLines={1}>{item.negocio.nombre}</Text>
+      </View>
+      <Text style={s.filaPrecio}>{formatPrecioServicio(item)}</Text>
+    </PressableCard>
+  );
+});
+
 // ─── Pantalla ───────────────────────────────────────────────────────────────
 
 export default function ServiciosScreen({ navigation }: any) {
+  const { session }                     = useAuth();
   const { unreadCount }                 = useNotificaciones();
   const [negocios, setNegocios]         = useState<Negocio[]>([]);
   const [busqueda, setBusqueda]         = useState('');
   const [filtroTipo, setFiltroTipo]     = useState('Todos');
+  const [filtroVehiculo, setFiltroVehiculo] = useState<TipoVehiculo | 'Todos'>('Todos');
+  const [filtroCiudad, setFiltroCiudad] = useState<string | 'Todas'>('Todas');
   const [soloAbiertos, setSoloAbiertos] = useState(false);
+  const [filtrosVisibles, setFiltrosVisibles] = useState(false);
   const [loading, setLoading]           = useState(true);
   const [refrescando, setRefrescando]   = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [promedios, setPromedios]       = useState<Record<string, Promedio>>({});
+  const [resultadosProductos, setResultadosProductos] = useState<ProductoConNegocio[]>([]);
+  const [resultadosServicios, setResultadosServicios] = useState<ServicioConNegocio[]>([]);
+  const [buscandoCatalogo, setBuscandoCatalogo] = useState(false);
   const yaCargo = useRef(false);
 
   useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion); }, []);
   useFocusEffect(useCallback(() => { fetchNegocios(); }, []));
+
+  // Preselecciona el filtro de vehículo según el Garage, solo si la persona tiene un único tipo.
+  useEffect(() => {
+    if (!session?.user.id) return;
+    supabase.from('vehiculos').select('tipo').eq('propietario_id', session.user.id).eq('activo', true).then(({ data }) => {
+      const tipos = new Set((data ?? []).map((v: any) => v.tipo));
+      if (tipos.size === 1) setFiltroVehiculo([...tipos][0] as TipoVehiculo);
+    });
+  }, [session?.user.id]);
 
   async function fetchNegocios() {
     // el esqueleto solo se ve la primera vez; despues se recarga sin borrar la lista
@@ -206,12 +256,31 @@ export default function ServiciosScreen({ navigation }: any) {
     setRefrescando(false);
   }
 
-  const q = busqueda.trim().toLowerCase();
-  const hayFiltros = q !== '' || filtroTipo !== 'Todos' || soloAbiertos;
+  const q = busqueda.trim();
+  const buscandoCatalogoActivo = q.length >= 2;
+
+  // Busca en productos y servicios (con poco retraso, para no disparar una consulta por cada letra).
+  useEffect(() => {
+    if (!buscandoCatalogoActivo) { setResultadosProductos([]); setResultadosServicios([]); return; }
+    setBuscandoCatalogo(true);
+    const t = setTimeout(async () => {
+      const [productos, servicios] = await Promise.all([buscarProductos(q), buscarServicios(q)]);
+      setResultadosProductos(productos);
+      setResultadosServicios(servicios);
+      setBuscandoCatalogo(false);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [q, buscandoCatalogoActivo]);
+
+  const vehiculoActivo = filtroVehiculo === 'Todos' ? null : filtroVehiculo;
+  const hayFiltros = filtroTipo !== 'Todos' || filtroVehiculo !== 'Todos' || filtroCiudad !== 'Todas' || soloAbiertos;
+  const totalFiltrosActivos = [filtroTipo !== 'Todos', filtroVehiculo !== 'Todos', filtroCiudad !== 'Todas', soloAbiertos].filter(Boolean).length;
 
   function limpiarFiltros() {
-    setBusqueda(''); setFiltroTipo('Todos'); setSoloAbiertos(false);
+    setBusqueda(''); setFiltroTipo('Todos'); setFiltroVehiculo('Todos'); setFiltroCiudad('Todas'); setSoloAbiertos(false);
   }
+
+  const ciudadesDisponibles = [...new Set(negocios.map(n => n.ciudad).filter((c): c is string => !!c))].sort();
 
   const visibles = negocios.filter(n => {
     const pasaTipo = filtroTipo === 'Todos'
@@ -220,11 +289,27 @@ export default function ServiciosScreen({ navigation }: any) {
         ? ['taller', 'mixto'].includes(n.tipo)
         : ['tienda', 'mixto'].includes(n.tipo);
     const pasaBusqueda = !q
-      || n.nombre.toLowerCase().includes(q)
-      || (n.ciudad ?? '').toLowerCase().includes(q);
+      || n.nombre.toLowerCase().includes(q.toLowerCase())
+      || (n.ciudad ?? '').toLowerCase().includes(q.toLowerCase());
+    const pasaVehiculo = coincideVehiculo(n.atiende, vehiculoActivo);
+    const pasaCiudad = filtroCiudad === 'Todas' || n.ciudad === filtroCiudad;
     const pasaAbierto = !soloAbiertos || estadoHorario(n.horario).abierto;
-    return pasaTipo && pasaBusqueda && pasaAbierto;
+    return pasaTipo && pasaBusqueda && pasaVehiculo && pasaCiudad && pasaAbierto;
   });
+
+  const productosVisibles = resultadosProductos.filter(p =>
+    coincideVehiculo(p.compatible_con, vehiculoActivo)
+    && (filtroCiudad === 'Todas' || p.negocio.ciudad === filtroCiudad)
+    && (filtroTipo === 'Todos' || (filtroTipo === 'taller' ? ['taller', 'mixto'] : ['tienda', 'mixto']).includes(p.negocio.tipo))
+  );
+  const serviciosVisibles = resultadosServicios.filter(sv =>
+    coincideVehiculo(sv.aplica_a, vehiculoActivo)
+    && (filtroCiudad === 'Todas' || sv.negocio.ciudad === filtroCiudad)
+    && (filtroTipo === 'Todos' || (filtroTipo === 'taller' ? ['taller', 'mixto'] : ['tienda', 'mixto']).includes(sv.negocio.tipo))
+  );
+  const negociosPorNombre = buscandoCatalogoActivo ? visibles : [];
+  const sinResultadosCatalogo = buscandoCatalogoActivo && !buscandoCatalogo
+    && negociosPorNombre.length === 0 && productosVisibles.length === 0 && serviciosVisibles.length === 0;
 
   return (
     <View style={s.container}>
@@ -234,71 +319,96 @@ export default function ServiciosScreen({ navigation }: any) {
         onPressMisCitas={() => navigation.navigate('MisCitas')}
       />
 
-      {/* Búsqueda */}
-      <View style={s.busquedaWrap}>
-        <IconSearch size={20} color={colors.textTertiary} />
-        <TextInput
-          style={s.busquedaInput}
-          placeholder="Buscar por nombre o ciudad"
-          placeholderTextColor={colors.textTertiary}
-          value={busqueda}
-          onChangeText={setBusqueda}
-          returnKeyType="search"
-          autoCorrect={false}
-          accessibilityLabel="Buscar talleres y tiendas por nombre o ciudad"
-        />
-        {busqueda.length > 0 && (
-          <Pressable
-            onPress={() => setBusqueda('')}
-            hitSlop={12}
-            accessibilityRole="button"
-            accessibilityLabel="Borrar búsqueda"
-            style={({ pressed }) => [s.borrarBtn, pressed && { opacity: 0.6 }]}
-          >
-            <IconX size={16} color={colors.textSecondary} />
-          </Pressable>
-        )}
+      {/* Búsqueda + filtros */}
+      <View style={s.topRow}>
+        <View style={s.busquedaWrap}>
+          <IconSearch size={20} color={colors.textTertiary} />
+          <TextInput
+            style={s.busquedaInput}
+            placeholder="Buscar taller, producto o servicio"
+            placeholderTextColor={colors.textTertiary}
+            value={busqueda}
+            onChangeText={setBusqueda}
+            returnKeyType="search"
+            autoCorrect={false}
+            accessibilityLabel="Buscar talleres, tiendas, productos o servicios"
+          />
+          {busqueda.length > 0 && (
+            <Pressable
+              onPress={() => setBusqueda('')}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Borrar búsqueda"
+              style={({ pressed }) => [s.borrarBtn, pressed && { opacity: 0.6 }]}
+            >
+              <IconX size={16} color={colors.textSecondary} />
+            </Pressable>
+          )}
+        </View>
+        <Pressable
+          style={({ pressed }) => [s.filtrosBtn, totalFiltrosActivos > 0 && s.filtrosBtnActivo, pressed && { opacity: 0.85 }]}
+          onPress={() => setFiltrosVisibles(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Abrir filtros"
+        >
+          <IconAdjustmentsHorizontal size={20} color={totalFiltrosActivos > 0 ? colors.accent : colors.textSecondary} />
+          {totalFiltrosActivos > 0 && (
+            <View style={s.filtrosBadge}><Text style={s.filtrosBadgeTexto}>{totalFiltrosActivos}</Text></View>
+          )}
+        </Pressable>
       </View>
 
-      {/* Filtros */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.chipsRow}
-        style={s.chipsScroll}
-      >
-        {FILTROS.map(({ key, label, Icon }) => {
-          const activo = filtroTipo === key;
-          return (
-            <Pressable
-              key={key}
-              style={({ pressed }) => [s.chip, activo && s.chipActivo, pressed && { opacity: 0.85 }]}
-              onPress={() => setFiltroTipo(key)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: activo }}
-            >
-              {Icon && <Icon size={16} color={activo ? colors.accent : colors.textSecondary} />}
-              <Text style={[s.chipTexto, activo && s.chipTextoActivo]}>{label}</Text>
-            </Pressable>
-          );
-        })}
-        <View style={s.separador} />
-        <Pressable
-          style={({ pressed }) => [s.chip, soloAbiertos && s.chipActivo, pressed && { opacity: 0.85 }]}
-          onPress={() => setSoloAbiertos(v => !v)}
-          accessibilityRole="button"
-          accessibilityState={{ selected: soloAbiertos }}
-        >
-          <View style={[s.punto, s.puntoAbierto, !soloAbiertos && { backgroundColor: colors.textTertiary }]} />
-          <Text style={[s.chipTexto, soloAbiertos && s.chipTextoActivo]}>Abiertos ahora</Text>
-        </Pressable>
-      </ScrollView>
-
-      {/* Lista */}
+      {/* Resultados */}
       {loading ? (
         <View style={s.list}>
           {[0, 1, 2].map(i => <EsqueletoCard key={i} reduceMotion={reduceMotion} />)}
         </View>
+      ) : buscandoCatalogoActivo ? (
+        <ScrollView contentContainerStyle={s.list} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {buscandoCatalogo ? (
+            <View style={{ paddingVertical: spacing.xxl, alignItems: 'center' }}>
+              <EsqueletoCard reduceMotion={reduceMotion} />
+            </View>
+          ) : sinResultadosCatalogo ? (
+            <View style={s.vacio}>
+              <View style={s.vacioIcono}><IconFilterOff size={40} color={colors.textTertiary} /></View>
+              <Text style={s.vacioTitulo}>No encontramos resultados</Text>
+              <Text style={s.vacioSub}>Prueba con otra búsqueda o quita los filtros.</Text>
+              {hayFiltros && (
+                <Pressable style={({ pressed }) => [s.vacioBoton, pressed && { opacity: 0.85 }]} onPress={limpiarFiltros} accessibilityRole="button">
+                  <Text style={s.vacioBotonTexto}>Quitar filtros</Text>
+                </Pressable>
+              )}
+            </View>
+          ) : (
+            <>
+              {negociosPorNombre.length > 0 && (
+                <View style={s.seccion}>
+                  <Text style={s.seccionTitulo}>Talleres y tiendas</Text>
+                  {negociosPorNombre.map((item, index) => (
+                    <NegocioCard key={item.id} item={item} navigation={navigation} index={index} reduceMotion={reduceMotion} promedio={promedios[item.id]} />
+                  ))}
+                </View>
+              )}
+              {serviciosVisibles.length > 0 && (
+                <View style={s.seccion}>
+                  <Text style={s.seccionTitulo}>Servicios</Text>
+                  {serviciosVisibles.map((item, index) => (
+                    <ResultadoServicioCard key={item.id} item={item} index={index} reduceMotion={reduceMotion} navigation={navigation} />
+                  ))}
+                </View>
+              )}
+              {productosVisibles.length > 0 && (
+                <View style={s.seccion}>
+                  <Text style={s.seccionTitulo}>Productos</Text>
+                  {productosVisibles.map((item, index) => (
+                    <ResultadoProductoCard key={item.id} item={item} index={index} reduceMotion={reduceMotion} navigation={navigation} />
+                  ))}
+                </View>
+              )}
+            </>
+          )}
+        </ScrollView>
       ) : visibles.length === 0 ? (
         <View style={s.vacio}>
           <View style={s.vacioIcono}>
@@ -357,6 +467,76 @@ export default function ServiciosScreen({ navigation }: any) {
           )}
         />
       )}
+
+      {/* Hoja de filtros */}
+      <Modal visible={filtrosVisibles} transparent animationType="fade" onRequestClose={() => setFiltrosVisibles(false)}>
+        <Pressable style={s.fondoModal} onPress={() => setFiltrosVisibles(false)}>
+          <Pressable style={s.hoja} onPress={() => {}}>
+            <View style={s.hojaHeader}>
+              <Text style={s.hojaTitulo}>Filtros</Text>
+              {totalFiltrosActivos > 0 && (
+                <Pressable onPress={limpiarFiltros} hitSlop={8}><Text style={s.hojaLimpiar}>Quitar todos</Text></Pressable>
+              )}
+            </View>
+
+            <Text style={s.hojaSeccion}>Tipo</Text>
+            <View style={s.hojaFila}>
+              {FILTROS.map(({ key, label, Icon }) => {
+                const activo = filtroTipo === key;
+                return (
+                  <Pressable key={key} style={[s.chip, activo && s.chipActivo]} onPress={() => setFiltroTipo(key)} accessibilityRole="button" accessibilityState={{ selected: activo }}>
+                    {Icon && <Icon size={16} color={activo ? colors.accent : colors.textSecondary} />}
+                    <Text style={[s.chipTexto, activo && s.chipTextoActivo]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <Text style={s.hojaSeccion}>Vehículo</Text>
+            <View style={s.hojaFila}>
+              {FILTROS_VEHICULO.map(({ key, label, Icon }) => {
+                const activo = filtroVehiculo === key;
+                return (
+                  <Pressable key={key} style={[s.chip, activo && s.chipActivo]} onPress={() => setFiltroVehiculo(key)} accessibilityRole="button" accessibilityState={{ selected: activo }}>
+                    {Icon && <Icon size={16} color={activo ? colors.accent : colors.textSecondary} />}
+                    <Text style={[s.chipTexto, activo && s.chipTextoActivo]}>{label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {ciudadesDisponibles.length > 1 && (
+              <>
+                <Text style={s.hojaSeccion}>Ciudad</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={s.hojaFila}>
+                    <Pressable style={[s.chip, filtroCiudad === 'Todas' && s.chipActivo]} onPress={() => setFiltroCiudad('Todas')} accessibilityRole="button">
+                      <Text style={[s.chipTexto, filtroCiudad === 'Todas' && s.chipTextoActivo]}>Todas</Text>
+                    </Pressable>
+                    {ciudadesDisponibles.map(c => (
+                      <Pressable key={c} style={[s.chip, filtroCiudad === c && s.chipActivo]} onPress={() => setFiltroCiudad(c)} accessibilityRole="button">
+                        <Text style={[s.chipTexto, filtroCiudad === c && s.chipTextoActivo]}>{c}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                </ScrollView>
+              </>
+            )}
+
+            <Text style={s.hojaSeccion}>Horario</Text>
+            <View style={s.hojaFila}>
+              <Pressable style={[s.chip, soloAbiertos && s.chipActivo]} onPress={() => setSoloAbiertos(v => !v)} accessibilityRole="button" accessibilityState={{ selected: soloAbiertos }}>
+                <View style={[s.punto, s.puntoAbierto, !soloAbiertos && { backgroundColor: colors.textTertiary }]} />
+                <Text style={[s.chipTexto, soloAbiertos && s.chipTextoActivo]}>Abiertos ahora</Text>
+              </Pressable>
+            </View>
+
+            <Pressable style={({ pressed }) => [s.hojaCerrar, pressed && { opacity: 0.9 }]} onPress={() => setFiltrosVisibles(false)} accessibilityRole="button">
+              <Text style={s.hojaCerrarTexto}>Ver resultados</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -367,9 +547,12 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   /* Búsqueda */
-  busquedaWrap: {
+  topRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     marginHorizontal: spacing.xl, marginBottom: spacing.md,
+  },
+  busquedaWrap: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     backgroundColor: colors.bgCard, borderRadius: radius.xl,
     borderWidth: 1, borderColor: colors.bgSurface,
     paddingHorizontal: spacing.lg, minHeight: 52,
@@ -379,10 +562,18 @@ const s = StyleSheet.create({
     width: 28, height: 28, borderRadius: 14, backgroundColor: colors.bgSurface,
     justifyContent: 'center', alignItems: 'center',
   },
+  filtrosBtn: {
+    width: 52, height: 52, borderRadius: radius.xl, backgroundColor: colors.bgCard,
+    borderWidth: 1, borderColor: colors.bgSurface, justifyContent: 'center', alignItems: 'center',
+  },
+  filtrosBtnActivo: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.15)' },
+  filtrosBadge: {
+    position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9,
+    backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
+  },
+  filtrosBadgeTexto: { fontFamily: fonts.bold, fontSize: 10, color: colors.onAccent },
 
   /* Filtros */
-  chipsScroll: { flexGrow: 0 },
-  chipsRow: { paddingHorizontal: spacing.xl, gap: spacing.sm, paddingBottom: spacing.md, alignItems: 'center' },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
     minHeight: 40, paddingHorizontal: spacing.lg, borderRadius: radius.pill,
@@ -391,7 +582,22 @@ const s = StyleSheet.create({
   chipActivo: { backgroundColor: 'rgba(72,151,90,0.15)', borderColor: colors.accent },
   chipTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.textSecondary },
   chipTextoActivo: { color: colors.accent },
-  separador: { width: 1, height: 22, backgroundColor: colors.bgSurface, marginHorizontal: 2 },
+
+  /* Resultados de búsqueda mixta */
+  seccion: { marginBottom: spacing.lg },
+  seccionTitulo: { fontFamily: fonts.heading, fontSize: 13, color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.sm },
+  filaResultado: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.md,
+    backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface,
+    padding: spacing.md, marginBottom: spacing.sm,
+  },
+  filaFoto: {
+    width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.bgSurface,
+    justifyContent: 'center', alignItems: 'center', overflow: 'hidden',
+  },
+  filaNombre: { fontFamily: fonts.bold, fontSize: 14, color: colors.textPrimary },
+  filaMeta: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: 1 },
+  filaPrecio: { fontFamily: fonts.heading, fontSize: 13, color: colors.accent },
 
   /* Lista */
   list: { paddingHorizontal: spacing.xl, paddingBottom: 40 },
@@ -460,4 +666,21 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: colors.accent, justifyContent: 'center',
   },
   vacioBotonTexto: { fontFamily: fonts.bold, fontSize: 14, color: colors.accent },
+
+  /* Hoja de filtros */
+  fondoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  hoja: {
+    backgroundColor: colors.bgCard, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
+    borderWidth: 1, borderColor: colors.bgSurface, padding: spacing.xl, paddingBottom: spacing.xxl,
+  },
+  hojaHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
+  hojaTitulo: { fontFamily: fonts.display, fontSize: 20, color: colors.textPrimary, letterSpacing: -0.3 },
+  hojaLimpiar: { fontFamily: fonts.heading, fontSize: 13, color: colors.accent },
+  hojaSeccion: { fontFamily: fonts.heading, fontSize: 13, color: colors.textTertiary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: spacing.sm, marginTop: spacing.lg },
+  hojaFila: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  hojaCerrar: {
+    marginTop: spacing.xxl, minHeight: 52, borderRadius: radius.md, backgroundColor: colors.accent,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  hojaCerrarTexto: { fontFamily: fonts.bold, fontSize: 15, color: colors.onAccent },
 });

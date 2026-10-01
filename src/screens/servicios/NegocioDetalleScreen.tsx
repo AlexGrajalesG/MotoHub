@@ -15,6 +15,7 @@ import { tokens } from '../../lib/tokens';
 import { formatPrecioServicio, formatCOP, type TipoPrecio } from '../../lib/precio';
 import { fetchPromedio, type Promedio } from '../../lib/calificaciones';
 import { fetchProductosDeNegocio, type Producto } from '../../lib/productos';
+import { imagenReferenciaNegocio } from '../../lib/buscadorServicios';
 import EstrellasDisplay from '../../components/EstrellasDisplay';
 
 const { colors, spacing, radius, fonts } = tokens;
@@ -134,11 +135,11 @@ export default function NegocioDetalleScreen({ route, navigation }: any) {
       >
         {/* ── Hero ── */}
         <View style={s.hero}>
-          {negocio.foto_url ? (
-            <Image source={negocio.foto_url} style={StyleSheet.absoluteFill} contentFit="cover" />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, s.heroPlaceholder]} />
-          )}
+          <Image
+            source={negocio.foto_url ?? imagenReferenciaNegocio(negocio.tipo)}
+            style={StyleSheet.absoluteFill}
+            contentFit="cover"
+          />
           <LinearGradient
             colors={['transparent', 'rgba(2,2,2,0.45)', colors.bgPrimary]}
             style={StyleSheet.absoluteFill}
