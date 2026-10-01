@@ -18,13 +18,15 @@ export type Post = {
   rol_autor: RolAutor;
   negocio_id: string | null;
   created_at: string;
+  likes_count: number;
+  comentarios_count: number;
   autor: { nombre: string | null; nombre_usuario: string | null; foto_url: string | null } | null;
   negocio: { nombre: string } | null;
 };
 
 const SELECT_POST = `
   id, autor_id, contenido, fotos_urls, video_url, video_plataforma, categoria, ciudad, marca,
-  rol_autor, negocio_id, created_at,
+  rol_autor, negocio_id, created_at, likes_count, comentarios_count,
   negocio:negocios ( nombre )
 `;
 
@@ -96,6 +98,67 @@ export async function crearPost(autorId: string, p: NuevoPost): Promise<{ ok: tr
 
 export async function eliminarPost(id: string): Promise<{ ok: true } | { ok: false; mensaje: string }> {
   const { error } = await supabase.from('posts').delete().eq('id', id);
+  return error ? { ok: false, mensaje: mensajeError(error) } : { ok: true };
+}
+
+// ─── Likes ──────────────────────────────────────────────────────────────────
+// posts.likes_count se mantiene solo con triggers (fn_sync_likes_count), nunca se escribe desde el cliente.
+
+/** De esta lista de posts, cuáles ya tienen like del usuario actual (RLS solo deja ver los propios). */
+export async function misLikes(postIds: string[], usuarioId: string): Promise<Set<string>> {
+  if (postIds.length === 0) return new Set();
+  const { data, error } = await supabase.from('post_likes').select('post_id').eq('usuario_id', usuarioId).in('post_id', postIds);
+  if (error) { console.error(error.message); return new Set(); }
+  return new Set((data ?? []).map((r: any) => r.post_id as string));
+}
+
+export async function darLike(postId: string, usuarioId: string): Promise<{ ok: true } | { ok: false; mensaje: string }> {
+  const { error } = await supabase.from('post_likes').insert({ post_id: postId, usuario_id: usuarioId });
+  if (error && !error.message.includes('duplicate key')) return { ok: false, mensaje: mensajeError(error) };
+  return { ok: true };
+}
+
+export async function quitarLike(postId: string, usuarioId: string): Promise<{ ok: true } | { ok: false; mensaje: string }> {
+  const { error } = await supabase.from('post_likes').delete().eq('post_id', postId).eq('usuario_id', usuarioId);
+  return error ? { ok: false, mensaje: mensajeError(error) } : { ok: true };
+}
+
+// ─── Comentarios ────────────────────────────────────────────────────────────
+// comentarios_count del post se mantiene con trigger (fn_sync_comentarios_count).
+
+export type Comentario = {
+  id: string;
+  post_id: string;
+  autor_id: string;
+  contenido: string;
+  created_at: string;
+  autor: { nombre: string | null; nombre_usuario: string | null; foto_url: string | null } | null;
+};
+
+export async function fetchComentarios(postId: string): Promise<Comentario[]> {
+  const { data, error } = await supabase
+    .from('comentarios')
+    .select('id, post_id, autor_id, contenido, created_at')
+    .eq('post_id', postId)
+    .order('created_at', { ascending: true });
+  if (error) { console.error(error.message); return []; }
+  const filas = data ?? [];
+  const ids = [...new Set(filas.map((f: any) => f.autor_id))];
+  if (ids.length === 0) return [];
+  const { data: autores } = await supabase.from('usuarios').select('id, nombre, nombre_usuario, foto_url').in('id', ids);
+  const mapa = new Map((autores ?? []).map((a: any) => [a.id, a]));
+  return filas.map((f: any) => ({ ...f, autor: mapa.get(f.autor_id) ?? null })) as Comentario[];
+}
+
+export async function crearComentario(postId: string, autorId: string, contenido: string): Promise<{ ok: true } | { ok: false; mensaje: string }> {
+  const texto = contenido.trim();
+  if (!texto) return { ok: false, mensaje: 'Escribe algo primero.' };
+  const { error } = await supabase.from('comentarios').insert({ post_id: postId, autor_id: autorId, contenido: texto });
+  return error ? { ok: false, mensaje: mensajeError(error) } : { ok: true };
+}
+
+export async function eliminarComentario(id: string): Promise<{ ok: true } | { ok: false; mensaje: string }> {
+  const { error } = await supabase.from('comentarios').delete().eq('id', id);
   return error ? { ok: false, mensaje: mensajeError(error) } : { ok: true };
 }
 

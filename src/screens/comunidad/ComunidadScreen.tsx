@@ -7,14 +7,14 @@ import {
 import { Image } from 'expo-image';
 import {
   IconWorld, IconMotorbike, IconBuildingStore, IconDots, IconFlag, IconUserOff,
-  IconPlus, IconShieldCheck, IconX,
+  IconPlus, IconShieldCheck, IconX, IconHeart, IconHeartFilled, IconMessageCircle,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useModo } from '../../context/ModoContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
 import { tokens } from '../../lib/tokens';
-import { fetchFeed, reportarPost, bloquearUsuario, eliminarPost, CATEGORIAS, type Post, type Pestana } from '../../lib/comunidad';
+import { fetchFeed, reportarPost, bloquearUsuario, eliminarPost, misLikes, darLike, quitarLike, CATEGORIAS, type Post, type Pestana } from '../../lib/comunidad';
 import TopBar from '../../components/TopBar';
 import PressableCard from '../../components/PressableCard';
 import FotosPost from '../../components/comunidad/FotosPost';
@@ -71,8 +71,11 @@ function EsqueletoCard({ reduceMotion }: { reduceMotion: boolean }) {
 // ─── Tarjeta de publicación ─────────────────────────────────────────────────
 
 const PostCard = memo(function PostCard({
-  item, index, reduceMotion, miId, esModerador, onMenu,
-}: { item: Post; index: number; reduceMotion: boolean; miId?: string; esModerador: boolean; onMenu: (p: Post) => void }) {
+  item, index, reduceMotion, miId, esModerador, liked, onMenu, onToggleLike, onAbrirComentarios,
+}: {
+  item: Post; index: number; reduceMotion: boolean; miId?: string; esModerador: boolean; liked: boolean;
+  onMenu: (p: Post) => void; onToggleLike: (p: Post) => void; onAbrirComentarios: (p: Post) => void;
+}) {
   const nombre = item.negocio?.nombre ?? item.autor?.nombre ?? 'Usuario de Rodix';
   const esTaller = item.rol_autor === 'negocio';
   const categoria = CATEGORIAS.find(c => c.key === item.categoria);
@@ -123,6 +126,31 @@ const PostCard = memo(function PostCard({
       {item.fotos_urls && item.fotos_urls.length > 0 && <FotosPost urls={item.fotos_urls} />}
 
       {item.video_url && item.video_plataforma && <VideoPost url={item.video_url} plataforma={item.video_plataforma} />}
+
+      <View style={s.acciones}>
+        <Pressable
+          style={({ pressed }) => [s.accion, pressed && { opacity: 0.7 }]}
+          onPress={() => onToggleLike(item)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={liked ? 'Quitar like' : 'Dar like'}
+        >
+          {liked
+            ? <IconHeartFilled size={20} color={colors.dangerAction} />
+            : <IconHeart size={20} color={colors.textSecondary} />}
+          {item.likes_count > 0 && <Text style={[s.accionTexto, liked && { color: colors.dangerAction }]}>{item.likes_count}</Text>}
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [s.accion, pressed && { opacity: 0.7 }]}
+          onPress={() => onAbrirComentarios(item)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Ver comentarios"
+        >
+          <IconMessageCircle size={20} color={colors.textSecondary} />
+          {item.comentarios_count > 0 && <Text style={s.accionTexto}>{item.comentarios_count}</Text>}
+        </Pressable>
+      </View>
     </PressableCard>
   );
 });
@@ -142,6 +170,7 @@ export default function ComunidadScreen({ navigation }: any) {
   const [ciudad, setCiudad] = useState<string | null>(null);
   const [marcas, setMarcas] = useState<string[]>([]);
   const [menuPost, setMenuPost] = useState<Post | null>(null);
+  const [misLikesSet, setMisLikesSet] = useState<Set<string>>(new Set());
   const yaCargo = useRef(false);
 
   useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion); }, []);
@@ -166,6 +195,33 @@ export default function ComunidadScreen({ navigation }: any) {
     setPosts(lista);
     yaCargo.current = true;
     setLoading(false);
+    if (session?.user.id && lista.length > 0) {
+      setMisLikesSet(await misLikes(lista.map(p => p.id), session.user.id));
+    }
+  }
+
+  async function alternarLike(post: Post) {
+    const uid = session?.user.id;
+    if (!uid) return;
+    const yaLeDioLike = misLikesSet.has(post.id);
+
+    setMisLikesSet(prev => {
+      const siguiente = new Set(prev);
+      yaLeDioLike ? siguiente.delete(post.id) : siguiente.add(post.id);
+      return siguiente;
+    });
+    setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + (yaLeDioLike ? -1 : 1) } : p));
+
+    const r = yaLeDioLike ? await quitarLike(post.id, uid) : await darLike(post.id, uid);
+    if (!r.ok) {
+      // revierte si falló
+      setMisLikesSet(prev => {
+        const siguiente = new Set(prev);
+        yaLeDioLike ? siguiente.add(post.id) : siguiente.delete(post.id);
+        return siguiente;
+      });
+      setPosts(prev => prev.map(p => p.id === post.id ? { ...p, likes_count: p.likes_count + (yaLeDioLike ? 1 : -1) } : p));
+    }
   }
 
   async function refrescar() {
@@ -260,7 +316,13 @@ export default function ComunidadScreen({ navigation }: any) {
             <RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={colors.accent} colors={[colors.accent]} progressBackgroundColor={colors.bgCard} />
           }
           renderItem={({ item, index }) => (
-            <PostCard item={item} index={index} reduceMotion={reduceMotion} miId={session?.user.id} esModerador={esModerador} onMenu={setMenuPost} />
+            <PostCard
+              item={item} index={index} reduceMotion={reduceMotion} miId={session?.user.id} esModerador={esModerador}
+              liked={misLikesSet.has(item.id)}
+              onMenu={setMenuPost}
+              onToggleLike={alternarLike}
+              onAbrirComentarios={p => navigation.navigate('Comentarios', { postId: p.id })}
+            />
           )}
         />
       )}
@@ -345,6 +407,10 @@ const s = StyleSheet.create({
   badgeTaller: { backgroundColor: colors.accentDark, borderRadius: radius.sm, paddingHorizontal: 6, paddingVertical: 2 },
   badgeTallerTexto: { fontFamily: fonts.bold, fontSize: 10, color: colors.accent, textTransform: 'uppercase' },
   meta: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: 1 },
+
+  acciones: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.md },
+  accion: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingVertical: spacing.sm },
+  accionTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
 
   contenido: { fontFamily: fonts.body, fontSize: 15, color: colors.textPrimary, lineHeight: 21 },
   categoria: { alignSelf: 'flex-start', marginBottom: spacing.sm, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: colors.accentDark },

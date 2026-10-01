@@ -67,9 +67,10 @@ import RegistrarServicioScreen from '../screens/chat/RegistrarServicioScreen';
 
 import CalificarCitaScreen     from '../screens/calificaciones/CalificarCitaScreen';
 
-import ComunidadScreen  from '../screens/comunidad/ComunidadScreen';
-import CrearPostScreen  from '../screens/comunidad/CrearPostScreen';
-import ModeracionScreen from '../screens/comunidad/ModeracionScreen';
+import ComunidadScreen    from '../screens/comunidad/ComunidadScreen';
+import CrearPostScreen    from '../screens/comunidad/CrearPostScreen';
+import ModeracionScreen   from '../screens/comunidad/ModeracionScreen';
+import ComentariosScreen  from '../screens/comunidad/ComentariosScreen';
 
 const Tab          = createBottomTabNavigator();
 const GarageNav    = createNativeStackNavigator();
@@ -120,6 +121,7 @@ function ServiciosStack() {
       <ServiciosNav.Screen name="ChatCita"          component={ChatCitaScreen} />
       <ServiciosNav.Screen name="RegistrarServicio" component={RegistrarServicioScreen} />
       <ServiciosNav.Screen name="CalificarCita"     component={CalificarCitaScreen} />
+      <ServiciosNav.Screen name="Notificaciones"    component={NotificacionesScreen} />
     </ServiciosNav.Navigator>
   );
 }
@@ -130,6 +132,7 @@ function ComunidadStack() {
       <ComunidadNav.Screen name="ComunidadHome" component={ComunidadScreen} />
       <ComunidadNav.Screen name="CrearPost"     component={CrearPostScreen} />
       <ComunidadNav.Screen name="Moderacion"    component={ModeracionScreen} />
+      <ComunidadNav.Screen name="Comentarios"   component={ComentariosScreen} />
       <ComunidadNav.Screen name="Notificaciones" component={NotificacionesScreen} />
     </ComunidadNav.Navigator>
   );
