@@ -13,6 +13,8 @@ type MiMecanico = { id: string; negocio_id: string; negocio_nombre: string };
 type ModoContextType = {
   tieneNegocio: boolean;
   esModerador: boolean;
+  /** Cuenta de negocio independiente (sin rol 'propietario' personal) — siempre modo Taller, sin switch. */
+  esNegocioPuro: boolean;
   negocioId: string | null;
   citasPendientes: number;
   modoTaller: boolean;
@@ -30,6 +32,7 @@ type ModoContextType = {
 const ModoContext = createContext<ModoContextType>({
   tieneNegocio: false,
   esModerador: false,
+  esNegocioPuro: false,
   negocioId: null,
   citasPendientes: 0,
   modoTaller: false,
@@ -48,6 +51,7 @@ export function ModoProvider({ children }: { children: React.ReactNode }) {
   const { session } = useAuth();
   const [tieneNegocio, setTieneNegocio] = useState(false);
   const [esModerador, setEsModerador] = useState(false);
+  const [esNegocioPuro, setEsNegocioPuro] = useState(false);
   const [negocioId, setNegocioId] = useState<string | null>(null);
   const [citasPendientes, setCitasPendientes] = useState(0);
   const [modoTaller, setModoTallerState] = useState(false);
@@ -64,6 +68,7 @@ export function ModoProvider({ children }: { children: React.ReactNode }) {
     const roles = (usuario?.roles as string[]) ?? [];
     setTieneNegocio(roles.includes('negocio'));
     setEsModerador(roles.includes('moderador'));
+    setEsNegocioPuro(roles.includes('negocio') && !roles.includes('propietario'));
     setNegocioId(negocio?.id ?? null);
   }, [session?.user.id]);
 
@@ -88,6 +93,7 @@ export function ModoProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!session?.user.id) {
       setTieneNegocio(false);
+      setEsNegocioPuro(false);
       setModoTallerState(false);
       setMiMecanico(null);
       setModoMecanicoState(false);
@@ -128,7 +134,7 @@ export function ModoProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <ModoContext.Provider value={{
-      tieneNegocio, esModerador, negocioId, citasPendientes, modoTaller, esMecanico: !!miMecanico, miMecanico, modoMecanico, loadingModo,
+      tieneNegocio, esModerador, esNegocioPuro, negocioId, citasPendientes, modoTaller, esMecanico: !!miMecanico, miMecanico, modoMecanico, loadingModo,
       setModoTaller, setModoMecanico, refreshTieneNegocio, refreshEsMecanico, refreshCitasPendientes,
     }}>
       {children}

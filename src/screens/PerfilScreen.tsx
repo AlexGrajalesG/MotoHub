@@ -65,7 +65,7 @@ export default function PerfilScreen({ navigation }: any) {
   const { session } = useAuth();
   const {
     tieneNegocio, esModerador, modoTaller, setModoTaller, esMecanico, miMecanico,
-    modoMecanico, setModoMecanico, refreshEsMecanico, loadingModo,
+    modoMecanico, setModoMecanico, refreshEsMecanico, loadingModo, esNegocioPuro,
   } = useModo();
 
   const [perfil, setPerfil] = useState<Perfil>(VACIO);
@@ -190,7 +190,7 @@ export default function PerfilScreen({ navigation }: any) {
     : session?.user.email?.[0].toUpperCase() ?? '?';
 
   const modoActual = modoTaller ? 'taller' : modoMecanico ? 'mecanico' : 'personal';
-  const hayModos = !loadingModo && (tieneNegocio || esMecanico);
+  const hayModos = !loadingModo && !esNegocioPuro && (tieneNegocio || esMecanico);
 
   if (loading) return (
     <View style={s.center}><ActivityIndicator color={colors.accent} size="large" /></View>

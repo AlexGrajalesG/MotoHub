@@ -16,6 +16,7 @@ import { getDocStatus } from '../lib/documentos';
 
 import LoginScreen            from '../screens/auth/LoginScreen';
 import RegisterScreen         from '../screens/auth/RegisterScreen';
+import RegistrarNegocioCuentaScreen from '../screens/auth/RegistrarNegocioCuentaScreen';
 import LegalScreen from '../screens/legal/LegalScreen';
 import SeguridadScreen from '../screens/cuenta/SeguridadScreen';
 import EliminarCuentaScreen from '../screens/cuenta/EliminarCuentaScreen';
@@ -362,9 +363,11 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
 }
 
 function ModeAwareTabs() {
-  const { tieneNegocio, modoTaller, esMecanico, modoMecanico } = useModo();
-  const efectivo: 'cliente' | 'taller' | 'mecanico' =
-    tieneNegocio && modoTaller ? 'taller' : esMecanico && modoMecanico ? 'mecanico' : 'cliente';
+  const { tieneNegocio, modoTaller, esMecanico, modoMecanico, esNegocioPuro } = useModo();
+  // Cuenta de negocio independiente: siempre Taller, no hay "modo personal" al que volver.
+  const efectivo: 'cliente' | 'taller' | 'mecanico' = esNegocioPuro
+    ? 'taller'
+    : tieneNegocio && modoTaller ? 'taller' : esMecanico && modoMecanico ? 'mecanico' : 'cliente';
 
   const [displayModo, setDisplayModo] = useState(efectivo);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -407,7 +410,7 @@ function ModeAwareTabs() {
     <View style={{ flex: 1 }}>
       <AppTabs modo={displayModo} />
 
-      {displayModo !== 'cliente' && (
+      {displayModo !== 'cliente' && !esNegocioPuro && (
         <Animated.View
           pointerEvents="none"
           style={[s.badge, { opacity: badgeOpacity, transform: [{ scale: badgeScale }] }]}
@@ -430,6 +433,7 @@ function AuthStack() {
     <AuthNav.Navigator screenOptions={{ headerShown: false }}>
       <AuthNav.Screen name="Login"      component={LoginScreen} />
       <AuthNav.Screen name="Register"   component={RegisterScreen} />
+      <AuthNav.Screen name="RegistrarNegocioCuenta" component={RegistrarNegocioCuentaScreen} />
       <AuthNav.Screen name="CheckEmail" component={CheckEmailScreen} />
       <AuthNav.Screen name="RecuperarClave" component={RecuperarClaveScreen} />
       <AuthNav.Screen name="Legal"      component={LegalScreen} />

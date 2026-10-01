@@ -146,6 +146,11 @@ export default function LoginScreen({ navigation }: any) {
             ¿No tienes cuenta? <Text style={s.enlaceFuerte}>Crea una gratis</Text>
           </Text>
         </Pressable>
+        <Pressable onPress={() => navigation.navigate('RegistrarNegocioCuenta')} hitSlop={8} style={s.enlaceWrap} accessibilityRole="link">
+          <Text style={s.enlace}>
+            ¿Tienes un taller o tienda? <Text style={s.enlaceFuerte}>Crea tu cuenta de negocio</Text>
+          </Text>
+        </Pressable>
       </View>
     </KeyboardAvoidingView>
     </FondoAuth>
