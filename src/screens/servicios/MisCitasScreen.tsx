@@ -271,22 +271,18 @@ export default function MisCitasScreen({ navigation }: any) {
         <Text style={s.headerTitle}>Mis citas</Text>
       </View>
 
-      <View style={s.filtros}>
-        <FlatList
-          data={FILTROS}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={f => f.value}
-          contentContainerStyle={{ gap: spacing.sm, paddingHorizontal: spacing.xl }}
-          renderItem={({ item }) => (
-            <Pressable
-              style={[s.chip, filtro === item.value && s.chipOn]}
-              onPress={() => setFiltro(item.value)}
-            >
-              <Text style={[s.chipText, filtro === item.value && s.chipTextOn]}>{item.label}</Text>
-            </Pressable>
-          )}
-        />
+      {/* Los 5 estados caben en dos filas, todos a la vista sin scroll horizontal
+          (hallazgo de auditoría UX: el último chip quedaba fuera de vista). */}
+      <View style={[s.filtros, s.filtrosWrap]}>
+        {FILTROS.map(item => (
+          <Pressable
+            key={item.value}
+            style={[s.chip, filtro === item.value && s.chipOn]}
+            onPress={() => setFiltro(item.value)}
+          >
+            <Text style={[s.chipText, filtro === item.value && s.chipTextOn]}>{item.label}</Text>
+          </Pressable>
+        ))}
       </View>
 
       {loading ? (
@@ -335,7 +331,8 @@ const s = StyleSheet.create({
   },
   headerTitle: { flex: 1, fontFamily: fonts.display, fontSize: 22, color: colors.textPrimary, letterSpacing: -0.4 },
 
-  filtros: { paddingBottom: spacing.md },
+  filtros: { paddingBottom: spacing.md, paddingHorizontal: spacing.xl },
+  filtrosWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
     backgroundColor: colors.bgCard,
     borderRadius: radius.pill, borderWidth: 1, borderColor: colors.bgSurface,

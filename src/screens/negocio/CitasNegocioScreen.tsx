@@ -33,10 +33,12 @@ type Cita = {
   usuario: { nombre: string | null; foto_url: string | null } | null;
 };
 
+// Las etiquetas dicen qué filtra cada pestaña, no el nombre interno del estado
+// (hallazgo de auditoría UX: "Revisar" y "Próximas" no se entendían sin explicación).
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'pendientes', label: 'Pendientes' },
-  { key: 'proximas',   label: 'Próximas' },
-  { key: 'revisar',    label: 'Revisar' },
+  { key: 'pendientes', label: 'Por confirmar' },
+  { key: 'proximas',   label: 'Confirmadas' },
+  { key: 'revisar',    label: 'Atrasadas' },
   { key: 'historial',  label: 'Historial' },
 ];
 
@@ -254,9 +256,9 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
         <View style={s.empty}>
           <IconHistoryOff size={48} color={colors.textTertiary} style={{ opacity: 0.6 }} />
           <Text style={s.emptyTitle}>
-            {tab === 'pendientes' ? 'Sin citas pendientes'
-              : tab === 'proximas'  ? 'Sin citas próximas'
-              : tab === 'revisar'   ? 'Todo al día, nada por revisar'
+            {tab === 'pendientes' ? 'Sin citas por confirmar'
+              : tab === 'proximas'  ? 'Sin citas confirmadas'
+              : tab === 'revisar'   ? 'Nada atrasado, todo al día'
               : 'No hay citas pasadas registradas'}
           </Text>
         </View>

@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import {
   IconSettings, IconCamera, IconMapPin, IconStarFilled, IconUserPlus, IconChevronRight, IconX,
   IconBuildingStore, IconPlus, IconPencil, IconShieldLock, IconShieldCheck, IconHelpCircle,
-  IconGavel, IconLogout, IconNotes, IconVideo, IconMessageCircle, IconTool,
+  IconGavel, IconLogout, IconNotes, IconVideo,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
 import { contarInvitacionesRecibidas } from '../lib/invitaciones';
@@ -17,8 +17,6 @@ import { fetchPromedio, type Promedio } from '../lib/calificaciones';
 import { salirDelEquipo } from '../lib/mecanicos';
 import { FORMATO_USUARIO, usuarioDisponible } from '../lib/cuenta';
 import { CATEGORIAS } from '../lib/comunidadTexto';
-import { fetchCitasNoLeidas } from '../lib/lecturas';
-import { formatCOP } from '../lib/precio';
 import { useAuth } from '../context/AuthContext';
 import { useModo } from '../context/ModoContext';
 import { FilaAjuste, GrupoAjustes } from '../components/FilaAjuste';
@@ -30,7 +28,6 @@ const { colors, spacing, radius, fonts } = tokens;
 const PORTADA = require('../../assets/fondo-auth.jpg');
 const CIUDADES_RAPIDAS = ['Bucaramanga', 'Floridablanca', 'Girón', 'Piedecuesta', 'Bogotá', 'Medellín'];
 const BIO_MAX = 160;
-const LIMITE_HISTORIAL = 40;
 
 type Perfil = {
   nombre: string;
@@ -48,31 +45,10 @@ type MiPost = {
   categoria: string; ciudad: string | null; created_at: string; estado: string;
 };
 
-type EstadoCita = 'pendiente' | 'confirmada' | 'cancelada' | 'completada';
-
-type Servicio = {
-  id: string; fecha_solicitada: string; estado: EstadoCita; descripcion: string | null; precio_acordado: number | null;
-  negocio: string | null; vehiculo: string | null; servicio: string | null;
-};
-
-type Chat = { citaId: string; negocio: string; ultimo: string; fecha: string; noLeido: boolean };
-
-type Pestana = 'publicaciones' | 'historial';
-type SubHistorial = 'servicios' | 'chats';
-
 const VACIO: Perfil = {
   nombre: '', bio: '', telefono: '', ciudad: '', edad: null, foto_url: null,
   contacto_emergencia_nombre: '', contacto_emergencia_telefono: '',
 };
-
-const ESTADO_LABEL: Record<EstadoCita, string> = { pendiente: 'Pendiente', confirmada: 'Confirmada', completada: 'Completada', cancelada: 'Cancelada' };
-const ESTADO_COLOR: Record<EstadoCita, string> = { pendiente: '#f5a623', confirmada: '#5ac8fa', completada: '#34c759', cancelada: colors.dangerAction };
-const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-
-function fechaCita(iso: string): string {
-  const [y, m, d] = iso.split('-').map(Number);
-  return `${d} ${MESES[m - 1]} ${y}`;
-}
 
 function hace(iso: string): string {
   const min = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -83,13 +59,6 @@ function hace(iso: string): string {
   const d = Math.floor(h / 24);
   if (d < 30) return `hace ${d} d`;
   return new Date(iso).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
-function vistaPrevia(m: { texto: string | null; tipo_mensaje: string; adjuntos: any[] | null }): string {
-  if (m.tipo_mensaje === 'registro_servicio') return 'Registro de servicio';
-  if (m.texto) return m.texto;
-  if (m.adjuntos && m.adjuntos.length > 0) return 'Adjunto';
-  return 'Mensaje';
 }
 
 export default function PerfilScreen({ navigation }: any) {
@@ -106,10 +75,6 @@ export default function PerfilScreen({ navigation }: any) {
   const [totalVehiculos, setTotalVehiculos] = useState(0);
   const [posts, setPosts] = useState<MiPost[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
-  const [servicios, setServicios] = useState<Servicio[]>([]);
-  const [chats, setChats] = useState<Chat[]>([]);
-  const [pestana, setPestana] = useState<Pestana>('publicaciones');
-  const [sub, setSub] = useState<SubHistorial>('servicios');
   const [loading, setLoading] = useState(true);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [ajustesAbierto, setAjustesAbierto] = useState(false);
@@ -124,7 +89,7 @@ export default function PerfilScreen({ navigation }: any) {
     contarInvitacionesRecibidas(uid).then(setInvitaciones);
     fetchPromedio('mecanico', uid).then(setReputacion);
 
-    const [{ data: u }, { count: nVehiculos }, { data: p, count }, { data: c }] = await Promise.all([
+    const [{ data: u }, { count: nVehiculos }, { data: p, count }] = await Promise.all([
       supabase.from('usuarios')
         .select('nombre, nombre_usuario, bio, telefono, ciudad, edad, foto_url, contacto_emergencia_nombre, contacto_emergencia_telefono')
         .eq('id', uid).maybeSingle(),
@@ -132,11 +97,6 @@ export default function PerfilScreen({ navigation }: any) {
       supabase.from('posts')
         .select('id, contenido, fotos_urls, video_url, categoria, ciudad, created_at, estado', { count: 'exact' })
         .eq('autor_id', uid).order('created_at', { ascending: false }).limit(30),
-      supabase.from('citas')
-        .select('id, fecha_solicitada, estado, descripcion, precio_acordado, negocios ( nombre ), vehiculos ( marca, modelo ), servicios ( nombre )')
-        .eq('usuario_id', uid)
-        .order('fecha_solicitada', { ascending: false })
-        .limit(LIMITE_HISTORIAL),
     ]);
 
     if (u) {
@@ -151,38 +111,7 @@ export default function PerfilScreen({ navigation }: any) {
     setTotalVehiculos(nVehiculos ?? 0);
     setPosts((p ?? []) as MiPost[]);
     setTotalPosts(count ?? (p ?? []).length);
-
-    const citas: Servicio[] = (c ?? []).map((r: any) => ({
-      id: r.id, fecha_solicitada: r.fecha_solicitada, estado: r.estado, descripcion: r.descripcion, precio_acordado: r.precio_acordado,
-      negocio: r.negocios?.nombre ?? null,
-      vehiculo: r.vehiculos ? `${r.vehiculos.marca} ${r.vehiculos.modelo}` : null,
-      servicio: r.servicios?.nombre ?? null,
-    }));
-    setServicios(citas);
     setLoading(false);
-    cargarChats(uid, citas);
-  }
-
-  /** Un chat por cita: el ultimo mensaje de cada una, las mas recientes primero. */
-  async function cargarChats(uid: string, citas: Servicio[]) {
-    const ids = citas.map(x => x.id);
-    if (ids.length === 0) { setChats([]); return; }
-    const [{ data: msgs }, noLeidas] = await Promise.all([
-      supabase.from('mensajes_cita')
-        .select('cita_id, texto, tipo_mensaje, adjuntos, created_at')
-        .in('cita_id', ids).order('created_at', { ascending: false }).limit(300),
-      fetchCitasNoLeidas(ids, uid),
-    ]);
-    const ultimo = new Map<string, any>();
-    (msgs ?? []).forEach((m: any) => { if (!ultimo.has(m.cita_id)) ultimo.set(m.cita_id, m); });
-    const lista: Chat[] = citas
-      .filter(x => ultimo.has(x.id))
-      .map(x => {
-        const m = ultimo.get(x.id);
-        return { citaId: x.id, negocio: x.negocio ?? 'Taller', ultimo: vistaPrevia(m), fecha: m.created_at, noLeido: noLeidas.has(x.id) };
-      })
-      .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
-    setChats(lista);
   }
 
   async function handleFoto() {
@@ -256,15 +185,12 @@ export default function PerfilScreen({ navigation }: any) {
     navigation.navigate(pantalla, params);
   }
 
-  const abrirChat = (citaId: string) => navigation.navigate('Servicios', { screen: 'ChatCita', params: { citaId } });
-
   const iniciales = perfil.nombre.trim()
     ? perfil.nombre.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
     : session?.user.email?.[0].toUpperCase() ?? '?';
 
   const modoActual = modoTaller ? 'taller' : modoMecanico ? 'mecanico' : 'personal';
   const hayModos = !loadingModo && (tieneNegocio || esMecanico);
-  const chatsSinLeer = chats.filter(c => c.noLeido).length;
 
   if (loading) return (
     <View style={s.center}><ActivityIndicator color={colors.accent} size="large" /></View>
@@ -344,7 +270,7 @@ export default function PerfilScreen({ navigation }: any) {
         <View style={s.stats}>
           <Stat valor={String(totalVehiculos)} etiqueta="Vehículos" onPress={() => navigation.navigate('Garage')} />
           <View style={s.statDivisor} />
-          <Stat valor={String(totalPosts)} etiqueta="Publicaciones" onPress={() => setPestana('publicaciones')} />
+          <Stat valor={String(totalPosts)} etiqueta="Publicaciones" />
           <View style={s.statDivisor} />
           <Stat
             valor={reputacion.total > 0 ? reputacion.promedio.toFixed(1) : '-'}
@@ -371,119 +297,44 @@ export default function PerfilScreen({ navigation }: any) {
           </Pressable>
         )}
 
-        {/* Pestañas */}
-        <View style={s.tabs} accessibilityRole="tablist">
-          <Tab texto="Publicaciones" activa={pestana === 'publicaciones'} onPress={() => setPestana('publicaciones')} />
-          <Tab texto="Historial" activa={pestana === 'historial'} onPress={() => setPestana('historial')} punto={chatsSinLeer > 0} />
-        </View>
-
-        {pestana === 'publicaciones' && (
-          <View style={s.lista}>
-            {posts.length === 0 ? (
-              <Vacio
-                icono={<IconNotes size={30} color={colors.textTertiary} />}
-                titulo="Aún no has publicado"
-                texto="Comparte una ruta, un tip o una foto de tu vehículo con la comunidad."
-                accion="Crear publicación"
-                onPress={() => navigation.navigate('Comunidad', { screen: 'CrearPost' })}
-              />
-            ) : posts.map(p => (
-              <View key={p.id} style={s.post}>
-                <View style={{ flex: 1, gap: 6 }}>
-                  <View style={s.postMeta}>
-                    <Text style={s.postCategoria}>{CATEGORIAS.find(c => c.key === p.categoria)?.label ?? 'General'}</Text>
-                    <Text style={s.postFecha}>{[p.ciudad, hace(p.created_at)].filter(Boolean).join(' · ')}</Text>
-                  </View>
-                  {!!p.contenido && <Text style={s.postTexto} numberOfLines={4}>{p.contenido}</Text>}
-                  {!!p.video_url && (
-                    <View style={s.postVideo}><IconVideo size={14} color={colors.textSecondary} /><Text style={s.postVideoTexto}>Video en enlace</Text></View>
-                  )}
-                  {p.estado !== 'visible' && <Text style={s.postRevision}>En revisión, solo tú la ves</Text>}
+        {/* Publicaciones (el historial de servicios y chats vive en Mis Citas, ya no se duplica aquí) */}
+        <Text style={s.publicacionesTitulo}>Publicaciones</Text>
+        <View style={s.lista}>
+          {posts.length === 0 ? (
+            <Vacio
+              icono={<IconNotes size={30} color={colors.textTertiary} />}
+              titulo="Aún no has publicado"
+              texto="Comparte una ruta, un tip o una foto de tu vehículo con la comunidad."
+              accion="Crear publicación"
+              onPress={() => navigation.navigate('Comunidad', { screen: 'CrearPost' })}
+            />
+          ) : posts.map(p => (
+            <View key={p.id} style={s.post}>
+              <View style={{ flex: 1, gap: 6 }}>
+                <View style={s.postMeta}>
+                  <Text style={s.postCategoria}>{CATEGORIAS.find(c => c.key === p.categoria)?.label ?? 'General'}</Text>
+                  <Text style={s.postFecha}>{[p.ciudad, hace(p.created_at)].filter(Boolean).join(' · ')}</Text>
                 </View>
-                {p.fotos_urls?.[0] && (
-                  <Pressable onPress={() => abrirFotos(p.fotos_urls!, 0)} accessibilityRole="imagebutton" accessibilityLabel="Ver fotos de la publicación">
-                    <Image source={{ uri: p.fotos_urls[0] }} style={s.postFoto} contentFit="cover" />
-                  </Pressable>
+                {!!p.contenido && <Text style={s.postTexto} numberOfLines={4}>{p.contenido}</Text>}
+                {!!p.video_url && (
+                  <View style={s.postVideo}><IconVideo size={14} color={colors.textSecondary} /><Text style={s.postVideoTexto}>Video en enlace</Text></View>
                 )}
+                {p.estado !== 'visible' && <Text style={s.postRevision}>En revisión, solo tú la ves</Text>}
               </View>
-            ))}
-            {posts.length > 0 && (
-              <Pressable style={({ pressed }) => [s.botonSec, pressed && { opacity: 0.8 }]} onPress={() => navigation.navigate('Comunidad', { screen: 'CrearPost' })} accessibilityRole="button">
-                <IconPlus size={16} color={colors.textPrimary} />
-                <Text style={s.botonSecTexto}>Nueva publicación</Text>
-              </Pressable>
-            )}
-          </View>
-        )}
-
-        {pestana === 'historial' && (
-          <View style={s.lista}>
-            <View style={s.segmento} accessibilityRole="tablist">
-              <Segmento texto="Servicios" activo={sub === 'servicios'} onPress={() => setSub('servicios')} />
-              <Segmento texto={chatsSinLeer > 0 ? `Chats (${chatsSinLeer})` : 'Chats'} activo={sub === 'chats'} onPress={() => setSub('chats')} />
+              {p.fotos_urls?.[0] && (
+                <Pressable onPress={() => abrirFotos(p.fotos_urls!, 0)} accessibilityRole="imagebutton" accessibilityLabel="Ver fotos de la publicación">
+                  <Image source={{ uri: p.fotos_urls[0] }} style={s.postFoto} contentFit="cover" />
+                </Pressable>
+              )}
             </View>
-
-            {sub === 'servicios' && (servicios.length === 0 ? (
-              <Vacio
-                icono={<IconTool size={30} color={colors.textTertiary} />}
-                titulo="Aún no has pedido servicios"
-                texto="Cuando agendes una cita con un taller, la verás aquí con su estado."
-                accion="Buscar talleres"
-                onPress={() => navigation.navigate('Servicios')}
-              />
-            ) : servicios.map(x => (
-              <Pressable
-                key={x.id}
-                style={({ pressed }) => [s.fila, pressed && { opacity: 0.85 }]}
-                onPress={() => abrirChat(x.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`${x.servicio ?? x.descripcion ?? 'Servicio'}, ${ESTADO_LABEL[x.estado]}`}
-              >
-                <View style={s.filaTop}>
-                  <View style={[s.estado, { backgroundColor: `${ESTADO_COLOR[x.estado]}22` }]}>
-                    <View style={[s.estadoPunto, { backgroundColor: ESTADO_COLOR[x.estado] }]} />
-                    <Text style={[s.estadoTexto, { color: ESTADO_COLOR[x.estado] }]}>{ESTADO_LABEL[x.estado]}</Text>
-                  </View>
-                  <Text style={s.filaFecha}>{fechaCita(x.fecha_solicitada)}</Text>
-                </View>
-                <Text style={s.filaTitulo} numberOfLines={1}>{x.servicio ?? x.descripcion ?? 'Servicio'}</Text>
-                <View style={s.filaPie}>
-                  <IconBuildingStore size={13} color={colors.accent} />
-                  <Text style={s.filaSub} numberOfLines={1}>{[x.negocio, x.vehiculo].filter(Boolean).join(' · ')}</Text>
-                  {x.precio_acordado != null && <Text style={s.filaPrecio}>{formatCOP(x.precio_acordado)}</Text>}
-                </View>
-              </Pressable>
-            )))}
-
-            {sub === 'chats' && (chats.length === 0 ? (
-              <Vacio
-                icono={<IconMessageCircle size={30} color={colors.textTertiary} />}
-                titulo="Aún no tienes conversaciones"
-                texto="Cada cita con un taller abre un chat para coordinar el servicio."
-                accion="Buscar talleres"
-                onPress={() => navigation.navigate('Servicios')}
-              />
-            ) : chats.map(c => (
-              <Pressable
-                key={c.citaId}
-                style={({ pressed }) => [s.chat, pressed && { opacity: 0.85 }]}
-                onPress={() => abrirChat(c.citaId)}
-                accessibilityRole="button"
-                accessibilityLabel={`Chat con ${c.negocio}${c.noLeido ? ', mensaje nuevo' : ''}`}
-              >
-                <View style={s.chatIcono}><IconBuildingStore size={20} color={colors.accent} /></View>
-                <View style={{ flex: 1, gap: 2 }}>
-                  <View style={s.chatTop}>
-                    <Text style={[s.chatNombre, c.noLeido && { color: colors.textPrimary }]} numberOfLines={1}>{c.negocio}</Text>
-                    <Text style={s.filaFecha}>{hace(c.fecha)}</Text>
-                  </View>
-                  <Text style={[s.chatUltimo, c.noLeido && s.chatUltimoNuevo]} numberOfLines={1}>{c.ultimo}</Text>
-                </View>
-                {c.noLeido && <View style={s.puntoNuevo} />}
-              </Pressable>
-            )))}
-          </View>
-        )}
+          ))}
+          {posts.length > 0 && (
+            <Pressable style={({ pressed }) => [s.botonSec, pressed && { opacity: 0.8 }]} onPress={() => navigation.navigate('Comunidad', { screen: 'CrearPost' })} accessibilityRole="button">
+              <IconPlus size={16} color={colors.textPrimary} />
+              <Text style={s.botonSecTexto}>Nueva publicación</Text>
+            </Pressable>
+          )}
+        </View>
       </ScrollView>
 
       {visorFotos}
@@ -576,18 +427,6 @@ function Segmento({ texto, activo, onPress }: { texto: string; activo: boolean; 
       accessibilityState={{ selected: activo }}
     >
       <Text style={[s.segTexto, activo && s.segTextoOn]}>{texto}</Text>
-    </Pressable>
-  );
-}
-
-function Tab({ texto, activa, onPress, punto }: { texto: string; activa: boolean; onPress: () => void; punto?: boolean }) {
-  return (
-    <Pressable style={s.tab} onPress={onPress} accessibilityRole="tab" accessibilityState={{ selected: activa }}>
-      <View style={s.tabFila}>
-        <Text style={[s.tabTexto, activa && s.tabTextoOn]}>{texto}</Text>
-        {punto && <View style={s.puntoNuevo} />}
-      </View>
-      <View style={[s.tabLinea, activa && s.tabLineaOn]} />
     </Pressable>
   );
 }
@@ -749,6 +588,11 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content: { paddingBottom: 60 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
+
+  publicacionesTitulo: {
+    fontFamily: fonts.bold, fontSize: 16, color: colors.textPrimary,
+    marginHorizontal: spacing.xl, marginTop: spacing.lg,
+  },
 
   portadaWrap: { height: 150, backgroundColor: colors.bgCard },
   ajustesBtn: {
