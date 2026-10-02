@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import {
   IconSettings, IconCamera, IconMapPin, IconStarFilled, IconUserPlus, IconChevronRight, IconX,
-  IconBuildingStore, IconPlus, IconPencil, IconShieldLock, IconShieldCheck, IconHelpCircle,
+  IconPlus, IconPencil, IconShieldLock, IconShieldCheck, IconHelpCircle,
   IconGavel, IconLogout, IconNotes, IconVideo,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
@@ -368,14 +368,6 @@ export default function PerfilScreen({ navigation }: any) {
             )}
 
             <GrupoAjustes>
-              {!loadingModo && !tieneNegocio ? (
-                <FilaAjuste
-                  icono={<IconBuildingStore size={20} color={colors.accent} />}
-                  titulo="Registrar mi taller o tienda"
-                  detalle="Empieza a recibir clientes"
-                  onPress={() => irA('RegistrarNegocio')}
-                />
-              ) : null}
               <FilaAjuste icono={<IconShieldLock size={20} color={colors.accent} />} titulo="Seguridad" onPress={() => irA('Seguridad')} />
               <FilaAjuste icono={<IconShieldCheck size={20} color={colors.accent} />} titulo="Privacidad y datos" onPress={() => irA('Privacidad')} />
               <FilaAjuste icono={<IconHelpCircle size={20} color={colors.accent} />} titulo="Ayuda" onPress={() => irA('Ayuda')} />
