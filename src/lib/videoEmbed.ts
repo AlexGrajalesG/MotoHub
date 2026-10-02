@@ -1,6 +1,6 @@
 import { detectarPlataforma, type VideoPlataforma } from './comunidadTexto';
 
-export type VideoResuelto = { embedUrl: string; miniatura: string | null; embedHtml: string | null };
+export type VideoResuelto = { embedUrl: string; miniatura: string | null };
 
 const cache = new Map<string, Promise<VideoResuelto | null>>();
 
@@ -19,28 +19,25 @@ export function hostPermitido(url: string): boolean {
 async function resolverTikTok(url: string): Promise<VideoResuelto | null> {
   let id = url.match(/\/video\/(\d+)/)?.[1] ?? null;
   let miniatura: string | null = null;
-  let embedHtml: string | null = null;
   try {
     // Sirve también con enlaces cortos (vm.tiktok.com, vt.tiktok.com): devuelve el id real y la portada.
     const r = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
     if (r.ok) {
       const j = await r.json();
       miniatura = typeof j.thumbnail_url === 'string' ? j.thumbnail_url : null;
-      embedHtml = typeof j.html === 'string' ? j.html : null;
-      id = (embedHtml?.match(/data-video-id="(\d+)"/)?.[1]) ?? id;
+      id = (typeof j.html === 'string' ? j.html.match(/data-video-id="(\d+)"/)?.[1] : null) ?? id;
     }
   } catch {
     // sin red o sin oEmbed: se intenta con el id del enlace, si lo trae
   }
-  return id ? { embedUrl: `https://www.tiktok.com/embed/v2/${id}`, miniatura, embedHtml } : null;
+  return id ? { embedUrl: `https://www.tiktok.com/embed/v2/${id}`, miniatura } : null;
 }
 
 function resolverInstagram(url: string): VideoResuelto | null {
   const m = url.match(/instagram\.com\/(reel|p|tv)\/([A-Za-z0-9_-]+)/i);
   if (!m) return null;
   const tipo = m[1].toLowerCase() === 'p' ? 'p' : 'reel';
-  // Instagram no tiene oEmbed publico (pide credenciales de app de Meta): sin miniatura ni snippet oficial.
-  return { embedUrl: `https://www.instagram.com/${tipo}/${m[2]}/embed/`, miniatura: null, embedHtml: null };
+  return { embedUrl: `https://www.instagram.com/${tipo}/${m[2]}/embed/`, miniatura: null };
 }
 
 /** Convierte el enlace que pegó la persona en la dirección que se puede reproducir dentro de la app. */
