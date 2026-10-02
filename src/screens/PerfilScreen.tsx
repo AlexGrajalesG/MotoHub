@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import {
   IconSettings, IconCamera, IconMapPin, IconStarFilled, IconUserPlus, IconChevronRight, IconX,
-  IconBuildingStore, IconPlus, IconPencil, IconShieldLock, IconShieldCheck, IconHelpCircle,
+  IconPlus, IconPencil, IconShieldLock, IconShieldCheck, IconHelpCircle,
   IconGavel, IconLogout, IconNotes, IconVideo,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
@@ -65,7 +65,7 @@ export default function PerfilScreen({ navigation }: any) {
   const { session } = useAuth();
   const {
     tieneNegocio, esModerador, modoTaller, setModoTaller, esMecanico, miMecanico,
-    modoMecanico, setModoMecanico, refreshEsMecanico, loadingModo,
+    modoMecanico, setModoMecanico, refreshEsMecanico, loadingModo, esNegocioPuro,
   } = useModo();
 
   const [perfil, setPerfil] = useState<Perfil>(VACIO);
@@ -190,7 +190,7 @@ export default function PerfilScreen({ navigation }: any) {
     : session?.user.email?.[0].toUpperCase() ?? '?';
 
   const modoActual = modoTaller ? 'taller' : modoMecanico ? 'mecanico' : 'personal';
-  const hayModos = !loadingModo && (tieneNegocio || esMecanico);
+  const hayModos = !loadingModo && !esNegocioPuro && (tieneNegocio || esMecanico);
 
   if (loading) return (
     <View style={s.center}><ActivityIndicator color={colors.accent} size="large" /></View>
@@ -368,14 +368,6 @@ export default function PerfilScreen({ navigation }: any) {
             )}
 
             <GrupoAjustes>
-              {!loadingModo && !tieneNegocio ? (
-                <FilaAjuste
-                  icono={<IconBuildingStore size={20} color={colors.accent} />}
-                  titulo="Registrar mi taller o tienda"
-                  detalle="Empieza a recibir clientes"
-                  onPress={() => irA('RegistrarNegocio')}
-                />
-              ) : null}
               <FilaAjuste icono={<IconShieldLock size={20} color={colors.accent} />} titulo="Seguridad" onPress={() => irA('Seguridad')} />
               <FilaAjuste icono={<IconShieldCheck size={20} color={colors.accent} />} titulo="Privacidad y datos" onPress={() => irA('Privacidad')} />
               <FilaAjuste icono={<IconHelpCircle size={20} color={colors.accent} />} titulo="Ayuda" onPress={() => irA('Ayuda')} />
@@ -469,7 +461,7 @@ function EditorPerfil({ visible, perfil, nombreUsuario, uid, onCerrar, onGuardad
     const usuarioNuevo = usuario.trim();
     const edad = edadTxt.trim() ? Number(edadTxt) : null;
     if (f.nombre.trim().length < 2) { setError('Escribe tu nombre'); return; }
-    if (edad !== null && (!Number.isInteger(edad) || edad < 10 || edad > 100)) { setError('Escribe una edad válida'); return; }
+    if (edad !== null && (!Number.isInteger(edad) || edad < 18 || edad > 100)) { setError('Debes ser mayor de 18 años'); return; }
     setGuardando(true);
     setError(null);
 

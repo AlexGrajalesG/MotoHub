@@ -3,7 +3,7 @@ import {
   View, Text, Pressable, StyleSheet, ActivityIndicator, KeyboardAvoidingView,
   Platform, ScrollView, type TextInput,
 } from 'react-native';
-import { IconArrowLeft, IconAlertCircle, IconCheck } from '@tabler/icons-react-native';
+import { IconArrowLeft, IconAlertCircle, IconCheck, IconBike, IconCar } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
 import { mensajeErrorAuth, type ErrorAuth } from '../../lib/errores';
@@ -15,61 +15,47 @@ import { Campo, Entrada } from '../../components/FormField';
 const { colors, spacing, radius, fonts } = tokens;
 
 const EMAIL_OK = /^\S+@\S+\.\S+$/;
-const USUARIO_OK = /^[a-z0-9_]{3,20}$/;
-const CIUDADES = ['Bucaramanga', 'Floridablanca', 'Girón', 'Piedecuesta', 'Bogotá', 'Medellín', 'Otra'];
 
-/** "Alex Gómez" -> "alex_gomez". Si queda muy corto se deja vacio para que el usuario lo escriba. */
-function usuarioDesdeNombre(nombre: string): string {
-  const base = nombre.trim().toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
-    .slice(0, 20);
-  return base.length >= 3 ? base : '';
-}
+const TIPOS: { value: 'taller' | 'tienda' | 'concesionario' | 'mixto'; label: string }[] = [
+  { value: 'taller',        label: 'Taller' },
+  { value: 'tienda',        label: 'Tienda' },
+  { value: 'concesionario', label: 'Concesionario' },
+  { value: 'mixto',         label: 'Mixto' },
+];
 
-type Campos = 'nombre' | 'usuario' | 'email' | 'telefono' | 'ciudad' | 'edad' | 'password' | 'acepto';
+type Campos = 'nombre' | 'email' | 'password' | 'atiende' | 'acepto';
 
-export default function RegisterScreen({ navigation }: any) {
-  const [nombre, setNombre]     = useState('');
-  const [usuario, setUsuario]   = useState('');
-  const [usuarioEditado, setUsuarioEditado] = useState(false);
-  const [usuarioOcupado, setUsuarioOcupado] = useState(false);
-  const [email, setEmail]       = useState('');
-  const [telefono, setTelefono] = useState('');
-  const [ciudadSel, setCiudadSel] = useState('');
-  const [ciudadOtra, setCiudadOtra] = useState('');
-  const [edad, setEdad]         = useState('');
-  const [password, setPassword] = useState('');
-  const [acepto, setAcepto]     = useState(false);
-  const [loading, setLoading]   = useState(false);
-  const [intento, setIntento]   = useState(false);
-  const [tocados, setTocados]   = useState<Partial<Record<Campos, boolean>>>({});
+/**
+ * Cuenta de negocio independiente: NO agrega el rol 'negocio' a una cuenta personal existente
+ * (eso lo sigue haciendo RegistrarNegocioScreen, sin tocar). Esto crea un login propio —
+ * el trigger handle_new_user() ve tipo_cuenta:'negocio' en la metadata y crea usuarios.roles=['negocio']
+ * + la fila de negocios en la misma operación, sin pasos extra después de confirmar el correo.
+ */
+export default function RegistrarNegocioCuentaScreen({ navigation }: any) {
+  const [nombre, setNombre]           = useState('');
+  const [tipo, setTipo]               = useState<'taller' | 'tienda' | 'concesionario' | 'mixto'>('taller');
+  const [atiende, setAtiende]         = useState<string[]>(['motos', 'carros']);
+  const [descripcion, setDescripcion] = useState('');
+  const [direccion, setDireccion]     = useState('');
+  const [ciudad, setCiudad]           = useState('');
+  const [telefono, setTelefono]       = useState('');
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [acepto, setAcepto]           = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [intento, setIntento]         = useState(false);
+  const [tocados, setTocados]         = useState<Partial<Record<Campos, boolean>>>({});
   const [errorServidor, setErrorServidor] = useState<ErrorAuth | null>(null);
 
   const nombreRef = useRef<TextInput>(null);
-  const usuarioRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
-  const telefonoRef = useRef<TextInput>(null);
-  const ciudadOtraRef = useRef<TextInput>(null);
-  const edadRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
-  const ciudad = ciudadSel === 'Otra' ? ciudadOtra.trim() : ciudadSel;
-  const telefonoDigitos = telefono.replace(/\D/g, '');
-  const edadNum = Number(edad);
-
   const errores: Partial<Record<Campos, string>> = {};
-  if (nombre.trim().length < 2) errores.nombre = 'Escribe tu nombre';
-  if (!USUARIO_OK.test(usuario)) errores.usuario = 'De 3 a 20 caracteres: letras, números o _';
-  else if (usuarioOcupado) errores.usuario = 'Ese usuario ya está en uso. Prueba otro';
-  if (!email.trim()) errores.email = 'Escribe tu correo';
+  if (nombre.trim().length < 2) errores.nombre = 'Escribe el nombre de tu taller o tienda';
+  if (atiende.length === 0) errores.atiende = '¿A qué atiende: motos, carros o ambos?';
+  if (!email.trim()) errores.email = 'Escribe un correo';
   else if (!EMAIL_OK.test(email.trim())) errores.email = 'Ese correo no parece válido';
-  if (!telefonoDigitos) errores.telefono = 'Escribe tu celular';
-  else if (telefonoDigitos.length < 10) errores.telefono = 'El celular debe tener 10 dígitos';
-  if (!ciudadSel) errores.ciudad = 'Elige tu ciudad';
-  else if (!ciudad) errores.ciudad = 'Escribe tu ciudad';
-  if (!edad) errores.edad = 'Escribe tu edad';
-  else if (!Number.isInteger(edadNum) || edadNum < 18 || edadNum > 100) errores.edad = 'Rodix es solo para mayores de 18 años';
   if (!password) errores.password = 'Crea una contraseña';
   else if (password.length < 6) errores.password = 'Usa al menos 6 caracteres';
   if (!acepto) errores.acepto = 'Para crear tu cuenta debes aceptar los textos legales';
@@ -77,34 +63,17 @@ export default function RegisterScreen({ navigation }: any) {
   const ver = (c: Campos) => (intento || tocados[c] ? errores[c] : undefined);
   const tocar = (c: Campos) => setTocados(t => ({ ...t, [c]: true }));
 
-  function cambiarNombre(v: string) {
-    setNombre(v);
-    if (!usuarioEditado) { setUsuario(usuarioDesdeNombre(v)); setUsuarioOcupado(false); }
+  function toggleAtiende(v: string) {
+    setAtiende(prev => (prev.includes(v) ? prev.filter(a => a !== v) : [...prev, v]));
+    tocar('atiende');
   }
 
-  function cambiarUsuario(v: string) {
-    setUsuarioEditado(true);
-    setUsuarioOcupado(false);
-    setUsuario(v.toLowerCase().replace(/^@/, '').replace(/[^a-z0-9_]/g, '').slice(0, 20));
-  }
-
-  /** Avisa antes de enviar si el usuario ya existe; si la consulta falla, la base le asigna uno libre. */
-  async function revisarUsuario() {
-    tocar('usuario');
-    if (!USUARIO_OK.test(usuario)) return;
-    const { data, error } = await supabase.rpc('nombre_usuario_disponible', { p_nombre_usuario: usuario });
-    if (!error && data === false) setUsuarioOcupado(true);
-  }
-
-  async function handleRegister() {
+  async function handleRegistrar() {
     setIntento(true);
-    const orden: [Campos, React.RefObject<TextInput | null>][] = [
-      ['nombre', nombreRef], ['usuario', usuarioRef], ['email', emailRef], ['telefono', telefonoRef],
-      ['edad', edadRef], ['password', passwordRef],
-    ];
-    const primero = orden.find(([c]) => errores[c]);
-    if (primero) { primero[1].current?.focus(); return; }
-    if (errores.ciudad) { if (ciudadSel === 'Otra') ciudadOtraRef.current?.focus(); return; }
+    if (errores.nombre) { nombreRef.current?.focus(); return; }
+    if (errores.atiende) return;
+    if (errores.email) { emailRef.current?.focus(); return; }
+    if (errores.password) { passwordRef.current?.focus(); return; }
     if (errores.acepto) return;
 
     setLoading(true);
@@ -114,11 +83,14 @@ export default function RegisterScreen({ navigation }: any) {
       password,
       options: {
         data: {
+          tipo_cuenta: 'negocio',
           nombre: nombre.trim(),
-          nombre_usuario: usuario,
-          telefono: telefonoDigitos,
-          ciudad,
-          edad: edadNum,
+          ciudad: ciudad.trim(),
+          telefono: telefono.replace(/\D/g, ''),
+          negocio_tipo: tipo,
+          negocio_descripcion: descripcion.trim(),
+          negocio_direccion: direccion.trim(),
+          atiende,
           consentimiento_version: VERSION_LEGAL,
           consentimiento_fecha: new Date().toISOString(),
         },
@@ -148,8 +120,8 @@ export default function RegisterScreen({ navigation }: any) {
         </View>
 
         <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Text style={s.titulo}>Crea tu cuenta</Text>
-          <Text style={s.sub}>Gratis y en menos de un minuto</Text>
+          <Text style={s.titulo}>Crea tu cuenta de negocio</Text>
+          <Text style={s.sub}>Una cuenta propia para tu taller o tienda, separada de tu cuenta personal</Text>
 
           {errorServidor && (
             <View style={s.banner} accessibilityLiveRegion="polite">
@@ -166,118 +138,96 @@ export default function RegisterScreen({ navigation }: any) {
           )}
 
           <View style={s.form}>
-            <Campo label="Nombre completo" sinMarca error={ver('nombre')}>
+            <Campo label="Nombre del negocio" sinMarca error={ver('nombre')}>
               <Entrada
                 inputRef={nombreRef}
                 value={nombre}
-                onChangeText={cambiarNombre}
+                onChangeText={setNombre}
                 onBlur={() => tocar('nombre')}
                 error={!!ver('nombre')}
-                placeholder="Tu nombre y apellido"
+                placeholder="Ej: MotoExpress Servicio"
                 autoCapitalize="words"
-                autoComplete="name"
-                textContentType="name"
-                returnKeyType="next"
-                onSubmitEditing={() => usuarioRef.current?.focus()}
-                blurOnSubmit={false}
-              />
-            </Campo>
-
-            <Campo label="Nombre de usuario" sinMarca error={ver('usuario')} ayuda="Así te encuentran los talleres, con @">
-              <Entrada
-                inputRef={usuarioRef}
-                value={usuario}
-                onChangeText={cambiarUsuario}
-                onBlur={revisarUsuario}
-                error={!!ver('usuario')}
-                placeholder="tu_usuario"
-                autoCapitalize="none"
-                autoCorrect={false}
-                textContentType="username"
                 returnKeyType="next"
                 onSubmitEditing={() => emailRef.current?.focus()}
                 blurOnSubmit={false}
               />
             </Campo>
 
-            <Campo label="Correo electrónico" sinMarca error={ver('email')}>
+            <Campo label="Tipo de negocio" sinMarca>
+              <View style={s.chips}>
+                {TIPOS.map(t => (
+                  <Pressable
+                    key={t.value}
+                    onPress={() => setTipo(t.value)}
+                    style={({ pressed }) => [s.chip, tipo === t.value && s.chipOn, pressed && { opacity: 0.8 }]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: tipo === t.value }}
+                  >
+                    <Text style={[s.chipTexto, tipo === t.value && s.chipTextoOn]}>{t.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Campo>
+
+            <Campo label="Atiende" sinMarca error={ver('atiende')}>
+              <View style={s.chips}>
+                <Pressable
+                  onPress={() => toggleAtiende('motos')}
+                  style={({ pressed }) => [s.chip, atiende.includes('motos') && s.chipOn, pressed && { opacity: 0.8 }]}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: atiende.includes('motos') }}
+                >
+                  <IconBike size={14} color={atiende.includes('motos') ? colors.onAccent : colors.textSecondary} />
+                  <Text style={[s.chipTexto, atiende.includes('motos') && s.chipTextoOn]}>Motos</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => toggleAtiende('carros')}
+                  style={({ pressed }) => [s.chip, atiende.includes('carros') && s.chipOn, pressed && { opacity: 0.8 }]}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: atiende.includes('carros') }}
+                >
+                  <IconCar size={14} color={atiende.includes('carros') ? colors.onAccent : colors.textSecondary} />
+                  <Text style={[s.chipTexto, atiende.includes('carros') && s.chipTextoOn]}>Carros</Text>
+                </Pressable>
+              </View>
+            </Campo>
+
+            <Campo label="Descripción" sinMarca ayuda="Opcional">
+              <Entrada
+                value={descripcion}
+                onChangeText={setDescripcion}
+                placeholder="Qué ofreces, especialidades..."
+                multiline
+                numberOfLines={3}
+                style={{ minHeight: 80, textAlignVertical: 'top' }}
+              />
+            </Campo>
+
+            <Campo label="Dirección" sinMarca ayuda="Opcional">
+              <Entrada value={direccion} onChangeText={setDireccion} placeholder="Ej: Carrera 27 #45-12" returnKeyType="next" />
+            </Campo>
+
+            <Campo label="Ciudad" sinMarca ayuda="Opcional">
+              <Entrada value={ciudad} onChangeText={setCiudad} placeholder="Ej: Bucaramanga" returnKeyType="next" />
+            </Campo>
+
+            <Campo label="Teléfono" sinMarca ayuda="Opcional">
+              <Entrada value={telefono} onChangeText={setTelefono} placeholder="3151234567" keyboardType="phone-pad" returnKeyType="next" />
+            </Campo>
+
+            <Campo label="Correo de la cuenta de negocio" sinMarca error={ver('email')} ayuda="Distinto al de tu cuenta personal, si ya tienes una">
               <Entrada
                 inputRef={emailRef}
                 value={email}
                 onChangeText={setEmail}
                 onBlur={() => tocar('email')}
                 error={!!ver('email')}
-                placeholder="tu@correo.com"
+                placeholder="negocio@correo.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
                 autoComplete="email"
                 textContentType="emailAddress"
-                returnKeyType="next"
-                onSubmitEditing={() => telefonoRef.current?.focus()}
-                blurOnSubmit={false}
-              />
-            </Campo>
-
-            <Campo label="Celular" sinMarca error={ver('telefono')}>
-              <Entrada
-                inputRef={telefonoRef}
-                value={telefono}
-                onChangeText={setTelefono}
-                onBlur={() => tocar('telefono')}
-                error={!!ver('telefono')}
-                placeholder="3001234567"
-                keyboardType="phone-pad"
-                autoComplete="tel"
-                textContentType="telephoneNumber"
-                maxLength={14}
-                returnKeyType="next"
-                onSubmitEditing={() => edadRef.current?.focus()}
-                blurOnSubmit={false}
-              />
-            </Campo>
-
-            <Campo label="Ciudad" sinMarca error={ver('ciudad')}>
-              <View style={s.chips}>
-                {CIUDADES.map(c => {
-                  const on = ciudadSel === c;
-                  return (
-                    <Pressable
-                      key={c}
-                      onPress={() => { setCiudadSel(c); tocar('ciudad'); }}
-                      style={({ pressed }) => [s.chip, on && s.chipOn, pressed && { opacity: 0.8 }]}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: on }}
-                    >
-                      <Text style={[s.chipTexto, on && s.chipTextoOn]}>{c}</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              {ciudadSel === 'Otra' && (
-                <Entrada
-                  inputRef={ciudadOtraRef}
-                  value={ciudadOtra}
-                  onChangeText={setCiudadOtra}
-                  onBlur={() => tocar('ciudad')}
-                  error={!!ver('ciudad')}
-                  placeholder="Escribe tu ciudad"
-                  autoCapitalize="words"
-                  maxLength={60}
-                />
-              )}
-            </Campo>
-
-            <Campo label="Edad" sinMarca error={ver('edad')}>
-              <Entrada
-                inputRef={edadRef}
-                value={edad}
-                onChangeText={v => setEdad(v.replace(/\D/g, '').slice(0, 3))}
-                onBlur={() => tocar('edad')}
-                error={!!ver('edad')}
-                placeholder="Ej. 28"
-                keyboardType="number-pad"
-                maxLength={3}
                 returnKeyType="next"
                 onSubmitEditing={() => passwordRef.current?.focus()}
                 blurOnSubmit={false}
@@ -297,7 +247,7 @@ export default function RegisterScreen({ navigation }: any) {
                 autoComplete="new-password"
                 textContentType="newPassword"
                 returnKeyType="done"
-                onSubmitEditing={handleRegister}
+                onSubmitEditing={handleRegistrar}
               />
             </Campo>
 
@@ -332,16 +282,16 @@ export default function RegisterScreen({ navigation }: any) {
         <View style={s.footer}>
           <Pressable
             style={({ pressed }) => [s.boton, loading && s.botonOcupado, pressed && { opacity: 0.85 }]}
-            onPress={handleRegister}
+            onPress={handleRegistrar}
             disabled={loading}
             accessibilityRole="button"
-            accessibilityLabel="Crear cuenta"
+            accessibilityLabel="Crear cuenta de negocio"
           >
-            {loading ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.botonTexto}>Crear cuenta</Text>}
+            {loading ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.botonTexto}>Crear cuenta de negocio</Text>}
           </Pressable>
           <Pressable onPress={() => navigation.navigate('Login')} hitSlop={8} style={s.enlaceWrap} accessibilityRole="link">
             <Text style={s.enlace}>
-              ¿Ya tienes cuenta? <Text style={s.enlaceFuerte}>Inicia sesión</Text>
+              ¿Ya tienes cuenta de negocio? <Text style={s.enlaceFuerte}>Inicia sesión</Text>
             </Text>
           </Pressable>
         </View>
@@ -364,8 +314,8 @@ const s = StyleSheet.create({
   },
 
   content: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xl },
-  titulo: { fontFamily: fonts.display, fontSize: 28, color: colors.textPrimary, letterSpacing: -0.5 },
-  sub: { fontFamily: fonts.body, fontSize: 15, color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.xl },
+  titulo: { fontFamily: fonts.display, fontSize: 26, color: colors.textPrimary, letterSpacing: -0.5 },
+  sub: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, marginTop: spacing.xs, marginBottom: spacing.xl, lineHeight: 20 },
 
   banner: {
     flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start',
@@ -379,6 +329,7 @@ const s = StyleSheet.create({
 
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     minHeight: 40, paddingHorizontal: spacing.md, borderRadius: radius.md, justifyContent: 'center',
     backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
   },
