@@ -1,12 +1,12 @@
 import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ScrollView, Modal, TextInput,
+  View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput,
   Alert, RefreshControl, AccessibilityInfo, Animated,
 } from 'react-native';
 import { Image } from 'expo-image';
 import {
-  IconWorld, IconMotorbike, IconBuildingStore, IconDots, IconFlag, IconUserOff,
+  IconWorld, IconBuildingStore, IconDots, IconFlag, IconUserOff,
   IconPlus, IconShieldCheck, IconX, IconHeart, IconHeartFilled, IconMessageCircle, IconSearch, IconFilterOff,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
@@ -16,7 +16,7 @@ import { useNotificaciones } from '../../context/NotificacionesContext';
 import { tokens } from '../../lib/tokens';
 import {
   fetchFeed, reportarPost, bloquearUsuario, eliminarPost, misLikes, darLike, quitarLike,
-  CATEGORIAS, extraerHashtags, type Post, type Pestana,
+  CATEGORIAS, extraerHashtags, type Post,
 } from '../../lib/comunidad';
 import TopBar from '../../components/TopBar';
 import PressableCard from '../../components/PressableCard';
@@ -24,12 +24,6 @@ import FotosPost from '../../components/comunidad/FotosPost';
 import VideoPost from '../../components/comunidad/VideoPost';
 
 const { colors, spacing, radius, fonts } = tokens;
-
-const PESTANAS: { key: Pestana; label: string }[] = [
-  { key: 'cerca', label: 'Cerca de mí' },
-  { key: 'moto', label: 'Mi moto' },
-  { key: 'talleres', label: 'Talleres' },
-];
 
 function formatRelativo(iso: string): string {
   const diffMin = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
@@ -176,13 +170,11 @@ export default function ComunidadScreen({ navigation }: any) {
   const { esModerador } = useModo();
   const { unreadCount } = useNotificaciones();
 
-  const [pestana, setPestana] = useState<Pestana>('cerca');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [ciudad, setCiudad] = useState<string | null>(null);
-  const [marcas, setMarcas] = useState<string[]>([]);
   const [menuPost, setMenuPost] = useState<Post | null>(null);
   const [misLikesSet, setMisLikesSet] = useState<Set<string>>(new Set());
   const [busqueda, setBusqueda] = useState('');
@@ -194,22 +186,18 @@ export default function ComunidadScreen({ navigation }: any) {
 
   async function cargarContexto() {
     if (!session?.user.id) return;
-    const [{ data: perfil }, { data: vehiculos }] = await Promise.all([
-      supabase.from('usuarios').select('ciudad').eq('id', session.user.id).maybeSingle(),
-      supabase.from('vehiculos').select('marca').eq('propietario_id', session.user.id).eq('activo', true),
-    ]);
+    const { data: perfil } = await supabase.from('usuarios').select('ciudad').eq('id', session.user.id).maybeSingle();
     setCiudad(perfil?.ciudad ?? null);
-    setMarcas([...new Set((vehiculos ?? []).map((v: any) => v.marca))]);
   }
 
   useEffect(() => {
     const t = setTimeout(() => cargar(), busqueda ? 300 : 0);
     return () => clearTimeout(t);
-  }, [pestana, ciudad, marcas.join(','), busqueda]);
+  }, [ciudad, busqueda]);
 
   async function cargar() {
     if (!yaCargo.current) setLoading(true);
-    const { posts: lista } = await fetchFeed(pestana, { ciudad, marcas, busqueda });
+    const { posts: lista } = await fetchFeed('cerca', { ciudad, busqueda });
     setPosts(lista);
     yaCargo.current = true;
     setLoading(false);
@@ -283,70 +271,43 @@ export default function ComunidadScreen({ navigation }: any) {
         onPressBell={() => navigation.navigate('Notificaciones')}
       />
 
-      <View style={s.busquedaWrap}>
-        <IconSearch size={18} color={colors.textTertiary} />
-        <TextInput
-          style={s.busquedaInput}
-          placeholder="Buscar en Comunidad o #hashtag"
-          placeholderTextColor={colors.textTertiary}
-          value={busqueda}
-          onChangeText={setBusqueda}
-          returnKeyType="search"
-          autoCorrect={false}
-          autoCapitalize="none"
-          accessibilityLabel="Buscar en Comunidad"
-        />
-        {busqueda.length > 0 && (
-          <Pressable onPress={() => setBusqueda('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Borrar búsqueda">
-            <IconX size={16} color={colors.textSecondary} />
-          </Pressable>
-        )}
-      </View>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabsRow} style={{ flexGrow: 0 }}>
-        {PESTANAS.map(({ key, label }) => {
-          const activo = pestana === key;
-          return (
-            <Pressable
-              key={key}
-              style={[s.tab, activo && s.tabActivo]}
-              onPress={() => setPestana(key)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: activo }}
-            >
-              <Text style={[s.tabTexto, activo && s.tabTextoActivo]}>{label}</Text>
+      <View style={s.busquedaRow}>
+        <View style={s.busquedaWrap}>
+          <IconSearch size={18} color={colors.textTertiary} />
+          <TextInput
+            style={s.busquedaInput}
+            placeholder="Buscar en Comunidad o #hashtag"
+            placeholderTextColor={colors.textTertiary}
+            value={busqueda}
+            onChangeText={setBusqueda}
+            returnKeyType="search"
+            autoCorrect={false}
+            autoCapitalize="none"
+            accessibilityLabel="Buscar en Comunidad"
+          />
+          {busqueda.length > 0 && (
+            <Pressable onPress={() => setBusqueda('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Borrar búsqueda">
+              <IconX size={16} color={colors.textSecondary} />
             </Pressable>
-          );
-        })}
+          )}
+        </View>
         {esModerador && (
           <Pressable style={s.moderarBtn} onPress={() => navigation.navigate('Moderacion')} accessibilityRole="button" accessibilityLabel="Moderación">
             <IconShieldCheck size={16} color={colors.accent} />
           </Pressable>
         )}
-      </ScrollView>
+      </View>
 
       {loading ? (
         <View style={s.list}>{[0, 1, 2].map(i => <EsqueletoCard key={i} reduceMotion={reduceMotion} />)}</View>
       ) : posts.length === 0 ? (
         <View style={s.vacio}>
           <View style={s.vacioIcono}>
-            {busqueda
-              ? <IconFilterOff size={40} color={colors.textTertiary} />
-              : pestana === 'moto' ? <IconMotorbike size={40} color={colors.textTertiary} /> : <IconWorld size={40} color={colors.textTertiary} />}
+            {busqueda ? <IconFilterOff size={40} color={colors.textTertiary} /> : <IconWorld size={40} color={colors.textTertiary} />}
           </View>
-          <Text style={s.vacioTitulo}>
-            {busqueda
-              ? 'No encontramos resultados'
-              : pestana === 'moto' && marcas.length === 0
-                ? 'Agrega un vehículo para ver esto'
-                : 'Todavía no hay publicaciones'}
-          </Text>
+          <Text style={s.vacioTitulo}>{busqueda ? 'No encontramos resultados' : 'Todavía no hay publicaciones'}</Text>
           <Text style={s.vacioSub}>
-            {busqueda
-              ? 'Prueba con otra palabra o #hashtag.'
-              : pestana === 'moto' && marcas.length === 0
-                ? 'Así te mostramos publicaciones de tu marca de moto o carro.'
-                : 'Sé el primero en compartir algo por aquí.'}
+            {busqueda ? 'Prueba con otra palabra o #hashtag.' : 'Sé el primero en compartir algo por aquí.'}
           </Text>
         </View>
       ) : (
@@ -426,23 +387,17 @@ export default function ComunidadScreen({ navigation }: any) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
-  busquedaWrap: {
+  busquedaRow: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
-    marginHorizontal: spacing.xl, marginBottom: spacing.sm,
+    paddingHorizontal: spacing.xl, marginBottom: spacing.md,
+  },
+  busquedaWrap: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
     backgroundColor: colors.bgCard, borderRadius: radius.xl,
     borderWidth: 1, borderColor: colors.bgSurface,
     paddingHorizontal: spacing.lg, minHeight: 48,
   },
   busquedaInput: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.textPrimary, paddingVertical: 10 },
-
-  tabsRow: { paddingHorizontal: spacing.xl, gap: spacing.lg, paddingBottom: spacing.md, alignItems: 'center' },
-  tab: {
-    minHeight: 40, justifyContent: 'center', paddingHorizontal: 2,
-    borderBottomWidth: 2, borderBottomColor: 'transparent',
-  },
-  tabActivo: { borderBottomColor: colors.accent },
-  tabTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.textSecondary },
-  tabTextoActivo: { color: colors.accent, fontFamily: fonts.bold },
 
   hashtagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
   hashtagChip: { minHeight: 28, paddingHorizontal: spacing.sm, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.accentDark },
