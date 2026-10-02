@@ -32,7 +32,9 @@ export default function LegalScreen({ route, navigation }: any) {
           </View>
         )}
 
-        {parrafos.map((p, i) => <Text key={i} style={s.parrafo}>{p}</Text>)}
+        {parrafos.map((p, i) => p.startsWith('## ')
+          ? <Text key={i} style={s.subtitulo}>{p.slice(3)}</Text>
+          : <Text key={i} style={s.parrafo}>{p}</Text>)}
 
         <Text style={s.version}>Versión: {VERSION_LEGAL}</Text>
       </ScrollView>
@@ -60,6 +62,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
   },
   avisoTexto: { flex: 1, fontFamily: fonts.body, fontSize: 13, color: colors.textPrimary, lineHeight: 19 },
+  subtitulo: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, marginTop: spacing.md },
   parrafo: { fontFamily: fonts.body, fontSize: 16, color: colors.textPrimary, lineHeight: 24 },
   version: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: spacing.md },
 });

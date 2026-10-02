@@ -69,7 +69,7 @@ export default function RegisterScreen({ navigation }: any) {
   if (!ciudadSel) errores.ciudad = 'Elige tu ciudad';
   else if (!ciudad) errores.ciudad = 'Escribe tu ciudad';
   if (!edad) errores.edad = 'Escribe tu edad';
-  else if (!Number.isInteger(edadNum) || edadNum < 14 || edadNum > 100) errores.edad = 'Escribe una edad entre 14 y 100';
+  else if (!Number.isInteger(edadNum) || edadNum < 18 || edadNum > 100) errores.edad = 'Rodix es solo para mayores de 18 años';
   if (!password) errores.password = 'Crea una contraseña';
   else if (password.length < 6) errores.password = 'Usa al menos 6 caracteres';
   if (!acepto) errores.acepto = 'Para crear tu cuenta debes aceptar los textos legales';

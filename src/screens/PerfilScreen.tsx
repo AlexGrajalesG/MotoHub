@@ -461,7 +461,7 @@ function EditorPerfil({ visible, perfil, nombreUsuario, uid, onCerrar, onGuardad
     const usuarioNuevo = usuario.trim();
     const edad = edadTxt.trim() ? Number(edadTxt) : null;
     if (f.nombre.trim().length < 2) { setError('Escribe tu nombre'); return; }
-    if (edad !== null && (!Number.isInteger(edad) || edad < 10 || edad > 100)) { setError('Escribe una edad válida'); return; }
+    if (edad !== null && (!Number.isInteger(edad) || edad < 18 || edad > 100)) { setError('Debes ser mayor de 18 años'); return; }
     setGuardando(true);
     setError(null);
 
