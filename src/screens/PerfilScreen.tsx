@@ -308,26 +308,44 @@ export default function PerfilScreen({ navigation }: any) {
               accion="Crear publicación"
               onPress={() => navigation.navigate('Comunidad', { screen: 'CrearPost' })}
             />
-          ) : posts.map(p => (
-            <View key={p.id} style={s.post}>
-              <View style={{ flex: 1, gap: 6 }}>
-                <View style={s.postMeta}>
-                  <Text style={s.postCategoria}>{CATEGORIAS.find(c => c.key === p.categoria)?.label ?? 'General'}</Text>
-                  <Text style={s.postFecha}>{[p.ciudad, hace(p.created_at)].filter(Boolean).join(' · ')}</Text>
-                </View>
-                {!!p.contenido && <Text style={s.postTexto} numberOfLines={4}>{p.contenido}</Text>}
-                {!!p.video_url && (
-                  <View style={s.postVideo}><IconVideo size={14} color={colors.textSecondary} /><Text style={s.postVideoTexto}>Video en enlace</Text></View>
-                )}
-                {p.estado !== 'visible' && <Text style={s.postRevision}>En revisión, solo tú la ves</Text>}
-              </View>
-              {p.fotos_urls?.[0] && (
-                <Pressable onPress={() => abrirFotos(p.fotos_urls!, 0)} accessibilityRole="imagebutton" accessibilityLabel="Ver fotos de la publicación">
-                  <Image source={{ uri: p.fotos_urls[0] }} style={s.postFoto} contentFit="cover" />
-                </Pressable>
-              )}
+          ) : (
+            <View style={s.grid}>
+              {posts.map(p => {
+                const categoria = CATEGORIAS.find(c => c.key === p.categoria);
+                return (
+                  <Pressable
+                    key={p.id}
+                    style={s.gridCard}
+                    onPress={() => p.fotos_urls?.[0] && abrirFotos(p.fotos_urls, 0)}
+                    disabled={!p.fotos_urls?.[0]}
+                    accessibilityRole="imagebutton"
+                    accessibilityLabel={p.contenido || 'Publicación'}
+                  >
+                    <View style={s.gridFotoWrap}>
+                      {p.fotos_urls?.[0] ? (
+                        <Image source={{ uri: p.fotos_urls[0] }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                      ) : p.video_url ? (
+                        <View style={[StyleSheet.absoluteFill, s.gridPlaceholder]}>
+                          <IconVideo size={22} color={colors.textTertiary} />
+                        </View>
+                      ) : (
+                        <View style={[StyleSheet.absoluteFill, s.gridPlaceholder, { padding: spacing.sm }]}>
+                          <Text style={s.gridPlaceholderTexto} numberOfLines={4}>{p.contenido}</Text>
+                        </View>
+                      )}
+                      {!!categoria && categoria.key !== 'general' && (
+                        <View style={s.gridBadge}><Text style={s.gridBadgeTexto}>{categoria.label}</Text></View>
+                      )}
+                    </View>
+                    <Text style={s.gridTitulo} numberOfLines={2}>{p.contenido || categoria?.label || 'Publicación'}</Text>
+                    <Text style={s.gridMeta} numberOfLines={1}>
+                      {p.estado !== 'visible' ? 'En revisión, solo tú la ves' : [p.ciudad, hace(p.created_at)].filter(Boolean).join(' · ')}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
-          ))}
+          )}
           {posts.length > 0 && (
             <Pressable style={({ pressed }) => [s.botonSec, pressed && { opacity: 0.8 }]} onPress={() => navigation.navigate('Comunidad', { screen: 'CrearPost' })} accessibilityRole="button">
               <IconPlus size={16} color={colors.textPrimary} />
@@ -661,18 +679,19 @@ const s = StyleSheet.create({
 
   lista: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, gap: spacing.md },
 
-  post: {
-    flexDirection: 'row', gap: spacing.md, padding: spacing.md,
-    backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface,
+  // Grilla de publicaciones, estilo perfil de red social (2 columnas, como el diseño de Stitch).
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.lg },
+  gridCard: { width: '48%' },
+  gridFotoWrap: { width: '100%', aspectRatio: 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.bgCard },
+  gridPlaceholder: { justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgCard },
+  gridPlaceholderTexto: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary, textAlign: 'center' },
+  gridBadge: {
+    position: 'absolute', top: spacing.sm, left: spacing.sm,
+    paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(2,2,2,0.65)',
   },
-  postMeta: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
-  postCategoria: { fontFamily: fonts.bold, fontSize: 11, color: colors.accent, textTransform: 'uppercase', letterSpacing: 0.6 },
-  postFecha: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
-  postTexto: { fontFamily: fonts.body, fontSize: 15, lineHeight: 21, color: colors.textPrimary },
-  postVideo: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  postVideoTexto: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary },
-  postRevision: { fontFamily: fonts.body, fontSize: 12, color: colors.dangerAction },
-  postFoto: { width: 72, height: 72, borderRadius: radius.md },
+  gridBadgeTexto: { fontFamily: fonts.bold, fontSize: 10, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.4 },
+  gridTitulo: { fontFamily: fonts.heading, fontSize: 13, color: colors.textPrimary, marginTop: spacing.xs, lineHeight: 17 },
+  gridMeta: { fontFamily: fonts.body, fontSize: 11, color: colors.textTertiary, marginTop: 2 },
 
   fila: {
     gap: 6, padding: spacing.md, backgroundColor: colors.bgCard, borderRadius: radius.lg,
