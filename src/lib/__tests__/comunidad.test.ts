@@ -1,4 +1,4 @@
-import { detectarPlataforma } from '../comunidadTexto';
+import { detectarPlataforma, extraerHashtags } from '../comunidadTexto';
 
 describe('detectarPlataforma', () => {
   it('reconoce enlaces de TikTok', () => {
@@ -21,5 +21,25 @@ describe('detectarPlataforma', () => {
 
   it('ignora espacios alrededor', () => {
     expect(detectarPlataforma('  https://www.tiktok.com/@user/video/123  ')).toBe('tiktok');
+  });
+});
+
+describe('extraerHashtags', () => {
+  it('saca los hashtags del texto', () => {
+    expect(extraerHashtags('Ruta al #Chicamocha hoy #domingo')).toEqual(['#chicamocha', '#domingo']);
+  });
+
+  it('acepta tildes y ñ', () => {
+    expect(extraerHashtags('#mantención en mi #moto')).toEqual(['#mantención', '#moto']);
+  });
+
+  it('quita duplicados y pasa a minúscula', () => {
+    expect(extraerHashtags('#Ruta buena #ruta #RUTA')).toEqual(['#ruta']);
+  });
+
+  it('sin hashtags, da un arreglo vacío', () => {
+    expect(extraerHashtags('Solo texto normal')).toEqual([]);
+    expect(extraerHashtags(null)).toEqual([]);
+    expect(extraerHashtags(undefined)).toEqual([]);
   });
 });

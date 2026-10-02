@@ -22,3 +22,12 @@ export function detectarPlataforma(url: string): VideoPlataforma | null {
   if (REGEX_INSTAGRAM.test(limpio)) return 'instagram';
   return null;
 }
+
+const REGEX_HASHTAG = /#[\p{L}\p{N}_]+/gu;
+
+/** Saca los #hashtags del texto de una publicación, sin duplicados, en minúscula. */
+export function extraerHashtags(contenido: string | null | undefined): string[] {
+  if (!contenido) return [];
+  const encontrados = contenido.match(REGEX_HASHTAG) ?? [];
+  return [...new Set(encontrados.map(h => h.toLowerCase()))];
+}

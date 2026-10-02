@@ -1,8 +1,8 @@
 import { supabase } from './supabase';
 import { mensajeError } from './errores';
-import { CATEGORIAS, detectarPlataforma, type Categoria, type VideoPlataforma, type RolAutor } from './comunidadTexto';
+import { CATEGORIAS, detectarPlataforma, extraerHashtags, type Categoria, type VideoPlataforma, type RolAutor } from './comunidadTexto';
 
-export { CATEGORIAS, detectarPlataforma };
+export { CATEGORIAS, detectarPlataforma, extraerHashtags };
 export type { Categoria, VideoPlataforma, RolAutor };
 
 export type Post = {
@@ -42,7 +42,7 @@ async function conAutores(filas: any[]): Promise<Post[]> {
 export type Pestana = 'cerca' | 'moto' | 'talleres';
 const PAGINA = 20;
 
-export async function fetchFeed(pestana: Pestana, opciones: { ciudad?: string | null; marcas?: string[]; pagina?: number } = {}): Promise<{ posts: Post[]; hayMas: boolean }> {
+export async function fetchFeed(pestana: Pestana, opciones: { ciudad?: string | null; marcas?: string[]; pagina?: number; busqueda?: string } = {}): Promise<{ posts: Post[]; hayMas: boolean }> {
   const desde = (opciones.pagina ?? 0) * PAGINA;
   let query = supabase.from('posts').select(SELECT_POST).order('created_at', { ascending: false }).range(desde, desde + PAGINA - 1);
 
@@ -54,6 +54,9 @@ export async function fetchFeed(pestana: Pestana, opciones: { ciudad?: string | 
   } else {
     query = query.eq('rol_autor', 'negocio');
   }
+
+  const q = opciones.busqueda?.trim();
+  if (q) query = query.ilike('contenido', `%${q}%`);
 
   const { data, error } = await query;
   if (error) { console.error(error.message); return { posts: [], hayMas: false }; }

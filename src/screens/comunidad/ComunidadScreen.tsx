@@ -1,20 +1,23 @@
 import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ScrollView, Modal,
+  View, Text, StyleSheet, FlatList, Pressable, ScrollView, Modal, TextInput,
   Alert, RefreshControl, AccessibilityInfo, Animated,
 } from 'react-native';
 import { Image } from 'expo-image';
 import {
   IconWorld, IconMotorbike, IconBuildingStore, IconDots, IconFlag, IconUserOff,
-  IconPlus, IconShieldCheck, IconX, IconHeart, IconHeartFilled, IconMessageCircle,
+  IconPlus, IconShieldCheck, IconX, IconHeart, IconHeartFilled, IconMessageCircle, IconSearch, IconFilterOff,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useModo } from '../../context/ModoContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
 import { tokens } from '../../lib/tokens';
-import { fetchFeed, reportarPost, bloquearUsuario, eliminarPost, misLikes, darLike, quitarLike, CATEGORIAS, type Post, type Pestana } from '../../lib/comunidad';
+import {
+  fetchFeed, reportarPost, bloquearUsuario, eliminarPost, misLikes, darLike, quitarLike,
+  CATEGORIAS, extraerHashtags, type Post, type Pestana,
+} from '../../lib/comunidad';
 import TopBar from '../../components/TopBar';
 import PressableCard from '../../components/PressableCard';
 import FotosPost from '../../components/comunidad/FotosPost';
@@ -22,10 +25,10 @@ import VideoPost from '../../components/comunidad/VideoPost';
 
 const { colors, spacing, radius, fonts } = tokens;
 
-const PESTANAS: { key: Pestana; label: string; Icon: typeof IconWorld }[] = [
-  { key: 'cerca', label: 'Cerca de mí', Icon: IconWorld },
-  { key: 'moto', label: 'Mi moto', Icon: IconMotorbike },
-  { key: 'talleres', label: 'Talleres', Icon: IconBuildingStore },
+const PESTANAS: { key: Pestana; label: string }[] = [
+  { key: 'cerca', label: 'Cerca de mí' },
+  { key: 'moto', label: 'Mi moto' },
+  { key: 'talleres', label: 'Talleres' },
 ];
 
 function formatRelativo(iso: string): string {
@@ -71,16 +74,17 @@ function EsqueletoCard({ reduceMotion }: { reduceMotion: boolean }) {
 // ─── Tarjeta de publicación ─────────────────────────────────────────────────
 
 const PostCard = memo(function PostCard({
-  item, index, reduceMotion, miId, esModerador, liked, onMenu, onToggleLike, onAbrirComentarios,
+  item, index, reduceMotion, miId, esModerador, liked, onMenu, onToggleLike, onAbrirComentarios, onBuscarHashtag,
 }: {
   item: Post; index: number; reduceMotion: boolean; miId?: string; esModerador: boolean; liked: boolean;
-  onMenu: (p: Post) => void; onToggleLike: (p: Post) => void; onAbrirComentarios: (p: Post) => void;
+  onMenu: (p: Post) => void; onToggleLike: (p: Post) => void; onAbrirComentarios: (p: Post) => void; onBuscarHashtag: (h: string) => void;
 }) {
   const nombre = item.negocio?.nombre ?? item.autor?.nombre ?? 'Usuario de Rodix';
   const esTaller = item.rol_autor === 'negocio';
   const categoria = CATEGORIAS.find(c => c.key === item.categoria);
   const [expandido, setExpandido] = useState(false);
   const largo = (item.contenido?.length ?? 0) > 220;
+  const hashtags = extraerHashtags(item.contenido);
 
   return (
     <PressableCard index={index} reduceMotion={reduceMotion} onPress={() => {}} style={s.card} scaleTo={1}>
@@ -121,6 +125,16 @@ const PostCard = memo(function PostCard({
             </Pressable>
           )}
         </>
+      )}
+
+      {hashtags.length > 0 && (
+        <View style={s.hashtagsRow}>
+          {hashtags.map(h => (
+            <Pressable key={h} onPress={() => onBuscarHashtag(h)} style={({ pressed }) => [s.hashtagChip, pressed && { opacity: 0.8 }]} accessibilityRole="button" accessibilityLabel={`Buscar ${h}`}>
+              <Text style={s.hashtagTexto}>{h}</Text>
+            </Pressable>
+          ))}
+        </View>
       )}
 
       {item.fotos_urls && item.fotos_urls.length > 0 && <FotosPost urls={item.fotos_urls} />}
@@ -171,6 +185,7 @@ export default function ComunidadScreen({ navigation }: any) {
   const [marcas, setMarcas] = useState<string[]>([]);
   const [menuPost, setMenuPost] = useState<Post | null>(null);
   const [misLikesSet, setMisLikesSet] = useState<Set<string>>(new Set());
+  const [busqueda, setBusqueda] = useState('');
   const yaCargo = useRef(false);
 
   useEffect(() => { AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion); }, []);
@@ -187,11 +202,14 @@ export default function ComunidadScreen({ navigation }: any) {
     setMarcas([...new Set((vehiculos ?? []).map((v: any) => v.marca))]);
   }
 
-  useEffect(() => { cargar(); }, [pestana, ciudad, marcas.join(',')]);
+  useEffect(() => {
+    const t = setTimeout(() => cargar(), busqueda ? 300 : 0);
+    return () => clearTimeout(t);
+  }, [pestana, ciudad, marcas.join(','), busqueda]);
 
   async function cargar() {
     if (!yaCargo.current) setLoading(true);
-    const { posts: lista } = await fetchFeed(pestana, { ciudad, marcas });
+    const { posts: lista } = await fetchFeed(pestana, { ciudad, marcas, busqueda });
     setPosts(lista);
     yaCargo.current = true;
     setLoading(false);
@@ -265,8 +283,28 @@ export default function ComunidadScreen({ navigation }: any) {
         onPressBell={() => navigation.navigate('Notificaciones')}
       />
 
+      <View style={s.busquedaWrap}>
+        <IconSearch size={18} color={colors.textTertiary} />
+        <TextInput
+          style={s.busquedaInput}
+          placeholder="Buscar en Comunidad o #hashtag"
+          placeholderTextColor={colors.textTertiary}
+          value={busqueda}
+          onChangeText={setBusqueda}
+          returnKeyType="search"
+          autoCorrect={false}
+          autoCapitalize="none"
+          accessibilityLabel="Buscar en Comunidad"
+        />
+        {busqueda.length > 0 && (
+          <Pressable onPress={() => setBusqueda('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Borrar búsqueda">
+            <IconX size={16} color={colors.textSecondary} />
+          </Pressable>
+        )}
+      </View>
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.tabsRow} style={{ flexGrow: 0 }}>
-        {PESTANAS.map(({ key, label, Icon }) => {
+        {PESTANAS.map(({ key, label }) => {
           const activo = pestana === key;
           return (
             <Pressable
@@ -276,7 +314,6 @@ export default function ComunidadScreen({ navigation }: any) {
               accessibilityRole="button"
               accessibilityState={{ selected: activo }}
             >
-              <Icon size={16} color={activo ? colors.accent : colors.textSecondary} />
               <Text style={[s.tabTexto, activo && s.tabTextoActivo]}>{label}</Text>
             </Pressable>
           );
@@ -293,17 +330,23 @@ export default function ComunidadScreen({ navigation }: any) {
       ) : posts.length === 0 ? (
         <View style={s.vacio}>
           <View style={s.vacioIcono}>
-            {pestana === 'moto' ? <IconMotorbike size={40} color={colors.textTertiary} /> : <IconWorld size={40} color={colors.textTertiary} />}
+            {busqueda
+              ? <IconFilterOff size={40} color={colors.textTertiary} />
+              : pestana === 'moto' ? <IconMotorbike size={40} color={colors.textTertiary} /> : <IconWorld size={40} color={colors.textTertiary} />}
           </View>
           <Text style={s.vacioTitulo}>
-            {pestana === 'moto' && marcas.length === 0
-              ? 'Agrega un vehículo para ver esto'
-              : 'Todavía no hay publicaciones'}
+            {busqueda
+              ? 'No encontramos resultados'
+              : pestana === 'moto' && marcas.length === 0
+                ? 'Agrega un vehículo para ver esto'
+                : 'Todavía no hay publicaciones'}
           </Text>
           <Text style={s.vacioSub}>
-            {pestana === 'moto' && marcas.length === 0
-              ? 'Así te mostramos publicaciones de tu marca de moto o carro.'
-              : 'Sé el primero en compartir algo por aquí.'}
+            {busqueda
+              ? 'Prueba con otra palabra o #hashtag.'
+              : pestana === 'moto' && marcas.length === 0
+                ? 'Así te mostramos publicaciones de tu marca de moto o carro.'
+                : 'Sé el primero en compartir algo por aquí.'}
           </Text>
         </View>
       ) : (
@@ -322,6 +365,7 @@ export default function ComunidadScreen({ navigation }: any) {
               onMenu={setMenuPost}
               onToggleLike={alternarLike}
               onAbrirComentarios={p => navigation.navigate('Comentarios', { postId: p.id })}
+              onBuscarHashtag={setBusqueda}
             />
           )}
         />
@@ -382,14 +426,27 @@ export default function ComunidadScreen({ navigation }: any) {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
-  tabsRow: { paddingHorizontal: spacing.xl, gap: spacing.sm, paddingBottom: spacing.md, alignItems: 'center' },
-  tab: {
-    flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: spacing.lg, borderRadius: radius.pill,
-    backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
+  busquedaWrap: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    marginHorizontal: spacing.xl, marginBottom: spacing.sm,
+    backgroundColor: colors.bgCard, borderRadius: radius.xl,
+    borderWidth: 1, borderColor: colors.bgSurface,
+    paddingHorizontal: spacing.lg, minHeight: 48,
   },
-  tabActivo: { backgroundColor: 'rgba(72,151,90,0.15)', borderColor: colors.accent },
-  tabTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
-  tabTextoActivo: { color: colors.accent },
+  busquedaInput: { flex: 1, fontFamily: fonts.body, fontSize: 15, color: colors.textPrimary, paddingVertical: 10 },
+
+  tabsRow: { paddingHorizontal: spacing.xl, gap: spacing.lg, paddingBottom: spacing.md, alignItems: 'center' },
+  tab: {
+    minHeight: 40, justifyContent: 'center', paddingHorizontal: 2,
+    borderBottomWidth: 2, borderBottomColor: 'transparent',
+  },
+  tabActivo: { borderBottomColor: colors.accent },
+  tabTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.textSecondary },
+  tabTextoActivo: { color: colors.accent, fontFamily: fonts.bold },
+
+  hashtagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.sm },
+  hashtagChip: { minHeight: 28, paddingHorizontal: spacing.sm, justifyContent: 'center', borderRadius: radius.pill, backgroundColor: colors.accentDark },
+  hashtagTexto: { fontFamily: fonts.heading, fontSize: 12, color: colors.accent },
   moderarBtn: {
     width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentDark,
     borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center',
