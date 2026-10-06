@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { IconArrowLeft, IconFileText, IconX, IconCircleCheck, IconSend, IconUserCheck, IconNotebook } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { elegirImagen } from '../../lib/imagenes';
 import { tokens } from '../../lib/tokens';
 import { uploadAdjuntoCita, registrarServicioPendiente } from '../../lib/mensajesCita';
 import { Campo, Entrada } from '../../components/FormField';
@@ -48,10 +48,8 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
   const errorDescripcion = tipo === 'personalizado' && !descripcion.trim() ? 'Cuéntale al cliente qué servicio fue' : undefined;
 
   async function agregarFoto() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    if (!result.canceled && result.assets[0]) setFotos(prev => [...prev, result.assets[0].uri]);
+    const imagen = await elegirImagen({ calidad: 0.9 });
+    if (imagen) setFotos(prev => [...prev, imagen.uri]);
   }
 
   async function elegirFactura() {

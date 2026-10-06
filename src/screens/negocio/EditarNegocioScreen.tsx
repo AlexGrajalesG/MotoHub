@@ -5,11 +5,11 @@ import {
   KeyboardAvoidingView, Platform, TouchableOpacity,
 } from 'react-native';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import {
   IconArrowLeft, IconBike, IconCar, IconCamera, IconBuildingStore,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { elegirImagen } from '../../lib/imagenes';
 import { tokens } from '../../lib/tokens';
 
 const { colors, spacing, radius, fonts } = tokens;
@@ -78,25 +78,21 @@ export default function EditarNegocioScreen({ route, navigation }: any) {
   }
 
   async function handleFoto() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images', quality: 0.85, allowsEditing: true, aspect: [1, 1],
-    });
-    if (result.canceled) return;
+    const imagen = await elegirImagen({ recortarCuadrada: true });
+    if (!imagen) return;
 
     setSubiendoFoto(true);
     try {
-      const asset  = result.assets[0];
-      const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const ext    = ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(rawExt) ? rawExt : 'jpg';
+      const { uri, ext, mimeType } = imagen;
       const path   = `negocios/${negocio.id}/foto.${ext}`;
 
-      const response    = await fetch(asset.uri);
+      const response    = await fetch(uri);
       const arrayBuffer = await response.arrayBuffer();
       if (arrayBuffer.byteLength === 0) throw new Error('No se pudo leer la imagen');
 
       const { error: upErr } = await supabase.storage
         .from('fotos')
-        .upload(path, arrayBuffer, { contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`, upsert: true });
+        .upload(path, arrayBuffer, { contentType: mimeType, upsert: true });
       if (upErr) throw upErr;
 
       const { data: { publicUrl } } = supabase.storage.from('fotos').getPublicUrl(path);

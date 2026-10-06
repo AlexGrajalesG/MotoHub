@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, Pressable,
   TextInput, ActivityIndicator, Alert, Image,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { elegirImagen } from '../../lib/imagenes';
 import { IconArrowLeft, IconCamera, IconX } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import {
@@ -34,13 +34,8 @@ export default function EditarProductoScreen({ route, navigation }: any) {
 
   async function pickFoto() {
     if (totalFotos >= 3) return;
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    if (!result.canceled && result.assets[0]) setFotosNuevas(prev => [...prev, result.assets[0].uri]);
+    const imagen = await elegirImagen({ calidad: 0.9 });
+    if (imagen) setFotosNuevas(prev => [...prev, imagen.uri]);
   }
 
   function removeFotoExistente(idx: number) {

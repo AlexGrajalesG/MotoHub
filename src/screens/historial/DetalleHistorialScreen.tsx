@@ -3,13 +3,13 @@ import {
   View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator, Alert, Image, Modal,
   KeyboardAvoidingView, Platform, Share,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import {
   IconArrowLeft, IconX, IconPlus, IconCheck, IconShare2, IconDotsVertical, IconPencil, IconTrash,
   IconBuildingStore, IconUser, IconGauge, IconCash, IconPhotoPlus, IconReceipt, IconLock, IconRosetteDiscountCheck,
   IconBulb, IconNotebook, IconFileText,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { elegirImagen } from '../../lib/imagenes';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { formatRegistroCompartible } from '../../lib/historial';
@@ -130,22 +130,18 @@ export default function DetalleHistorialScreen({ route, navigation }: any) {
   // ─── fotos y comprobantes ───────────────────────────────────────────────────
   async function agregarImagen(campo: 'fotos' | 'anexos') {
     if (!session) return;
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    if (result.canceled || !result.assets[0]) return;
+    const imagen = await elegirImagen({ calidad: 0.9 });
+    if (!imagen) return;
 
     setSubiendo(true);
     try {
-      const uri = result.assets[0].uri;
-      const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
+      const { uri, ext, mimeType } = imagen;
       const carpeta = campo === 'anexos' ? 'anexos/' : '';
-      const path = `${session.user.id}/historial/${vehiculo.id}/${carpeta}${Date.now()}.${safeExt}`;
+      const path = `${session.user.id}/historial/${vehiculo.id}/${carpeta}${Date.now()}.${ext}`;
       const response = await fetch(uri);
       const ab = await response.arrayBuffer();
       if (ab.byteLength === 0) throw new Error('vacio');
-      const { error } = await supabase.storage.from('fotos').upload(path, ab, { contentType: `image/${safeExt}` });
+      const { error } = await supabase.storage.from('fotos').upload(path, ab, { contentType: mimeType });
       if (error) throw error;
       const url = supabase.storage.from('fotos').getPublicUrl(path).data.publicUrl;
       await actualizar({ [campo]: [...(registro[campo] ?? []), url] });

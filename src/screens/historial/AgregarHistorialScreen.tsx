@@ -3,9 +3,9 @@ import {
   View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { IconArrowLeft, IconBellRinging, IconLock } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { elegirImagen } from '../../lib/imagenes';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { Campo, Entrada } from '../../components/FormField';
@@ -71,13 +71,8 @@ export default function AgregarHistorialScreen({ route, navigation }: any) {
   }
 
   async function agregarFoto() {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería para agregar fotos.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    if (!result.canceled && result.assets[0]) setFotos(prev => [...prev, result.assets[0].uri]);
+    const imagen = await elegirImagen({ calidad: 0.9 });
+    if (imagen) setFotos(prev => [...prev, imagen.uri]);
   }
 
   async function subirFotos(uris: string[]): Promise<string[]> {

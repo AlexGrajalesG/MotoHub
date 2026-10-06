@@ -6,12 +6,12 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as ImagePicker from 'expo-image-picker';
 import {
   IconArrowLeft, IconMessageCircle, IconCamera, IconCloudUpload,
   IconCheck, IconX, IconStar, IconDeviceFloppy, IconBike,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { elegirImagen } from '../../lib/imagenes';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { useVisorImagenes } from '../../components/VisorImagenes';
@@ -151,15 +151,10 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
 
   async function anexarFoto() {
     if (!cita || !session) return;
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') { Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.'); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    if (result.canceled || !result.assets[0]) return;
-    const uri = result.assets[0].uri;
-    const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
+    const imagen = await elegirImagen({ calidad: 0.9 });
+    if (!imagen) return;
     setSubiendo(true);
-    const url = await uploadAdjuntoCita(uri, citaId, safeExt);
+    const url = await uploadAdjuntoCita(imagen.uri, citaId, imagen.ext);
     if (url) {
       await enviarMensajeTexto(citaId, session.user.id, 'negocio', '', [{ url, tipo: 'foto' }]);
       setFotos(prev => [...prev, url]);

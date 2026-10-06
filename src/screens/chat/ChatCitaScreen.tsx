@@ -4,13 +4,13 @@ import {
   View, Text, StyleSheet, FlatList, Pressable, TextInput,
   ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import {
   IconArrowLeft, IconPaperclip, IconSend, IconTool, IconClock,
   IconFileText, IconCheck, IconX, IconCircleCheck, IconCircleX, IconReceipt,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { elegirImagen } from '../../lib/imagenes';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { TIPO_LABEL } from '../../lib/historial';
@@ -188,17 +188,8 @@ export default function ChatCitaScreen({ route, navigation }: any) {
   }
 
   async function adjuntarFoto(tipo: Adjunto['tipo']) {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    if (result.canceled || !result.assets[0]) return;
-    const uri = result.assets[0].uri;
-    const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(ext) ? ext : 'jpg';
-    await subirYEnviar(uri, safeExt, tipo);
+    const imagen = await elegirImagen({ calidad: 0.9 });
+    if (imagen) await subirYEnviar(imagen.uri, imagen.ext, tipo);
   }
 
   async function adjuntarDocumento(tipo: Adjunto['tipo']) {

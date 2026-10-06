@@ -5,13 +5,13 @@ import {
   Modal, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import {
   IconSettings, IconCamera, IconMapPin, IconStarFilled, IconUserPlus, IconChevronRight, IconX,
   IconPlus, IconPencil, IconShieldLock, IconShieldCheck, IconHelpCircle,
   IconGavel, IconLogout, IconNotes, IconVideo,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
+import { elegirImagen } from '../lib/imagenes';
 import { contarInvitacionesRecibidas } from '../lib/invitaciones';
 import { fetchPromedio, type Promedio } from '../lib/calificaciones';
 import { salirDelEquipo } from '../lib/mecanicos';
@@ -115,25 +115,21 @@ export default function PerfilScreen({ navigation }: any) {
   }
 
   async function handleFoto() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images', quality: 0.85, allowsEditing: true, aspect: [1, 1],
-    });
-    if (result.canceled) return;
+    const imagen = await elegirImagen({ recortarCuadrada: true });
+    if (!imagen) return;
 
     setSubiendoFoto(true);
     try {
-      const asset = result.assets[0];
-      const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const ext = ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(rawExt) ? rawExt : 'jpg';
+      const { uri, ext, mimeType } = imagen;
       const path = `perfiles/${session!.user.id}/avatar.${ext}`;
 
-      const response = await fetch(asset.uri);
+      const response = await fetch(uri);
       const arrayBuffer = await response.arrayBuffer();
       if (arrayBuffer.byteLength === 0) throw new Error('No se pudo leer la imagen');
 
       const { error: upErr } = await supabase.storage
         .from('fotos')
-        .upload(path, arrayBuffer, { contentType: `image/${ext}`, upsert: true });
+        .upload(path, arrayBuffer, { contentType: mimeType, upsert: true });
       if (upErr) throw upErr;
 
       const { data: { publicUrl } } = supabase.storage.from('fotos').getPublicUrl(path);

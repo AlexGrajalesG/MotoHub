@@ -7,8 +7,12 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.rodix.app"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.rodix.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.rodix.app",
@@ -26,6 +30,14 @@
       "expo-secure-store",
       "expo-font",
       "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Rodix necesita acceder a tus fotos para que puedas subir imágenes de tu vehículo, documentos y publicaciones.",
+          "cameraPermission": "Rodix necesita la cámara para que puedas tomar fotos de tu vehículo y de tus documentos.",
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-splash-screen",
         {

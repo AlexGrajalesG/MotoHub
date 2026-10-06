@@ -7,7 +7,6 @@ import {
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
-import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -17,6 +16,7 @@ import {
   IconCamera,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { capturarImagen, elegirImagen, TEXTOS_IMAGEN, type OrigenImagen } from '../../lib/imagenes';
 import { useAuth } from '../../context/AuthContext';
 import VisorImagenes, { useVisorImagenes } from '../../components/VisorImagenes';
 import { verificarRecordatoriosKm } from '../../lib/notificaciones';
@@ -161,21 +161,19 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
     if (vehiculo.fotos.length >= 5) {
       Alert.alert('Límite', 'Máximo 5 fotos por vehículo'); return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.85 });
-    if (result.canceled) return;
+    const imagen = await elegirImagen();
+    if (!imagen) return;
     setSubiendo(true);
     try {
-      const asset  = result.assets[0];
-      const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-      const ext    = ['jpg','jpeg','png','heic','webp'].includes(rawExt) ? rawExt : 'jpg';
+      const { uri, ext, mimeType } = imagen;
       const path   = `${session?.user.id}/${vehiculo.id}/${Date.now()}.${ext}`;
 
-      const response = await fetch(asset.uri);
+      const response = await fetch(uri);
       const buffer   = await response.arrayBuffer();
       if (buffer.byteLength === 0) throw new Error('No se pudo leer la imagen');
 
       const { error: upErr } = await supabase.storage.from('fotos')
-        .upload(path, buffer, { contentType: `image/${ext}` });
+        .upload(path, buffer, { contentType: mimeType });
       if (upErr) throw upErr;
 
       const { data: { publicUrl } } = supabase.storage.from('fotos').getPublicUrl(path);
@@ -251,20 +249,16 @@ export default function DetalleVehiculoScreen({ route, navigation }: any) {
   }
 
   async function handleSubirDoc(tipo: string) {
-    Alert.alert('Subir documento', 'Elige el tipo de archivo', [
-      { text: 'Foto / Imagen', onPress: () => subirImagen(tipo) },
-      { text: 'PDF',           onPress: () => subirPDF(tipo) },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+    Alert.alert('Subir documento', 'Elige cómo agregarlo', [
+      { text: TEXTOS_IMAGEN.camara,  onPress: () => subirImagen(tipo, 'camara') },
+      { text: TEXTOS_IMAGEN.galeria, onPress: () => subirImagen(tipo, 'galeria') },
+      { text: 'PDF',                 onPress: () => subirPDF(tipo) },
+    ], { cancelable: true });
   }
 
-  async function subirImagen(tipo: string) {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.85 });
-    if (result.canceled) return;
-    const asset  = result.assets[0];
-    const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const ext    = ['jpg','jpeg','png','heic','webp'].includes(rawExt) ? rawExt : 'jpg';
-    iniciarSubida(tipo, asset.uri, `image/${ext}`, ext);
+  async function subirImagen(tipo: string, origen: OrigenImagen) {
+    const imagen = await capturarImagen(origen);
+    if (imagen) iniciarSubida(tipo, imagen.uri, imagen.mimeType, imagen.ext);
   }
 
   async function subirPDF(tipo: string) {

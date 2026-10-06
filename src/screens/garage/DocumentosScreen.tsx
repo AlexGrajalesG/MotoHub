@@ -2,13 +2,13 @@ import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, ScrollView, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   IconShieldCheck, IconClipboardText, IconTool, IconFileText, IconFileTypePdf,
   IconPhoto, IconTrash, IconPlus,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
+import { capturarImagen, TEXTOS_IMAGEN, type OrigenImagen } from '../../lib/imagenes';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
@@ -79,20 +79,16 @@ export default function DocumentosScreen({ route, navigation }: any) {
   }
 
   function handleSubir(tipo: string) {
-    Alert.alert('Subir documento', 'Elige el tipo de archivo', [
-      { text: 'Foto / Imagen', onPress: () => subirImagen(tipo) },
+    Alert.alert('Subir documento', 'Elige cómo agregarlo', [
+      { text: TEXTOS_IMAGEN.camara, onPress: () => subirImagen(tipo, 'camara') },
+      { text: TEXTOS_IMAGEN.galeria, onPress: () => subirImagen(tipo, 'galeria') },
       { text: 'PDF', onPress: () => subirPDF(tipo) },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+    ], { cancelable: true });
   }
 
-  async function subirImagen(tipo: string) {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images', quality: 0.8 });
-    if (result.canceled) return;
-    const asset = result.assets[0];
-    const rawExt = asset.uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const ext = ['jpg', 'jpeg', 'png', 'heic', 'webp'].includes(rawExt) ? rawExt : 'jpg';
-    await subirArchivo(tipo, asset.uri, `image/${ext}`, ext);
+  async function subirImagen(tipo: string, origen: OrigenImagen) {
+    const imagen = await capturarImagen(origen, { calidad: 0.8 });
+    if (imagen) await subirArchivo(tipo, imagen.uri, imagen.mimeType, imagen.ext);
   }
 
   async function subirPDF(tipo: string) {
