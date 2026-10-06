@@ -16,6 +16,7 @@
     },
     "android": {
       "package": "com.rodix.app",
+      "permissions": ["android.permission.CAMERA"],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#133210",
