@@ -11,6 +11,7 @@ import { ModoProvider } from './src/context/ModoContext';
 import { NotificacionesProvider } from './src/context/NotificacionesContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { configurarHandler } from './src/lib/notificaciones';
+import GuardiaOrientacion from './src/components/GuardiaOrientacion';
 
 configurarHandler();
 
@@ -27,12 +28,14 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <ModoProvider>
-        <NotificacionesProvider>
-          <AppNavigator />
-        </NotificacionesProvider>
-      </ModoProvider>
-    </AuthProvider>
+    <GuardiaOrientacion>
+      <AuthProvider>
+        <ModoProvider>
+          <NotificacionesProvider>
+            <AppNavigator />
+          </NotificacionesProvider>
+        </ModoProvider>
+      </AuthProvider>
+    </GuardiaOrientacion>
   );
 }
