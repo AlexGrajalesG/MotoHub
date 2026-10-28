@@ -4,7 +4,7 @@
  * Al cambiar el contenido, subir `VERSION_LEGAL`: la version aceptada se guarda con cada registro.
  * Las lineas que empiezan con '## ' se muestran como subtitulo.
  */
-export const VERSION_LEGAL = '2026-10-02';
+export const VERSION_LEGAL = '2026-10-28';
 
 export type DocumentoLegal = 'datos' | 'terminos';
 
@@ -15,7 +15,7 @@ export const LEGAL: Record<DocumentoLegal, { titulo: string; parrafos: string[] 
       'Esta política explica cómo Rodix recoge, usa, almacena y protege tus datos personales en su sitio web y en su aplicación, de acuerdo con el habeas data (artículo 15 de la Constitución), la Ley 1581 de 2012 y el Decreto 1074 de 2015.',
 
       '## 1. Responsable del tratamiento',
-      'Alex Gómez, persona natural, titular de la marca Rodix. NIT 1025527691-4. Domicilio: Cl del Comercio #17-77, Centro, Bucaramanga, Santander, Colombia. Correo: rodixmotors@gmail.com. Teléfono y WhatsApp: 321 915 8228. El responsable también atiende las consultas y reclamos sobre datos personales.',
+      'Alexander Gómez Grajales, persona natural, titular de la marca Rodix. NIT 1025527691-4. Domicilio: Cl del Comercio #17-77, Centro, Bucaramanga, Santander, Colombia. Correo: rodixmotors@gmail.com. Teléfono y WhatsApp: 321 915 8228. El responsable también atiende las consultas y reclamos sobre datos personales.',
 
       '## 2. Solo mayores de edad',
       'Rodix es un servicio para personas mayores de 18 años. La ley colombiana prohíbe tratar datos de niños, niñas y adolescentes, salvo los de naturaleza pública, por lo que no ofrecemos el servicio a menores ni recogemos sus datos de forma consciente. Si crees que un menor nos entregó datos, escríbenos y los eliminaremos.',
