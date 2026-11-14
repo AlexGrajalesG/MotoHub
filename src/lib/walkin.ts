@@ -15,7 +15,7 @@ export async function crearOrdenWalkin(
   negocioId: string,
   clienteId: string,
   vehiculoId: string | null,
-  estado: 'confirmada' | 'completada' = 'confirmada'
+  estado: 'confirmada' = 'confirmada'
 ): Promise<string | null> {
   const { data, error } = await supabase.rpc('crear_orden_walkin', {
     p_negocio_id: negocioId,

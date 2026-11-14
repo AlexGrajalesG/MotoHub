@@ -11,6 +11,8 @@ import { uploadAdjuntoCita, registrarServicioPendiente } from '../../lib/mensaje
 import { Campo, Entrada } from '../../components/FormField';
 import { Seccion, SelectorTipo, SelectorFecha, FotosServicio } from '../../components/historial/piezas';
 import { metaTipo, fechaAISO, conMiles, soloDigitos } from '../../lib/historialTipos';
+import { validarKm } from '../../lib/cierreCitaTexto';
+import { finalizarCita } from '../../lib/cierreCita';
 
 const { colors, fonts, spacing, radius } = tokens;
 
@@ -20,7 +22,9 @@ type Vehiculo = { marca: string; modelo: string; placa: string | null; kilometra
 
 /** El taller o el mecánico registra el servicio hecho; el cliente debe aceptarlo. */
 export default function RegistrarServicioScreen({ route, navigation }: any) {
-  const { citaId, vehiculoId, creadoPor = 'negocio' } = route.params as { citaId: string; vehiculoId: string; creadoPor?: 'negocio' | 'mecanico' };
+  const { citaId, vehiculoId, creadoPor = 'negocio', finalizar = false } = route.params as {
+    citaId: string; vehiculoId: string; creadoPor?: 'negocio' | 'mecanico'; finalizar?: boolean;
+  };
 
   const [vehiculo, setVehiculo] = useState<Vehiculo | null>(null);
   const [tipo, setTipo] = useState('aceite');
@@ -33,6 +37,7 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
   const [facturaUri, setFacturaUri] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [finalizado, setFinalizado] = useState(false);
   const [intento, setIntento] = useState(false);
 
   useEffect(() => {
@@ -40,12 +45,13 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
       .then(({ data }) => {
         if (!data) return;
         setVehiculo(data as Vehiculo);
-        if (data.kilometraje) setKm(conMiles(String(data.kilometraje)));
       });
   }, [vehiculoId]);
 
   const meta = metaTipo(tipo);
   const errorDescripcion = tipo === 'personalizado' && !descripcion.trim() ? 'Cuéntale al cliente qué servicio fue' : undefined;
+  // El km no se rellena solo: debe leerse del tablero en cada servicio
+  const errorKm = validarKm(soloDigitos(km), vehiculo?.kilometraje ?? null, fecha === fechaAISO(new Date()));
 
   async function agregarFoto() {
     const imagen = await elegirImagen({ calidad: 0.9 });
@@ -59,7 +65,7 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
 
   async function enviar() {
     setIntento(true);
-    if (errorDescripcion) return;
+    if (errorDescripcion || errorKm) return;
 
     setGuardando(true);
     try {
@@ -90,6 +96,11 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
         creado_por: creadoPor,
       });
       if (error) throw error;
+      if (finalizar) {
+        const cierre = await finalizarCita(citaId);
+        if (!cierre.ok) Alert.alert('Servicio enviado, pero sin finalizar', cierre.mensaje);
+        else setFinalizado(true);
+      }
       setEnviado(true);
     } catch {
       Alert.alert('No se pudo enviar', 'Revisa tu conexión e intenta de nuevo.');
@@ -103,8 +114,12 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
       <View style={s.container}>
         <View style={s.exito}>
           <View style={s.exitoIcono}><IconCircleCheck size={44} color={colors.accent} /></View>
-          <Text style={s.exitoTitulo}>Enviado al cliente</Text>
-          <Text style={s.exitoSub}>Lo verá en el chat. Cuando lo acepte, queda en el historial de su vehículo.</Text>
+          <Text style={s.exitoTitulo}>{finalizado ? 'Servicio finalizado' : 'Enviado al cliente'}</Text>
+          <Text style={s.exitoSub}>
+            {finalizado
+              ? 'El chat quedó cerrado con un resumen. El cliente verá el servicio y, cuando lo acepte, queda en el historial de su vehículo.'
+              : 'Lo verá en el chat. Cuando lo acepte, queda en el historial de su vehículo.'}
+          </Text>
           <Pressable style={({ pressed }) => [s.botonPri, { alignSelf: 'stretch' }, pressed && { opacity: 0.85 }]} onPress={() => navigation.goBack()} accessibilityRole="button">
             <Text style={s.botonPriTexto}>Volver al chat</Text>
           </Pressable>
@@ -149,8 +164,13 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
             <Campo label="Fecha"><SelectorFecha valor={fecha} onChange={setFecha} /></Campo>
             <View style={s.dosCol}>
               <View style={{ flex: 1 }}>
-                <Campo label="Kilometraje" ayuda="km del tablero">
-                  <Entrada value={km} onChangeText={v => setKm(conMiles(v))} placeholder="15.000" keyboardType="number-pad" />
+                <Campo
+                  label="Kilometraje"
+                  requerido
+                  error={intento ? errorKm : undefined}
+                  ayuda={vehiculo?.kilometraje ? `Último: ${vehiculo.kilometraje.toLocaleString('es-CO')} km` : 'km del tablero'}
+                >
+                  <Entrada value={km} onChangeText={v => setKm(conMiles(v))} error={!!(intento && errorKm)} placeholder="15.000" keyboardType="number-pad" />
                 </Campo>
               </View>
               <View style={{ flex: 1 }}>
@@ -211,7 +231,7 @@ export default function RegistrarServicioScreen({ route, navigation }: any) {
             disabled={guardando}
             accessibilityRole="button"
           >
-            {guardando ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.botonPriTexto}>Enviar al cliente</Text>}
+            {guardando ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.botonPriTexto}>{finalizar ? 'Enviar y finalizar servicio' : 'Enviar al cliente'}</Text>}
           </Pressable>
         </View>
       </KeyboardAvoidingView>

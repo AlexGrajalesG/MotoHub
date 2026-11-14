@@ -3,7 +3,8 @@ import { supabase } from './supabase';
 
 /**
  * Vuelve a cargar cuando cambia una tabla (Supabase Realtime).
- * `filter` en formato PostgREST (ej. `negocio_id=eq.<id>`); `null` = todavia no hay filtro valido, no se suscribe.
+ * `filter` en formato PostgREST (ej. `negocio_id=eq.<id>`); `null` = todavia no hay filtro valido, no se suscribe;
+ * `''` = sin filtro (RLS limita lo que le llega a cada usuario).
  * Junta rafagas de cambios en una sola recarga.
  */
 export function useRealtimeRefresh(table: string, filter: string | null, onChange: () => void) {
@@ -16,7 +17,7 @@ export function useRealtimeRefresh(table: string, filter: string | null, onChang
     let timer: ReturnType<typeof setTimeout> | null = null;
     const channel = supabase
       .channel(`rt-${table}-${sufijo.current}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table, filter }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table, ...(filter ? { filter } : {}) }, () => {
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => callback.current(), 300);
       })

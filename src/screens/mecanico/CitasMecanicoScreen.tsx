@@ -13,6 +13,7 @@ import { useNotificaciones } from '../../context/NotificacionesContext';
 import { fetchCitasNoLeidas } from '../../lib/lecturas';
 import { tokens } from '../../lib/tokens';
 import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
+import { finalizarOPedirKm } from '../../lib/cierreCita';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -110,9 +111,9 @@ export default function CitasMecanicoScreen({ navigation }: any) {
 
   async function marcarCompletada(cita: Cita) {
     setBusy(cita.id);
-    const { error } = await supabase.from('citas').update({ estado: 'completada' }).eq('id', cita.id);
+    const ok = await finalizarOPedirKm({ citaId: cita.id, creadoPor: 'mecanico', navigation });
     setBusy(null);
-    if (error) { Alert.alert('Error', error.message); return; }
+    if (!ok) return;
     if (filtro === 'todas') setCitas(prev => prev.map(c => c.id === cita.id ? { ...c, estado: 'completada' } : c));
     else setCitas(prev => prev.filter(c => c.id !== cita.id));
   }

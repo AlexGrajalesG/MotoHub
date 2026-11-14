@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -6,13 +6,16 @@ import {
   View, Text, StyleSheet, ActivityIndicator, Animated, AccessibilityInfo,
 } from 'react-native';
 import {
-  IconBike, IconClipboardText, IconBuildingStore, IconUsers, IconUser, IconTools, IconTool,
+  IconBike, IconClipboardText, IconBuildingStore, IconUsers, IconUser, IconTools, IconTool, IconMessageCircle,
 } from '@tabler/icons-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useModo } from '../context/ModoContext';
 import { tokens } from '../lib/tokens';
 import { supabase } from '../lib/supabase';
 import { getDocStatus } from '../lib/documentos';
+import { fetchBandeja } from '../lib/bandeja';
+import { comoSegunModo, contarNoLeidas } from '../lib/bandejaTexto';
+import { useRealtimeRefresh } from '../lib/useRealtimeRefresh';
 
 import LoginScreen            from '../screens/auth/LoginScreen';
 import RegisterScreen         from '../screens/auth/RegisterScreen';
@@ -68,6 +71,8 @@ import RegistrarServicioScreen from '../screens/chat/RegistrarServicioScreen';
 
 import CalificarCitaScreen     from '../screens/calificaciones/CalificarCitaScreen';
 
+import BandejaMensajesScreen   from '../screens/mensajes/BandejaMensajesScreen';
+
 import ComunidadScreen    from '../screens/comunidad/ComunidadScreen';
 import CrearPostScreen    from '../screens/comunidad/CrearPostScreen';
 import ModeracionScreen   from '../screens/comunidad/ModeracionScreen';
@@ -83,6 +88,7 @@ const MecanicoNav  = createNativeStackNavigator();
 const PerfilNav    = createNativeStackNavigator();
 const AuthNav      = createNativeStackNavigator();
 const ComunidadNav = createNativeStackNavigator();
+const MensajesNav  = createNativeStackNavigator();
 const { colors, spacing, radius, fonts } = tokens;
 
 const PlaceholderScreen = ({ name }: { name: string }) => (
@@ -91,6 +97,18 @@ const PlaceholderScreen = ({ name }: { name: string }) => (
     <Text style={{ color: colors.textSecondary, marginTop: 8 }}>Próximamente</Text>
   </View>
 );
+
+/** Bandeja de mensajes; `como` llega desde la pestaña según el modo de uso (cliente o negocio). */
+function MensajesStack({ route }: any) {
+  return (
+    <MensajesNav.Navigator screenOptions={{ headerShown: false }}>
+      <MensajesNav.Screen name="MensajesHome" component={BandejaMensajesScreen} initialParams={route.params} />
+      <MensajesNav.Screen name="ChatCita"          component={ChatCitaScreen} />
+      <MensajesNav.Screen name="RegistrarServicio" component={RegistrarServicioScreen} />
+      <MensajesNav.Screen name="CalificarCita"     component={CalificarCitaScreen} />
+    </MensajesNav.Navigator>
+  );
+}
 
 function GarageStack() {
   return (
@@ -226,6 +244,23 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
   const [docBadge, setDocBadge]       = useState<number>(0);
   const citasBadge = citasPendientes > 0 ? citasPendientes : undefined;
 
+  // Conversaciones con mensajes sin leer, según el lado en que se usa la app
+  const como = comoSegunModo(modo);
+  const [noLeidos, setNoLeidos] = useState(0);
+  const ultimaRevision = useRef(0);
+  const refreshMensajes = useCallback(async () => {
+    if (!session?.user.id) return;
+    ultimaRevision.current = Date.now();
+    setNoLeidos(contarNoLeidas(await fetchBandeja(como)));
+  }, [session?.user.id, como]);
+  useEffect(() => { refreshMensajes(); }, [refreshMensajes]);
+  useRealtimeRefresh('mensajes_cita', session?.user.id ? '' : null, refreshMensajes);
+  const mensajesBadge = noLeidos > 0 ? noLeidos : undefined;
+  // Al navegar (p. ej. al volver de un chat ya leído) se actualiza el contador, como máximo cada 2 s
+  const screenListeners = {
+    state: () => { if (Date.now() - ultimaRevision.current > 2000) refreshMensajes(); },
+  };
+
   useEffect(() => {
     if (!session?.user.id) return;
     fetchBadge();
@@ -274,9 +309,22 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
     setDocBadge(conAlerta);
   }
 
+  const pestanaMensajes = (
+    <Tab.Screen
+      name="Mensajes"
+      component={MensajesStack}
+      initialParams={{ como }}
+      options={{
+        tabBarIcon: ({ color, size }) => <IconMessageCircle size={size} color={color} />,
+        tabBarBadge: mensajesBadge,
+        tabBarBadgeStyle: { backgroundColor: '#48975a', fontSize: 10 },
+      }}
+    />
+  );
+
   if (modo === 'taller') {
     return (
-      <Tab.Navigator screenOptions={tabBarOptions}>
+      <Tab.Navigator screenOptions={tabBarOptions} screenListeners={screenListeners}>
         <Tab.Screen
           name="MiTaller"
           component={NegocioStack}
@@ -295,6 +343,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
             tabBarBadgeStyle: { backgroundColor: '#48975a', fontSize: 10 },
           }}
         />
+        {pestanaMensajes}
         <Tab.Screen
           name="ServiciosTaller"
           component={ServiciosTabStack}
@@ -314,7 +363,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
 
   if (modo === 'mecanico') {
     return (
-      <Tab.Navigator screenOptions={tabBarOptions}>
+      <Tab.Navigator screenOptions={tabBarOptions} screenListeners={screenListeners}>
         <Tab.Screen
           name="CitasMecanico"
           component={MecanicoStack}
@@ -323,6 +372,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
             tabBarIcon: ({ color, size }) => <IconTool size={size} color={color} />,
           }}
         />
+        {pestanaMensajes}
         <Tab.Screen
           name="Perfil"
           component={PerfilStack}
@@ -333,7 +383,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
   }
 
   return (
-    <Tab.Navigator screenOptions={tabBarOptions}>
+    <Tab.Navigator screenOptions={tabBarOptions} screenListeners={screenListeners}>
       <Tab.Screen
         name="Garage"
         component={GarageStack}
@@ -348,6 +398,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
         component={ServiciosStack}
         options={{ tabBarIcon: ({ color, size }) => <IconBuildingStore size={size} color={color} /> }}
       />
+      {pestanaMensajes}
       <Tab.Screen
         name="Comunidad"
         component={ComunidadStack}

@@ -16,6 +16,7 @@ import { tokens } from '../../lib/tokens';
 import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
 import { type TipoPrecio } from '../../lib/precio';
 import { fetchCitasNoLeidas } from '../../lib/lecturas';
+import { finalizarOPedirKm } from '../../lib/cierreCita';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -178,9 +179,16 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
   async function cambiarEstado(cita: Cita, nuevo: Estado, confirmMsg?: { title: string; body: string }) {
     const aplicar = async () => {
       setBusy(cita.id);
-      const { error } = await supabase.from('citas').update({ estado: nuevo }).eq('id', cita.id);
-      setBusy(null);
-      if (error) { Alert.alert('Error', error.message); return; }
+      if (nuevo === 'completada') {
+        // Completar exige el kilometraje: si falta, lleva a registrar el servicio
+        const ok = await finalizarOPedirKm({ citaId: cita.id, creadoPor: 'negocio', navigation });
+        setBusy(null);
+        if (!ok) return;
+      } else {
+        const { error } = await supabase.from('citas').update({ estado: nuevo }).eq('id', cita.id);
+        setBusy(null);
+        if (error) { Alert.alert('Error', error.message); return; }
+      }
       setCitas(prev => prev.filter(c => c.id !== cita.id));
       if (cita.estado === 'pendiente') refreshCitasPendientes();
       if (tab === 'revisar') fetchRevisarCount();

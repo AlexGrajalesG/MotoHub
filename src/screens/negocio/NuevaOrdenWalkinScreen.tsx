@@ -40,11 +40,21 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
 
   async function handleCrear() {
     if (!cliente) return;
+    const yaSeHizo = estado === 'completada';
+    if (yaSeHizo && !vehiculoId) {
+      Alert.alert('Falta el vehículo', 'Para registrar un servicio ya hecho necesitas elegir el vehículo, porque se pide el kilometraje.');
+      return;
+    }
     setCreando(true);
-    const citaId = await crearOrdenWalkin(negocioId, cliente.id, vehiculoId, estado);
+    // La orden siempre nace en proceso; "ya se hizo" la finaliza al registrar el servicio con su km
+    const citaId = await crearOrdenWalkin(negocioId, cliente.id, vehiculoId, 'confirmada');
     setCreando(false);
     if (!citaId) {
       Alert.alert('No se pudo crear la orden', 'Intenta de nuevo. Si el problema sigue, revisa tu conexión.');
+      return;
+    }
+    if (yaSeHizo) {
+      navigation.replace('RegistrarServicio', { citaId, vehiculoId, creadoPor: 'negocio', finalizar: true });
       return;
     }
     navigation.replace('ChatCita', { citaId });

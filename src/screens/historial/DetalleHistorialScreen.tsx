@@ -17,6 +17,8 @@ import { useVisorImagenes } from '../../components/VisorImagenes';
 import { formatCOP } from '../../lib/precio';
 import { openUrl } from '../../lib/openUrl';
 import { metaTipo, tituloRegistro, fechaLarga } from '../../lib/historialTipos';
+import ResumenCierreCard from '../../components/ResumenCierreCard';
+import { fetchCierreCita, type CierreCita } from '../../lib/cierreCita';
 
 const { colors, fonts, spacing, radius } = tokens;
 
@@ -38,6 +40,7 @@ type Registro = {
   recomendaciones: string[] | null;
   creado_por: string | null;
   aprobado_propietario: boolean | null;
+  cita_id?: string | null;
 };
 
 type Nota = { id: string; texto: string; created_at: string };
@@ -63,6 +66,7 @@ export default function DetalleHistorialScreen({ route, navigation }: any) {
   const [subiendo, setSubiendo] = useState(false);
   const { abrir, cerrar, visor } = useVisorImagenes(quitarImagen);
   const [menu, setMenu] = useState(false);
+  const [cierre, setCierre] = useState<CierreCita | null>(null);
 
   const meta = metaTipo(registro.tipo);
   const titulo = tituloRegistro(registro);
@@ -75,6 +79,12 @@ export default function DetalleHistorialScreen({ route, navigation }: any) {
     // al volver de Editar hay que ver los datos nuevos
     return navigation.addListener('focus', recargar);
   }, []);
+
+  // Resumen de la conversación del servicio, si este registro vino de una cita ya cerrada
+  useEffect(() => {
+    if (!registro.cita_id) return;
+    fetchCierreCita(registro.cita_id).then(setCierre);
+  }, [registro.cita_id]);
 
   async function recargar() {
     const { data } = await supabase.from('historial_mantenimiento').select('*').eq('id', registroParam.id).maybeSingle();
@@ -330,6 +340,13 @@ export default function DetalleHistorialScreen({ route, navigation }: any) {
               </View>
             ))}
           </Bloque>
+
+          {/* Resumen del chat cerrado de la cita */}
+          {cierre?.resumen_cierre && (
+            <Bloque titulo="Conversación del servicio">
+              <ResumenCierreCard resumen={cierre.resumen_cierre} onAbrirFotos={abrir} incrustado />
+            </Bloque>
+          )}
 
           {/* Notas de seguimiento */}
           <Bloque titulo="Notas de seguimiento" ayuda="Tu diario de este servicio: cómo se sintió la moto después, qué notaste. Nadie más las ve.">

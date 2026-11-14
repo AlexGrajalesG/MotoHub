@@ -20,6 +20,7 @@ import {
   fetchMensajes, enviarMensajeTexto, uploadAdjuntoCita,
 } from '../../lib/mensajesCita';
 import { formatCOP } from '../../lib/precio';
+import { finalizarOPedirKm } from '../../lib/cierreCita';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -95,6 +96,14 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
     setPrecio(c.precio_acordado != null ? String(c.precio_acordado) : '');
     fetchMecanicosDeNegocio(c.negocio_id).then(setMecanicos);
     setLoading(false);
+  }
+
+  async function finalizar() {
+    if (!cita) return;
+    setBusy(true);
+    const ok = await finalizarOPedirKm({ citaId: cita.id, creadoPor: 'negocio', navigation });
+    setBusy(false);
+    if (ok) setCita(prev => prev && { ...prev, estado: 'completada' });
   }
 
   async function cambiarEstado(nuevo: Estado, confirmMsg?: { title: string; body: string }) {
@@ -344,7 +353,7 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
       )}
       {cita.estado === 'confirmada' && (
         <View style={s.bottomActions}>
-          <Pressable style={({ pressed }) => [s.finalizarBtn, pressed && { opacity: 0.85 }]} onPress={() => cambiarEstado('completada')} disabled={busy}>
+          <Pressable style={({ pressed }) => [s.finalizarBtn, pressed && { opacity: 0.85 }]} onPress={finalizar} disabled={busy}>
             {busy ? <ActivityIndicator size="small" color={colors.bgPrimary} /> : <><IconCheck size={18} color={colors.bgPrimary} /><Text style={s.finalizarText}>FINALIZAR SERVICIO</Text></>}
           </Pressable>
           <Pressable

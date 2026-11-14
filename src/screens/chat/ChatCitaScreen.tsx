@@ -7,7 +7,7 @@ import {
 import * as DocumentPicker from 'expo-document-picker';
 import {
   IconArrowLeft, IconPaperclip, IconSend, IconTool, IconClock,
-  IconFileText, IconCheck, IconX, IconCircleCheck, IconCircleX, IconReceipt,
+  IconFileText, IconCheck, IconX, IconCircleCheck, IconCircleX, IconReceipt, IconLock,
 } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { elegirImagen } from '../../lib/imagenes';
@@ -27,6 +27,10 @@ import EstrellasDisplay from '../../components/EstrellasDisplay';
 import EstadoCitaLinea from '../../components/EstadoCitaLinea';
 import RegistroCard from '../../components/historial/RegistroCard';
 import { useVisorImagenes } from '../../components/VisorImagenes';
+import ResumenCierreCard from '../../components/ResumenCierreCard';
+import { fetchCierreCita, type CierreCita } from '../../lib/cierreCita';
+import { citaCerrada, avisoChatCerrado } from '../../lib/cierreCitaTexto';
+import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -75,6 +79,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
   const [resolviendo, setResolviendo] = useState<string | null>(null);
   const [rolPropio, setRolPropio] = useState<RolAutor>('propietario');
   const [promedioOtro, setPromedioOtro] = useState<Promedio>({ promedio: 0, total: 0 });
+  const [cierre, setCierre] = useState<CierreCita | null>(null);
   const listRef = useRef<FlatList>(null);
 
   async function cargarCita() {
@@ -104,6 +109,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
       usuario: usuarioData ?? null,
     } as CitaInfo;
     setCita(c);
+    setCierre(citaCerrada(c.estado) ? await fetchCierreCita(citaId) : null);
 
     let esMecanicoActivo = false;
     if (c.usuario_id !== session?.user.id && c.negocio?.propietario_id !== session?.user.id) {
@@ -141,6 +147,9 @@ export default function ChatCitaScreen({ route, navigation }: any) {
     const unsub = subscribeMensajes(citaId, cargarMensajes);
     return unsub;
   }, [citaId]);
+
+  // Si la cita se cierra mientras el chat está abierto, el chat pasa a solo lectura
+  useRealtimeRefresh('citas', `id=eq.${citaId}`, () => cargarCita());
 
   useEffect(() => {
     if (mensajes.length > 0) {
@@ -280,6 +289,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
   if (loading || !cita) {
     return <View style={s.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
+  const cerrada = citaCerrada(cita.estado);
 
   return (
     <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -324,11 +334,24 @@ export default function ChatCitaScreen({ route, navigation }: any) {
         renderItem={({ item }) => renderMensaje(item)}
         ListEmptyComponent={
           <View style={s.empty}>
-            <Text style={s.emptyText}>Aún no hay mensajes. Escribe para iniciar la conversación.</Text>
+            <Text style={s.emptyText}>
+              {cerrada ? 'No hubo mensajes en esta conversación.' : 'Aún no hay mensajes. Escribe para iniciar la conversación.'}
+            </Text>
           </View>
+        }
+        ListFooterComponent={
+          cerrada && cierre?.resumen_cierre
+            ? <ResumenCierreCard resumen={cierre.resumen_cierre} onAbrirFotos={abrirFotos} />
+            : null
         }
       />
 
+      {cerrada ? (
+        <View style={s.cerradoBanner} accessibilityRole="alert">
+          <IconLock size={16} color={colors.textSecondary} />
+          <Text style={s.cerradoTexto}>{avisoChatCerrado(cita.estado === 'cancelada' ? 'cancelada' : 'completada')}</Text>
+        </View>
+      ) : (
       <View style={s.inputRow}>
         {rolPropio !== 'propietario' && (
           <Pressable
@@ -366,6 +389,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
           {enviando ? <ActivityIndicator size="small" color={colors.onAccent} /> : <IconSend size={18} color={colors.onAccent} />}
         </Pressable>
       </View>
+      )}
       {visorFotos}
     </KeyboardAvoidingView>
   );
@@ -445,4 +469,10 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center',
   },
   sendBtnDisabled: { opacity: 0.4 },
+  cerradoBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: spacing.sm,
+    paddingHorizontal: spacing.xl, paddingVertical: spacing.md,
+    borderTopWidth: 1, borderTopColor: colors.bgSurface, backgroundColor: colors.bgCard,
+  },
+  cerradoTexto: { flex: 1, fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary },
 });
