@@ -10,9 +10,9 @@ import { estilosTema } from '../../lib/estilosTema';
 const { colors, spacing, radius, fonts } = tokens;
 
 const RESUMEN = [
-  { titulo: 'Qué guardamos', texto: 'Tu nombre, correo, teléfono y ciudad, y los datos de tus vehículos, documentos, recordatorios, historial y citas.' },
-  { titulo: 'Para qué', texto: 'Para darte el garage digital, avisarte de vencimientos y conectarte con talleres.' },
-  { titulo: 'Quién los ve', texto: 'Los talleres con los que agendas una cita ven tu nombre, tu teléfono y los datos del vehículo de esa cita.' },
+  { titulo: 'Qué guardamos', texto: 'Tu nombre, correo, teléfono y ciudad, los datos de tus vehículos, documentos, recordatorios, historial y citas, y tus mensajes y a quién sigues.' },
+  { titulo: 'Para qué', texto: 'Para darte el garage digital, avisarte de vencimientos y conectarte con talleres y con otras personas.' },
+  { titulo: 'Quién los ve', texto: 'Los talleres con los que agendas una cita ven tu nombre, tu teléfono y los datos del vehículo de esa cita. Tus mensajes los ven solo quienes participan en la conversación.' },
 ];
 
 export default function PrivacidadScreen({ navigation }: any) {
