@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Share, Alert } from 'react-native';
+import { View, Text, ScrollView, Share, Alert } from 'react-native';
 import { IconFileText, IconShieldCheck, IconDownload, IconTrash } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { exportarMisDatos } from '../../lib/cuenta';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
 import { FilaAjuste, GrupoAjustes } from '../../components/FilaAjuste';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -78,7 +79,7 @@ export default function PrivacidadScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content: { paddingHorizontal: spacing.xl, paddingBottom: 40, gap: spacing.xl },
   resumen: {
@@ -88,4 +89,4 @@ const s = StyleSheet.create({
   resumenTitulo: { fontFamily: fonts.heading, fontSize: 14, color: colors.accent },
   resumenTexto: { fontFamily: fonts.body, fontSize: 15, color: colors.textPrimary, lineHeight: 22 },
   derechos: { fontFamily: fonts.body, fontSize: 13, color: colors.textTertiary, lineHeight: 19, textAlign: 'center' },
-});
+}));

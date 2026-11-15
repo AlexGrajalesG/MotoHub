@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator,
+  View, Text, ScrollView, Pressable, ActivityIndicator,
 } from 'react-native';
 import {
   IconBuildingStore, IconPencil, IconTools,
@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useNotificaciones } from '../../context/NotificacionesContext';
 import { useModo } from '../../context/ModoContext';
 import { tokens } from '../../lib/tokens';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -359,7 +360,7 @@ export default function MiTallerScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container:  { flex: 1, backgroundColor: colors.bgPrimary },
   center:     { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
   scrollView: { flex: 1 },
@@ -463,7 +464,7 @@ const s = StyleSheet.create({
   citaPlaca: {
     backgroundColor: colors.bgSurface, borderRadius: 4,
     paddingHorizontal: 6, paddingVertical: 2,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.2)',
+    borderWidth: 1, borderColor: colors.accentTinte,
   },
   citaPlacaText: {
     fontFamily: fonts.display, fontSize: 11, color: colors.textPrimary,
@@ -503,7 +504,7 @@ const s = StyleSheet.create({
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginBottom: spacing.md },
   quickCard: {
     flexBasis: '47%', flexGrow: 1, backgroundColor: colors.bgCard, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: colors.veloSutil,
     padding: spacing.md, alignItems: 'center', gap: spacing.sm,
   },
   quickLabel: {
@@ -551,4 +552,4 @@ const s = StyleSheet.create({
     minHeight: 52, justifyContent: 'center',
   },
   ctaBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
-});
+}));

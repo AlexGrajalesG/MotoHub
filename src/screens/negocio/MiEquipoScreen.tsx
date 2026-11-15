@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert, Modal, TextInput,
+  View, Text, FlatList, Pressable, ActivityIndicator, Alert, Modal, TextInput,
 } from 'react-native';
 import {
   IconArrowLeft, IconUserPlus, IconUsers, IconPhone, IconTrash, IconEye, IconEyeOff, IconClock, IconX,
@@ -14,6 +14,7 @@ import {
 import {
   invitarMecanico, cancelarInvitacion, fetchInvitacionesEnviadas, type InvitacionEnviada,
 } from '../../lib/invitaciones';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -254,7 +255,7 @@ export default function MiEquipoScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -292,7 +293,7 @@ const s = StyleSheet.create({
   emptyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, letterSpacing: -0.3, textAlign: 'center', marginTop: spacing.sm },
   emptySubtitle: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
 
-  modalBg: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl },
+  modalBg: { flex: 1, backgroundColor: colors.sombra, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl },
   modalCard: {
     width: '100%', backgroundColor: colors.bgCard, borderRadius: radius.xl,
     borderWidth: 1, borderColor: colors.bgSurface, padding: spacing.lg,
@@ -315,4 +316,4 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', backgroundColor: colors.accent,
   },
   modalBtnGuardarText: { fontFamily: fonts.heading, color: colors.onAccent, fontSize: 14 },
-});
+}));

@@ -17,6 +17,7 @@ import { fetchPromedio, type Promedio } from '../../lib/calificaciones';
 import { fetchProductosDeNegocio, type Producto } from '../../lib/productos';
 import { imagenReferenciaNegocio } from '../../lib/buscadorServicios';
 import EstrellasDisplay from '../../components/EstrellasDisplay';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -58,9 +59,9 @@ function estaAbierto(horario: Negocio['horario']): boolean {
 }
 
 const BENTO_TINTS = [
-  { bg: 'rgba(72,151,90,0.12)',  color: colors.accent  },
+  { get bg() { return colors.accentTenue; }, get color() { return colors.accent; } },
   { bg: 'rgba(36,154,209,0.12)', color: '#249ad1'      },
-  { bg: 'rgba(47,168,155,0.12)',  color: colors.success },
+  { bg: 'rgba(47,168,155,0.12)', get color() { return colors.success; } },
 ];
 
 export default function NegocioDetalleScreen({ route, navigation }: any) {
@@ -292,7 +293,7 @@ export default function NegocioDetalleScreen({ route, navigation }: any) {
               {/* Placeholder de mapa */}
               <View style={s.mapPlaceholder}>
                 <LinearGradient
-                  colors={['rgba(72,151,90,0.1)', 'transparent']}
+                  colors={[colors.accentTenue, 'transparent']}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                   style={StyleSheet.absoluteFill}
                   pointerEvents="none"
@@ -361,7 +362,7 @@ export default function NegocioDetalleScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   /* ── Header flotante ── */
@@ -372,8 +373,8 @@ const s = StyleSheet.create({
   },
   headerBtn: {
     width: 40, height: 40, borderRadius: radius.md,
-    backgroundColor: 'rgba(2,2,2,0.65)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.sombra,
+    borderWidth: 1, borderColor: colors.velo,
     justifyContent: 'center', alignItems: 'center',
   },
   brand: {
@@ -396,14 +397,14 @@ const s = StyleSheet.create({
   heroBadges: { position: 'absolute', top: 100, right: spacing.xl, gap: 8 },
   glassBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: radius.pill,
+    backgroundColor: colors.velo, borderRadius: radius.pill,
     paddingHorizontal: 12, paddingVertical: 6,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
   },
   glassDot:     { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.textTertiary },
   glassDotOpen: { backgroundColor: colors.success },
   glassBadgeText: {
-    fontFamily: fonts.bold, fontSize: 11, color: '#fff',
+    fontFamily: fonts.bold, fontSize: 11, color: colors.blancoFijo,
     textTransform: 'uppercase', letterSpacing: 0.5,
   },
   heroBottom: {
@@ -411,11 +412,11 @@ const s = StyleSheet.create({
     left: spacing.xl, right: spacing.xl,
   },
   heroTitle: {
-    fontFamily: fonts.display, fontSize: 36, color: '#fff',
+    fontFamily: fonts.display, fontSize: 36, color: colors.blancoFijo,
     lineHeight: 44, letterSpacing: -0.5,
   },
   heroLoc: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, opacity: 0.85 },
-  heroCity: { fontFamily: fonts.body, fontSize: 15, color: '#fff' },
+  heroCity: { fontFamily: fonts.body, fontSize: 15, color: colors.blancoFijo },
 
   /* ── Secciones ── */
   section: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl },
@@ -433,7 +434,7 @@ const s = StyleSheet.create({
     flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.md,
     backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
   },
-  tabChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.12)' },
+  tabChipActive: { borderColor: colors.accent, backgroundColor: colors.accentTenue },
   tabChipText: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
   tabChipTextActive: { color: colors.accent },
 
@@ -448,7 +449,7 @@ const s = StyleSheet.create({
     position: 'absolute', top: spacing.sm + 4, left: spacing.sm + 4,
     backgroundColor: 'rgba(192,57,43,0.85)', borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 3,
   },
-  agotadoText: { fontFamily: fonts.bold, fontSize: 10, color: '#fff', textTransform: 'uppercase' },
+  agotadoText: { fontFamily: fonts.bold, fontSize: 10, color: colors.blancoFijo, textTransform: 'uppercase' },
   productoNombre: { fontFamily: fonts.heading, fontSize: 13, color: colors.textPrimary, marginTop: 4 },
   productoPrecio: { fontFamily: fonts.bold, fontSize: 14, color: colors.accent },
 
@@ -456,7 +457,7 @@ const s = StyleSheet.create({
   bentoWrap: { gap: spacing.sm },
   bentoLarge: {
     backgroundColor: colors.bgCard, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: colors.veloSutil,
     padding: spacing.lg,
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
   },
@@ -477,7 +478,7 @@ const s = StyleSheet.create({
   bentoRow: { flexDirection: 'row', gap: spacing.sm },
   bentoSmall: {
     flex: 1, backgroundColor: colors.bgCard, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: colors.veloSutil,
     padding: spacing.md, gap: spacing.sm,
   },
   bentoSmallEmpty: { flex: 1 },
@@ -498,7 +499,7 @@ const s = StyleSheet.create({
   /* ── Ubicación ── */
   locationCard: {
     backgroundColor: colors.bgCard, borderRadius: radius.lg,
-    overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    overflow: 'hidden', borderWidth: 1, borderColor: colors.veloSutil,
   },
   mapPlaceholder: {
     height: 128, backgroundColor: colors.bgElevated,
@@ -509,9 +510,9 @@ const s = StyleSheet.create({
     position: 'absolute', bottom: 10, left: 12,
     backgroundColor: 'rgba(2,2,2,0.85)',
     borderRadius: radius.pill, paddingHorizontal: 12, paddingVertical: 4,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1, borderColor: colors.velo,
   },
-  wazeChipText: { fontFamily: fonts.bold, fontSize: 12, color: '#fff' },
+  wazeChipText: { fontFamily: fonts.bold, fontSize: 12, color: colors.blancoFijo },
   locationInfo: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     padding: spacing.md,
@@ -544,4 +545,4 @@ const s = StyleSheet.create({
     fontFamily: fonts.bold, fontSize: 15, color: colors.onAccent,
     textTransform: 'uppercase', letterSpacing: 1.5,
   },
-});
+}));

@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, TextInput,
+  View, Text, FlatList, Pressable, TextInput,
   ActivityIndicator, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -17,6 +17,7 @@ import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
 import { type TipoPrecio } from '../../lib/precio';
 import { fetchCitasNoLeidas } from '../../lib/lecturas';
 import { finalizarOPedirKm } from '../../lib/cierreCita';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -411,7 +412,7 @@ export default function CitasNegocioScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -454,14 +455,14 @@ const s = StyleSheet.create({
 
   card: {
     backgroundColor: colors.bgCard, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: colors.veloSutil,
     padding: spacing.md, gap: spacing.md,
   },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
 
   avatar: {
     width: 48, height: 48, borderRadius: 24, overflow: 'hidden',
-    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: 'rgba(72,151,90,0.2)',
+    backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.accentTinte,
     justifyContent: 'center', alignItems: 'center',
   },
   avatarImg: { width: '100%', height: '100%' },
@@ -473,7 +474,7 @@ const s = StyleSheet.create({
   placaInline: { color: colors.accent },
 
   confirmadaBadge: {
-    backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: radius.pill,
+    backgroundColor: colors.velo, borderRadius: radius.pill,
     paddingHorizontal: 8, paddingVertical: 2,
   },
   confirmadaBadgeText: { fontFamily: fonts.bold, fontSize: 10, color: colors.success, textTransform: 'uppercase' },
@@ -511,11 +512,11 @@ const s = StyleSheet.create({
   confirmarText: { fontFamily: fonts.bold, fontSize: 12, color: colors.onAccent, letterSpacing: 0.5 },
   rechazarBtn: {
     flex: 1, backgroundColor: colors.bgSurface, borderRadius: radius.md,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1, borderColor: colors.veloLeve,
     minHeight: 42, justifyContent: 'center', alignItems: 'center',
   },
   rechazarText: { fontFamily: fonts.bold, fontSize: 12, color: colors.textSecondary, letterSpacing: 0.5 },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl, gap: spacing.md },
   emptyTitle: { fontFamily: fonts.bold, fontSize: 14, color: colors.textTertiary, textAlign: 'center' },
-});
+}));

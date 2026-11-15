@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, Text, TextInput, Pressable, StyleSheet, type TextInputProps } from 'react-native';
+import { View, Text, TextInput, Pressable, type TextInputProps } from 'react-native';
 import { IconAlertCircle, IconEye, IconEyeOff } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -82,7 +83,7 @@ export function Entrada({ error, inputRef, style, onFocus, onBlur, esContrasena,
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   campo: { gap: 6 },
   label: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
   requerido: { color: colors.accent },
@@ -101,4 +102,4 @@ const s = StyleSheet.create({
   filaError: { borderColor: colors.dangerAction },
   input: { flex: 1, fontFamily: fonts.body, fontSize: 16, color: colors.textPrimary, paddingVertical: 12 },
   ojo: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center' },
-});
+}));

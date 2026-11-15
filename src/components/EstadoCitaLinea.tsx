@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
 import { IconCheck, IconCircleX } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
 import { pasosCita, type EstadoCita } from '../lib/citasTexto';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, fonts } = tokens;
 
@@ -43,7 +44,7 @@ export default function EstadoCitaLinea({ estado, compacto }: { estado: EstadoCi
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   fila: { flexDirection: 'row', alignItems: 'flex-start' },
   paso: { alignItems: 'center', minWidth: 60 },
   nodoFila: { flexDirection: 'row', alignItems: 'center', width: '100%' },
@@ -64,4 +65,4 @@ const s = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   canceladaTexto: { fontFamily: fonts.bold, fontSize: 12, color: colors.dangerAction },
-});
+}));

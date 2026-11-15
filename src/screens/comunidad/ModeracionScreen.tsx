@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { IconFlag, IconCheck, IconTrash, IconShieldCheck } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { fetchColaModeracion, moderarPost, type PostReportado } from '../../lib/comunidad';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -87,7 +88,7 @@ export default function ModeracionScreen({ navigation }: any) {
                   disabled={ocupado === post.id}
                   accessibilityRole="button"
                 >
-                  <IconTrash size={16} color="#fff" />
+                  <IconTrash size={16} color={colors.blancoFijo} />
                   <Text style={s.eliminarTexto}>Eliminar</Text>
                 </Pressable>
               </View>
@@ -99,7 +100,7 @@ export default function ModeracionScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   content: { paddingHorizontal: spacing.xl, paddingBottom: 40, gap: spacing.md },
@@ -120,10 +121,10 @@ const s = StyleSheet.create({
   restaurarBtn: { borderWidth: 1, borderColor: colors.accent },
   restaurarTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.accent },
   eliminarBtn: { backgroundColor: colors.dangerAction },
-  eliminarTexto: { fontFamily: fonts.heading, fontSize: 13, color: '#fff' },
+  eliminarTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.blancoFijo },
 
   vacio: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl },
   vacioIcono: { width: 88, height: 88, borderRadius: radius.xl, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.lg },
   vacioTitulo: { fontFamily: fonts.display, fontSize: 20, color: colors.textPrimary, textAlign: 'center' },
   vacioSub: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm, lineHeight: 20 },
-});
+}));

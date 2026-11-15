@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { IconClock } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { tokens } from '../lib/tokens';
 import { fechaDeBorrado, cancelarEliminacion, formatearFecha } from '../lib/cuenta';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -77,12 +78,12 @@ export default function CuentaGate({ children }: { children: React.ReactNode }) 
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   centro: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl, backgroundColor: colors.bgPrimary, gap: spacing.md },
   icono: {
     width: 88, height: 88, borderRadius: radius.xl, backgroundColor: colors.accentDark,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm,
+    borderWidth: 1, borderColor: colors.accentBorde, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm,
   },
   titulo: { fontFamily: fonts.display, fontSize: 24, color: colors.textPrimary, letterSpacing: -0.4, textAlign: 'center' },
   fecha: { fontFamily: fonts.bold, fontSize: 16, color: colors.accent, textAlign: 'center' },
@@ -96,4 +97,4 @@ const s = StyleSheet.create({
   botonTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
   secundario: { minHeight: 50, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface, justifyContent: 'center', alignItems: 'center' },
   secundarioTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.textPrimary },
-});
+}));

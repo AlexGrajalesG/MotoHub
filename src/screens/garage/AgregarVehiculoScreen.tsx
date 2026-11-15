@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, ActivityIndicator, BackHandler,
+  View, Text, Pressable, ActivityIndicator, BackHandler,
   ScrollView, KeyboardAvoidingView, Platform, type TextInput,
 } from 'react-native';
 import {
@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { mensajeError } from '../../lib/errores';
 import { Campo, Entrada } from '../../components/FormField';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -384,7 +385,7 @@ export default function AgregarVehiculoScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   header: {
@@ -408,7 +409,7 @@ const s = StyleSheet.create({
   preview: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
     backgroundColor: colors.accentDark, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', padding: spacing.md,
+    borderWidth: 1, borderColor: colors.accentBorde, padding: spacing.md,
   },
   previewIcono: {
     width: 44, height: 44, borderRadius: radius.md,
@@ -425,7 +426,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
     justifyContent: 'center', alignItems: 'center',
   },
-  tipoTileActivo: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.12)' },
+  tipoTileActivo: { borderColor: colors.accent, backgroundColor: colors.accentTenue },
   tipoLabel: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
   tipoLabelActivo: { color: colors.accent },
 
@@ -468,7 +469,7 @@ const s = StyleSheet.create({
   exito: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, paddingVertical: 60, gap: spacing.md },
   exitoIcono: {
     alignSelf: 'center', width: 96, height: 96, borderRadius: radius.xl, backgroundColor: colors.accentDark,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: colors.accentBorde, justifyContent: 'center', alignItems: 'center',
     marginBottom: spacing.sm,
   },
   exitoTitulo: { fontFamily: fonts.display, fontSize: 32, color: colors.textPrimary, textAlign: 'center', letterSpacing: -0.5 },
@@ -494,4 +495,4 @@ const s = StyleSheet.create({
   },
   filaTitulo: { fontFamily: fonts.bold, fontSize: 16, color: colors.textPrimary },
   filaSub: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-});
+}));

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator, Alert,
+  View, Text, ScrollView, Pressable, TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import { IconArrowLeft, IconStar, IconStarFilled, IconCircleCheck } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
@@ -10,6 +10,7 @@ import {
   fetchMisCalificacionesDeCita, enviarCalificacion, type DestinoTipo, type AutorRol,
 } from '../../lib/calificaciones';
 import { determinarRolParaCalificar } from '../../lib/roles';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -134,7 +135,7 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
                         accessibilityLabel={`${n} estrella${n > 1 ? 's' : ''}`}
                       >
                         {n <= valor
-                          ? <IconStarFilled size={32} color="#f5a623" />
+                          ? <IconStarFilled size={32} color={colors.aviso} />
                           : <IconStar size={32} color={colors.bgSurface} />
                         }
                       </Pressable>
@@ -168,7 +169,7 @@ export default function CalificarCitaScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
 
@@ -203,4 +204,4 @@ const s = StyleSheet.create({
 
   doneRow: { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'center', paddingVertical: spacing.sm },
   doneText: { fontFamily: fonts.heading, fontSize: 14, color: colors.success },
-});
+}));

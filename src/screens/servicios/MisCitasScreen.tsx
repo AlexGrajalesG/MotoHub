@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert,
+  View, Text, FlatList, Pressable, ActivityIndicator, Alert,
   Animated, Easing, AccessibilityInfo,
 } from 'react-native';
 import {
@@ -14,6 +14,7 @@ import { tokens } from '../../lib/tokens';
 import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
 import { formatPrecioServicio, formatCOP, type TipoPrecio } from '../../lib/precio';
 import { fetchCitasNoLeidas } from '../../lib/lecturas';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -44,8 +45,8 @@ const ESTADO_LABELS: Record<Estado, string> = {
   completada: 'Completada', cancelada: 'Cancelada',
 };
 const ESTADO_COLORS: Record<Estado, string> = {
-  pendiente: '#f5a623', confirmada: '#5ac8fa',
-  completada: '#34c759', cancelada: colors.dangerAction,
+  get pendiente() { return colors.aviso; }, confirmada: '#5ac8fa',
+  completada: '#34c759', get cancelada() { return colors.dangerAction; },
 };
 
 const DIAS_CORTOS  = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -315,7 +316,7 @@ export default function MisCitasScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -380,7 +381,7 @@ const s = StyleSheet.create({
   },
   actionBtnDanger:  { backgroundColor: 'transparent', borderColor: colors.dangerActionBorder },
   actionTextDanger: { fontFamily: fonts.bold, fontSize: 13, color: colors.dangerAction },
-  actionBtnChat:    { backgroundColor: 'transparent', borderColor: 'rgba(72,151,90,0.35)' },
+  actionBtnChat:    { backgroundColor: 'transparent', borderColor: colors.accentBorde },
   actionTextChat:   { fontFamily: fonts.bold, fontSize: 13, color: colors.accent },
 
   empty: {
@@ -394,4 +395,4 @@ const s = StyleSheet.create({
   emptySubtitle: {
     fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, textAlign: 'center',
   },
-});
+}));

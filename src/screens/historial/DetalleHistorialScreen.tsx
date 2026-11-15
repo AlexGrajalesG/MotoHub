@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, TextInput, ActivityIndicator, Alert, Image, Modal,
+  View, Text, ScrollView, Pressable, TextInput, ActivityIndicator, Alert, Image, Modal,
   KeyboardAvoidingView, Platform, Share,
 } from 'react-native';
 import {
@@ -19,6 +19,7 @@ import { openUrl } from '../../lib/openUrl';
 import { metaTipo, tituloRegistro, fechaLarga } from '../../lib/historialTipos';
 import ResumenCierreCard from '../../components/ResumenCierreCard';
 import { fetchCierreCita, type CierreCita } from '../../lib/cierreCita';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, fonts, spacing, radius } = tokens;
 
@@ -425,7 +426,7 @@ function Bloque({ titulo, ayuda, accion, children }: {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: spacing.md },
@@ -475,7 +476,7 @@ const s = StyleSheet.create({
   agregarTexto: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
   factura: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 48, paddingHorizontal: spacing.md,
-    backgroundColor: colors.accentDark, borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
+    backgroundColor: colors.accentDark, borderRadius: radius.md, borderWidth: 1, borderColor: colors.accentBorde,
   },
   facturaTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
 
@@ -503,7 +504,7 @@ const s = StyleSheet.create({
   },
   notaFecha: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
 
-  velo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  velo: { flex: 1, backgroundColor: colors.sombraFuerte, justifyContent: 'flex-end' },
   hoja: { backgroundColor: colors.bgCard, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, borderWidth: 1, borderColor: colors.bgSurface, paddingVertical: spacing.md, paddingBottom: spacing.xxl },
   opcion: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 56, paddingHorizontal: spacing.xl },
   opcionTexto: { fontFamily: fonts.heading, fontSize: 16, color: colors.textPrimary },
@@ -515,5 +516,5 @@ const s = StyleSheet.create({
     position: 'absolute', bottom: 48, flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48, paddingHorizontal: spacing.xl,
     borderRadius: radius.pill, backgroundColor: 'rgba(224,85,85,0.9)',
   },
-  visorQuitarTexto: { fontFamily: fonts.bold, fontSize: 15, color: '#fff' },
-});
+  visorQuitarTexto: { fontFamily: fonts.bold, fontSize: 15, color: colors.blancoFijo },
+}));

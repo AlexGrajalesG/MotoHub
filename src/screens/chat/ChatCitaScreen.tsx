@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, TextInput,
+  View, Text, FlatList, Pressable, TextInput,
   ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
@@ -31,6 +31,7 @@ import ResumenCierreCard from '../../components/ResumenCierreCard';
 import { fetchCierreCita, type CierreCita } from '../../lib/cierreCita';
 import { citaCerrada, avisoChatCerrado } from '../../lib/cierreCitaTexto';
 import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -59,7 +60,7 @@ const ROL_LABEL: Record<RolAutor, string> = {
   propietario: 'Cliente', negocio: 'Taller', mecanico: 'Mecánico',
 };
 const ROL_COLOR: Record<RolAutor, string> = {
-  propietario: '#5ac8fa', negocio: colors.accent, mecanico: '#34c759',
+  propietario: '#5ac8fa', get negocio() { return colors.accent; }, mecanico: '#34c759',
 };
 
 function formatHora(iso: string): string {
@@ -395,7 +396,7 @@ export default function ChatCitaScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
 
@@ -475,4 +476,4 @@ const s = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: colors.bgSurface, backgroundColor: colors.bgCard,
   },
   cerradoTexto: { flex: 1, fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary },
-});
+}));

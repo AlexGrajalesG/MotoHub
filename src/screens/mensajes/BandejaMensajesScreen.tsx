@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { IconMessageCircle, IconLock } from '@tabler/icons-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
@@ -10,6 +10,7 @@ import {
   repartirConversaciones, contarNoLeidas, vistaPreviaUltimo, etiquetaFecha, inicialDe, textoVacioBandeja,
   esConversacionCerrada, type ComoBandeja, type ConversacionBandeja, type PestanaBandeja,
 } from '../../lib/bandejaTexto';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -149,7 +150,7 @@ export default function BandejaMensajesScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   centro: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -200,4 +201,4 @@ const s = StyleSheet.create({
   vacio: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.xl },
   vacioTitulo: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, textAlign: 'center' },
   vacioTexto: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
-});
+}));

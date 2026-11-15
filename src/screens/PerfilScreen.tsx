@@ -7,7 +7,7 @@ import {
 import { Image } from 'expo-image';
 import {
   IconSettings, IconCamera, IconMapPin, IconStarFilled, IconUserPlus, IconChevronRight, IconX,
-  IconPlus, IconPencil, IconShieldLock, IconShieldCheck, IconHelpCircle,
+  IconPlus, IconPencil, IconShieldLock, IconShieldCheck, IconHelpCircle, IconPalette,
   IconGavel, IconLogout, IconNotes, IconVideo,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
@@ -22,6 +22,7 @@ import { useModo } from '../context/ModoContext';
 import { FilaAjuste, GrupoAjustes } from '../components/FilaAjuste';
 import { useVisorImagenes } from '../components/VisorImagenes';
 import { tokens } from '../lib/tokens';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -385,6 +386,7 @@ export default function PerfilScreen({ navigation }: any) {
               <FilaAjuste icono={<IconShieldLock size={20} color={colors.accent} />} titulo="Seguridad" onPress={() => irA('Seguridad')} />
               <FilaAjuste icono={<IconShieldCheck size={20} color={colors.accent} />} titulo="Privacidad y datos" onPress={() => irA('Privacidad')} />
               <FilaAjuste icono={<IconHelpCircle size={20} color={colors.accent} />} titulo="Ayuda" onPress={() => irA('Ayuda')} />
+              <FilaAjuste icono={<IconPalette size={20} color={colors.accent} />} titulo="Apariencia" onPress={() => irA('Apariencia')} />
               {esModerador ? (
                 <FilaAjuste icono={<IconGavel size={20} color={colors.accent} />} titulo="Moderación" onPress={() => irA('Comunidad', { screen: 'Moderacion' })} />
               ) : null}
@@ -416,7 +418,7 @@ function Stat({ valor, etiqueta, onPress, estrella }: { valor: string; etiqueta:
   return (
     <Pressable style={s.stat} onPress={onPress} disabled={!onPress} accessibilityRole={onPress ? 'button' : undefined} accessibilityLabel={`${valor} ${etiqueta}`}>
       <View style={s.statValorFila}>
-        {estrella && <IconStarFilled size={15} color="#f5a623" />}
+        {estrella && <IconStarFilled size={15} color={colors.aviso} />}
         <Text style={s.statValor}>{valor}</Text>
       </View>
       <Text style={s.statEtiqueta}>{etiqueta}</Text>
@@ -590,7 +592,7 @@ function Entrada({ etiqueta, ayuda, multiline, ...rest }: { etiqueta: string; ay
 
 const AVATAR = 96;
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content: { paddingBottom: 60 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
@@ -603,7 +605,7 @@ const s = StyleSheet.create({
   portadaWrap: { height: 150, backgroundColor: colors.bgCard },
   ajustesBtn: {
     position: 'absolute', top: 52, right: spacing.xl, width: 44, height: 44, borderRadius: 22,
-    backgroundColor: 'rgba(2,2,2,0.55)', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: colors.sombra, justifyContent: 'center', alignItems: 'center',
   },
 
   filaAvatar: {
@@ -633,7 +635,7 @@ const s = StyleSheet.create({
   bio: { fontFamily: fonts.body, fontSize: 15, lineHeight: 22, color: colors.textPrimary, marginTop: 2 },
   bioVacia: { fontFamily: fonts.body, fontSize: 14, color: colors.textTertiary, marginTop: 2, minHeight: 32, textAlignVertical: 'center' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
-  chip: { paddingHorizontal: spacing.md, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.accentDark, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', maxWidth: '100%' },
+  chip: { paddingHorizontal: spacing.md, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: colors.accentDark, borderWidth: 1, borderColor: colors.accentBorde, maxWidth: '100%' },
   chipTexto: { fontFamily: fonts.heading, fontSize: 12, color: colors.textPrimary },
 
   stats: {
@@ -649,7 +651,7 @@ const s = StyleSheet.create({
   aviso: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 60,
     marginHorizontal: spacing.xl, marginTop: spacing.md, padding: spacing.md,
-    backgroundColor: colors.accentDark, borderRadius: radius.lg, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
+    backgroundColor: colors.accentDark, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.accentBorde,
   },
   avisoTitulo: { fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
   avisoSub: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary, marginTop: 2 },
@@ -683,9 +685,9 @@ const s = StyleSheet.create({
   gridPlaceholderTexto: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary, textAlign: 'center' },
   gridBadge: {
     position: 'absolute', top: spacing.sm, left: spacing.sm,
-    paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(2,2,2,0.65)',
+    paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: colors.sombra,
   },
-  gridBadgeTexto: { fontFamily: fonts.bold, fontSize: 10, color: '#fff', textTransform: 'uppercase', letterSpacing: 0.4 },
+  gridBadgeTexto: { fontFamily: fonts.bold, fontSize: 10, color: colors.blancoFijo, textTransform: 'uppercase', letterSpacing: 0.4 },
   gridTitulo: { fontFamily: fonts.heading, fontSize: 13, color: colors.textPrimary, marginTop: spacing.xs, lineHeight: 17 },
   gridMeta: { fontFamily: fonts.body, fontSize: 11, color: colors.textTertiary, marginTop: 2 },
 
@@ -707,7 +709,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, minHeight: 68,
     backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface,
   },
-  chatIcono: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(72,151,90,0.12)', justifyContent: 'center', alignItems: 'center' },
+  chatIcono: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accentTenue, justifyContent: 'center', alignItems: 'center' },
   chatTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   chatNombre: { flex: 1, fontFamily: fonts.heading, fontSize: 15, color: colors.textSecondary },
   chatUltimo: { fontFamily: fonts.body, fontSize: 13, color: colors.textTertiary },
@@ -724,16 +726,16 @@ const s = StyleSheet.create({
   },
   botonSecTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
 
-  velo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' },
+  velo: { flex: 1, backgroundColor: colors.sombra },
   hoja: {
     backgroundColor: colors.bgPrimary, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
     borderTopWidth: 1, borderColor: colors.bgSurface, padding: spacing.xl, paddingBottom: 40,
   },
   hojaCabecera: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing.lg },
   hojaTitulo: { fontFamily: fonts.display, fontSize: 22, color: colors.textPrimary },
-});
+}));
 
-const e = StyleSheet.create({
+const e = estilosTema(() => ({
   raiz: { flex: 1, backgroundColor: colors.bgPrimary },
   cabecera: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -760,4 +762,4 @@ const e = StyleSheet.create({
   chipTextoOn: { fontFamily: fonts.bold, color: colors.onAccent },
   seccion: { fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary, marginTop: spacing.md },
   seccionSub: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: -spacing.sm },
-});
+}));

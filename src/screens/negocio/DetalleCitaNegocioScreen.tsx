@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, TextInput,
+  View, Text, ScrollView, Pressable, TextInput,
   ActivityIndicator, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -21,6 +21,7 @@ import {
 } from '../../lib/mensajesCita';
 import { formatCOP } from '../../lib/precio';
 import { finalizarOPedirKm } from '../../lib/cierreCita';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -377,7 +378,7 @@ export default function DetalleCitaNegocioScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
   content:   { paddingBottom: 48, paddingHorizontal: spacing.xl },
@@ -398,19 +399,19 @@ const s = StyleSheet.create({
   heroGradient: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '70%' },
   heroBadge: {
     position: 'absolute', top: spacing.md, right: spacing.md,
-    backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.velo, borderWidth: 1, borderColor: colors.velo,
     borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 4,
   },
-  heroBadgeText: { fontFamily: fonts.bold, fontSize: 11, color: '#fff', letterSpacing: 0.5 },
+  heroBadgeText: { fontFamily: fonts.bold, fontSize: 11, color: colors.blancoFijo, letterSpacing: 0.5 },
   heroInfo: { position: 'absolute', left: spacing.md, bottom: spacing.md, right: spacing.md },
-  heroTitle: { fontFamily: fonts.heading, fontSize: 20, color: '#fff', marginBottom: 4 },
+  heroTitle: { fontFamily: fonts.heading, fontSize: 20, color: colors.blancoFijo, marginBottom: 4 },
   placaChip: {
     backgroundColor: colors.bgSurface, borderRadius: radius.sm,
     borderWidth: 1, borderColor: 'rgba(72,151,90,0.3)',
     paddingHorizontal: 8, paddingVertical: 2,
   },
   placaText: { fontFamily: fonts.bold, fontSize: 10, color: colors.accent, letterSpacing: 1.5 },
-  duenoText: { fontFamily: fonts.body, fontSize: 12, color: 'rgba(255,255,255,0.7)' },
+  duenoText: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary },
 
   chatBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -444,7 +445,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgSurface, borderRadius: radius.pill,
     paddingHorizontal: spacing.sm, paddingVertical: 6, borderWidth: 1, borderColor: 'transparent',
   },
-  mecChipOn: { backgroundColor: 'rgba(72,151,90,0.15)', borderColor: colors.accent },
+  mecChipOn: { backgroundColor: colors.accentTenue, borderColor: colors.accent },
   mecChipText: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary },
   mecChipTextOn: { color: colors.accent, fontFamily: fonts.heading },
   precioRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -474,9 +475,9 @@ const s = StyleSheet.create({
   bottomActions: { gap: spacing.sm, marginTop: spacing.md, alignItems: 'center' },
   finalizarBtn: {
     width: '100%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#fff', borderRadius: radius.xl, minHeight: 54,
+    backgroundColor: colors.blancoFijo, borderRadius: radius.xl, minHeight: 54,
   },
-  finalizarBtnSecundario: { backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)' },
+  finalizarBtnSecundario: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colors.accentBorde },
   finalizarText: { fontFamily: fonts.bold, fontSize: 14, color: colors.bgPrimary, letterSpacing: 0.8 },
   pausarText: { fontFamily: fonts.bold, fontSize: 13, color: colors.textTertiary, letterSpacing: 0.8, paddingVertical: spacing.sm },
-});
+}));

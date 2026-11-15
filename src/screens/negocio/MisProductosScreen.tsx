@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert,
+  View, Text, FlatList, Pressable, ActivityIndicator, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import {
@@ -10,6 +10,7 @@ import {
 import { tokens } from '../../lib/tokens';
 import { formatCOP } from '../../lib/precio';
 import { fetchProductosDeNegocio, actualizarProducto, eliminarProducto, type Producto } from '../../lib/productos';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -137,7 +138,7 @@ export default function MisProductosScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -176,4 +177,4 @@ const s = StyleSheet.create({
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl, gap: spacing.sm },
   emptyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, letterSpacing: -0.3, textAlign: 'center', marginTop: spacing.sm },
   emptySubtitle: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
-});
+}));

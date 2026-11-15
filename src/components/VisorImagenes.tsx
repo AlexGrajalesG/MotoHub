@@ -1,13 +1,14 @@
 import { useState, useRef, useMemo, useCallback } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, Modal, FlatList, Animated, PanResponder, useWindowDimensions,
+  View, Text, Pressable, Modal, FlatList, Animated, PanResponder, useWindowDimensions,
   StatusBar, type GestureResponderEvent,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { IconX, IconTrash } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
+import { estilosTema } from '../lib/estilosTema';
 
-const { spacing, fonts, radius } = tokens;
+const { colors, spacing, fonts, radius } = tokens;
 
 const ZOOM_MAX = 4;
 const ZOOM_DOBLE_TOQUE = 2.5;
@@ -141,7 +142,7 @@ export default function VisorImagenes({ urls, inicio, onCerrar, onQuitar }: {
         )}
 
         <Pressable style={s.cerrar} onPress={onCerrar} hitSlop={12} accessibilityRole="button" accessibilityLabel="Cerrar imagen">
-          <IconX size={22} color="#fff" />
+          <IconX size={22} color={colors.blancoFijo} />
         </Pressable>
 
         {visible && urls.length > 1 && (
@@ -154,7 +155,7 @@ export default function VisorImagenes({ urls, inicio, onCerrar, onQuitar }: {
 
         {visible && onQuitar && (
           <Pressable style={s.quitar} onPress={() => onQuitar(urls[indice])} accessibilityRole="button" accessibilityLabel="Quitar imagen">
-            <IconTrash size={18} color="#fff" />
+            <IconTrash size={18} color={colors.blancoFijo} />
             <Text style={s.quitarTexto}>Quitar</Text>
           </Pressable>
         )}
@@ -172,7 +173,7 @@ export function useVisorImagenes(onQuitar?: (url: string) => void) {
   return { abrir, cerrar, visor };
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   fondo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.97)' },
   cerrar: {
     position: 'absolute', top: 52, right: spacing.xl, width: 44, height: 44, borderRadius: 22,
@@ -182,11 +183,11 @@ const s = StyleSheet.create({
     position: 'absolute', top: 60, alignSelf: 'center', paddingHorizontal: spacing.md, paddingVertical: 5,
     borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.16)',
   },
-  contadorTexto: { fontFamily: fonts.heading, fontSize: 13, color: '#fff' },
+  contadorTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.blancoFijo },
   ayuda: { position: 'absolute', bottom: 44, alignSelf: 'center', fontFamily: fonts.body, fontSize: 12, color: 'rgba(255,255,255,0.55)' },
   quitar: {
     position: 'absolute', bottom: 90, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 48,
     paddingHorizontal: spacing.xl, borderRadius: radius.pill, backgroundColor: 'rgba(224,85,85,0.92)',
   },
-  quitarTexto: { fontFamily: fonts.bold, fontSize: 15, color: '#fff' },
-});
+  quitarTexto: { fontFamily: fonts.bold, fontSize: 15, color: colors.blancoFijo },
+}));

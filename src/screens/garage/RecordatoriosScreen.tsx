@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   IconShieldCheck, IconTool, IconDroplet, IconDisc, IconLink, IconCircleDot, IconBattery,
@@ -8,6 +8,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -186,7 +187,7 @@ export default function RecordatoriosScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
 
@@ -235,4 +236,4 @@ const s = StyleSheet.create({
   },
   emptyTitle: { fontFamily: fonts.display, fontSize: 20, color: colors.textPrimary, marginBottom: spacing.sm, letterSpacing: -0.3 },
   emptySubtitle: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
-});
+}));

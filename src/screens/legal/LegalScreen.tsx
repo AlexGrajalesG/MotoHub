@@ -1,7 +1,8 @@
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { IconArrowLeft, IconInfoCircle } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { LEGAL, VERSION_LEGAL, type DocumentoLegal } from '../../lib/legal';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -42,7 +43,7 @@ export default function LegalScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   header: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
@@ -59,10 +60,10 @@ const s = StyleSheet.create({
   aviso: {
     flexDirection: 'row', gap: spacing.sm, alignItems: 'flex-start',
     backgroundColor: colors.accentDark, borderRadius: radius.md, padding: spacing.md,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
+    borderWidth: 1, borderColor: colors.accentBorde,
   },
   avisoTexto: { flex: 1, fontFamily: fonts.body, fontSize: 13, color: colors.textPrimary, lineHeight: 19 },
   subtitulo: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, marginTop: spacing.md },
   parrafo: { fontFamily: fonts.body, fontSize: 16, color: colors.textPrimary, lineHeight: 24 },
   version: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: spacing.md },
-});
+}));

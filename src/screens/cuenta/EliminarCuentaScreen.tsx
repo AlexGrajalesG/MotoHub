@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { IconTrash, IconCheck, IconAlertCircle, IconCircleCheck } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { useModo } from '../../context/ModoContext';
 import { tokens } from '../../lib/tokens';
 import { solicitarEliminacion, formatearFecha, DIAS_DE_GRACIA } from '../../lib/cuenta';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -117,7 +118,7 @@ export default function EliminarCuentaScreen({ navigation }: any) {
           accessibilityRole="button"
           accessibilityState={{ disabled: !entiendo || enviando }}
         >
-          {enviando ? <ActivityIndicator color="#fff" /> : <Text style={s.botonPeligroTexto}>Eliminar mi cuenta</Text>}
+          {enviando ? <ActivityIndicator color={colors.blancoFijo} /> : <Text style={s.botonPeligroTexto}>Eliminar mi cuenta</Text>}
         </Pressable>
         <Pressable
           style={({ pressed }) => [s.botonSecundario, pressed && { opacity: 0.8 }]}
@@ -131,7 +132,7 @@ export default function EliminarCuentaScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.lg },
 
@@ -175,7 +176,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.dangerAction, borderRadius: radius.md, minHeight: 54,
     justifyContent: 'center', alignItems: 'center',
   },
-  botonPeligroTexto: { fontFamily: fonts.bold, fontSize: 16, color: '#fff' },
+  botonPeligroTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.blancoFijo },
   botonSecundario: {
     minHeight: 50, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
     justifyContent: 'center', alignItems: 'center',
@@ -190,9 +191,9 @@ const s = StyleSheet.create({
   confirmacion: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl, gap: spacing.md },
   iconoOk: {
     width: 88, height: 88, borderRadius: radius.xl, backgroundColor: colors.accentDark,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm,
+    borderWidth: 1, borderColor: colors.accentBorde, justifyContent: 'center', alignItems: 'center', marginBottom: spacing.sm,
   },
   titulo: { fontFamily: fonts.display, fontSize: 26, color: colors.textPrimary, letterSpacing: -0.4, textAlign: 'center' },
   texto: { fontFamily: fonts.bold, fontSize: 17, color: colors.textPrimary, textAlign: 'center' },
   textoSuave: { fontFamily: fonts.body, fontSize: 15, color: colors.textSecondary, textAlign: 'center', lineHeight: 22 },
-});
+}));

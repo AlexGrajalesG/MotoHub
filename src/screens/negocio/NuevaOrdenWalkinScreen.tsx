@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, Pressable, TextInput,
+  View, Text, Pressable, TextInput,
   ActivityIndicator, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import {
@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { buscarClientePorNombreUsuario, crearOrdenWalkin, type ClienteWalkin } from '../../lib/walkin';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -183,7 +184,7 @@ export default function NuevaOrdenWalkinScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   header: {
@@ -252,7 +253,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: colors.bgSurface,
     paddingHorizontal: spacing.md, minHeight: 44,
   },
-  vehiculoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.1)' },
+  vehiculoChipActive: { borderColor: colors.accent, backgroundColor: colors.accentTenue },
   vehiculoChipText: { fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary },
   vehiculoChipTextActive: { color: colors.accent },
 
@@ -262,7 +263,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: colors.bgSurface,
     paddingHorizontal: spacing.md, minHeight: 44,
   },
-  estadoChipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.1)' },
+  estadoChipActive: { borderColor: colors.accent, backgroundColor: colors.accentTenue },
   estadoChipText: { fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary },
   estadoChipTextActive: { color: colors.accent },
 
@@ -272,4 +273,4 @@ const s = StyleSheet.create({
     minHeight: 52, marginTop: spacing.md,
   },
   crearBtnText: { fontFamily: fonts.bold, fontSize: 15, color: colors.onAccent },
-});
+}));

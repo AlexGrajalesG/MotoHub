@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, SectionList, ScrollView, Pressable, ActivityIndicator, Share,
+  View, Text, SectionList, ScrollView, Pressable, ActivityIndicator, Share,
 } from 'react-native';
 import {
   IconArrowLeft, IconPlus, IconShare2, IconChevronRight, IconCamera, IconBuildingStore, IconRosetteDiscountCheck, IconNotebook,
@@ -11,6 +11,7 @@ import { tokens } from '../../lib/tokens';
 import { formatHistorialCompartible } from '../../lib/historial';
 import { formatCOP } from '../../lib/precio';
 import { TIPOS_SERVICIO, metaTipo, tituloRegistro, fechaCorta, mesAnio, haceDias } from '../../lib/historialTipos';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, fonts, spacing, radius } = tokens;
 
@@ -227,7 +228,7 @@ function Tarjeta({ r, onPress }: { r: Registro; onPress: () => void }) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
 
@@ -290,4 +291,4 @@ const s = StyleSheet.create({
   },
   vacioTitulo: { fontFamily: fonts.display, fontSize: 21, color: colors.textPrimary, textAlign: 'center', letterSpacing: -0.3 },
   vacioTexto: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21, marginBottom: spacing.lg },
-});
+}));

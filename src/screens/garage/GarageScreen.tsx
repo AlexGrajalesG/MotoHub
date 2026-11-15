@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable,
+  View, Text, FlatList, Pressable,
   ActivityIndicator, AccessibilityInfo, RefreshControl,
   Dimensions,
 } from 'react-native';
@@ -23,6 +23,7 @@ import {
   calcularAlertas, calcularPrimerosPasos, type Alerta, type PasoInicial, type RecordatorioInicio,
 } from '../../lib/inicio';
 import { ResumenAtencion, PrimerosPasos, AccionesRapidas, SelectorVehiculo } from '../../components/InicioWidgets';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 const CARD_WIDTH = Dimensions.get('window').width - spacing.xl * 2;
@@ -380,7 +381,7 @@ export default function GarageScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
 
@@ -429,7 +430,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: colors.bgSurface,
   },
   filtroChipActivo: {
-    backgroundColor: 'rgba(72,151,90,0.1)', borderColor: colors.accent,
+    backgroundColor: colors.accentTenue, borderColor: colors.accent,
   },
   filtroChipText: { fontFamily: fonts.bold, fontSize: 13, color: colors.textSecondary },
   filtroChipTextActivo: { color: colors.accent },
@@ -463,12 +464,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: 'rgba(2,2,2,0.75)', borderRadius: radius.pill,
     paddingHorizontal: 12, paddingVertical: 4,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1, borderColor: colors.velo,
   },
   vencimientoDot: { width: 8, height: 8, borderRadius: 4 },
   vencimientoBadgeText: {
     fontFamily: fonts.bold, fontSize: 10, letterSpacing: 0.3,
-    color: '#fff', textTransform: 'uppercase',
+    color: colors.blancoFijo, textTransform: 'uppercase',
   },
 
   info: {
@@ -511,4 +512,4 @@ const styles = StyleSheet.create({
     minHeight: 52, justifyContent: 'center',
   },
   emptyBtnText: { fontFamily: fonts.bold, color: colors.onAccent, fontSize: 16 },
-});
+}));

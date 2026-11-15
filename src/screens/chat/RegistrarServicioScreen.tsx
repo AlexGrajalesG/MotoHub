@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  View, Text, ScrollView, Pressable, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { IconArrowLeft, IconFileText, IconX, IconCircleCheck, IconSend, IconUserCheck, IconNotebook } from '@tabler/icons-react-native';
@@ -13,6 +13,7 @@ import { Seccion, SelectorTipo, SelectorFecha, FotosServicio } from '../../compo
 import { metaTipo, fechaAISO, conMiles, soloDigitos } from '../../lib/historialTipos';
 import { validarKm } from '../../lib/cierreCitaTexto';
 import { finalizarCita } from '../../lib/cierreCita';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, fonts, spacing, radius } = tokens;
 
@@ -250,7 +251,7 @@ function Paso({ Icono, texto, activo }: { Icono: any; texto: string; activo?: bo
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: spacing.md },
   back: { width: 44, height: 44, borderRadius: radius.md, backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface, justifyContent: 'center', alignItems: 'center' },
@@ -271,7 +272,7 @@ const s = StyleSheet.create({
 
   facturaBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.md, backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface },
   facturaBtnTexto: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary },
-  factura: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.md, backgroundColor: colors.accentDark, borderRadius: radius.md, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)' },
+  factura: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 52, paddingHorizontal: spacing.md, backgroundColor: colors.accentDark, borderRadius: radius.md, borderWidth: 1, borderColor: colors.accentBorde },
   facturaTexto: { flex: 1, fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
 
   vista: { gap: spacing.md, padding: spacing.lg, backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface },
@@ -287,7 +288,7 @@ const s = StyleSheet.create({
   botonPriTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
 
   exito: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl, gap: spacing.md },
-  exitoIcono: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.accentDark, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center' },
+  exitoIcono: { width: 88, height: 88, borderRadius: 44, backgroundColor: colors.accentDark, borderWidth: 1, borderColor: colors.accentBorde, justifyContent: 'center', alignItems: 'center' },
   exitoTitulo: { fontFamily: fonts.display, fontSize: 24, color: colors.textPrimary, letterSpacing: -0.4 },
   exitoSub: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary, textAlign: 'center', lineHeight: 21, marginBottom: spacing.lg },
-});
+}));

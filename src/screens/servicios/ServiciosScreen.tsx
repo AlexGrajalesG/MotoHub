@@ -23,6 +23,7 @@ import {
 import EstrellasDisplay from '../../components/EstrellasDisplay';
 import TopBar from '../../components/TopBar';
 import PressableCard from '../../components/PressableCard';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -543,7 +544,7 @@ export default function ServiciosScreen({ navigation }: any) {
 
 // ─── Estilos ─────────────────────────────────────────────────────────────────
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   /* Búsqueda */
@@ -566,7 +567,7 @@ const s = StyleSheet.create({
     width: 52, height: 52, borderRadius: radius.xl, backgroundColor: colors.bgCard,
     borderWidth: 1, borderColor: colors.bgSurface, justifyContent: 'center', alignItems: 'center',
   },
-  filtrosBtnActivo: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.15)' },
+  filtrosBtnActivo: { borderColor: colors.accent, backgroundColor: colors.accentTenue },
   filtrosBadge: {
     position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9,
     backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4,
@@ -579,7 +580,7 @@ const s = StyleSheet.create({
     minHeight: 40, paddingHorizontal: spacing.lg, borderRadius: radius.pill,
     backgroundColor: colors.bgCard, borderWidth: 1, borderColor: colors.bgSurface,
   },
-  chipActivo: { backgroundColor: 'rgba(72,151,90,0.15)', borderColor: colors.accent },
+  chipActivo: { backgroundColor: colors.accentTenue, borderColor: colors.accent },
   chipTexto: { fontFamily: fonts.heading, fontSize: 14, color: colors.textSecondary },
   chipTextoActivo: { color: colors.accent },
 
@@ -627,7 +628,7 @@ const s = StyleSheet.create({
   },
   insigniaIzq: { left: spacing.md },
   insigniaDer: { right: spacing.md },
-  insigniaTexto: { fontFamily: fonts.bold, fontSize: 12, color: '#fff' },
+  insigniaTexto: { fontFamily: fonts.bold, fontSize: 12, color: colors.blancoFijo },
   textoAbierto: { color: colors.success },
   punto: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.textTertiary },
   puntoAbierto: { backgroundColor: colors.success },
@@ -668,7 +669,7 @@ const s = StyleSheet.create({
   vacioBotonTexto: { fontFamily: fonts.bold, fontSize: 14, color: colors.accent },
 
   /* Hoja de filtros */
-  fondoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  fondoModal: { flex: 1, backgroundColor: colors.sombraFuerte, justifyContent: 'flex-end' },
   hoja: {
     backgroundColor: colors.bgCard, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl,
     borderWidth: 1, borderColor: colors.bgSurface, padding: spacing.xl, paddingBottom: spacing.xxl,
@@ -683,4 +684,4 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   hojaCerrarTexto: { fontFamily: fonts.bold, fontSize: 15, color: colors.onAccent },
-});
+}));

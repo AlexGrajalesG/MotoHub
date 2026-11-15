@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, TextInput, Pressable, ScrollView, StyleSheet, ActivityIndicator,
+  View, Text, TextInput, Pressable, ScrollView, ActivityIndicator,
   Alert, KeyboardAvoidingView, Platform, Image as RNImage,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -16,6 +16,7 @@ import {
 } from '../../lib/comunidad';
 import VideoPost from '../../components/comunidad/VideoPost';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -111,7 +112,7 @@ export default function CrearPostScreen({ navigation }: any) {
               <View key={url} style={s.fotoWrap}>
                 <RNImage source={{ uri: url }} style={s.foto} />
                 <Pressable style={s.fotoQuitar} onPress={() => quitarFoto(url)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Quitar foto">
-                  <IconX size={14} color="#fff" />
+                  <IconX size={14} color={colors.blancoFijo} />
                 </Pressable>
               </View>
             ))}
@@ -210,7 +211,7 @@ export default function CrearPostScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.lg },
 
@@ -266,4 +267,4 @@ const s = StyleSheet.create({
   },
   boton: { backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54, justifyContent: 'center', alignItems: 'center' },
   botonTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
-});
+}));

@@ -1,5 +1,6 @@
-import { Pressable, StyleSheet, PressableProps, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import { tokens } from '../lib/tokens';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, radius } = tokens;
 
@@ -32,11 +33,11 @@ export default function IconButton({ size = 44, accessibilityLabel, disabled, ch
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   btn: {
     borderRadius: radius.md,
     backgroundColor: colors.bgSurface,
     justifyContent: 'center', alignItems: 'center',
   },
   disabled: { opacity: 0.4 },
-});
+}));

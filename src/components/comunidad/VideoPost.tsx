@@ -7,6 +7,7 @@ import { tokens } from '../../lib/tokens';
 import { openUrl } from '../../lib/openUrl';
 import { resolverVideo, type VideoResuelto } from '../../lib/videoEmbed';
 import type { VideoPlataforma } from '../../lib/comunidadTexto';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -53,8 +54,8 @@ export default function VideoPost({ url, plataforma }: { url: string; plataforma
           <View style={s.velo} />
           <View style={s.centro}>
             {cargando
-              ? <ActivityIndicator color="#fff" />
-              : <View style={s.play}><IconPlayerPlay size={28} color="#fff" fill="#fff" /></View>}
+              ? <ActivityIndicator color={colors.blancoFijo} />
+              : <View style={s.play}><IconPlayerPlay size={28} color={colors.blancoFijo} fill={colors.blancoFijo} /></View>}
           </View>
         </View>
       </Pressable>
@@ -64,7 +65,7 @@ export default function VideoPost({ url, plataforma }: { url: string; plataforma
 
 const RELLENO = { position: 'absolute' as const, top: 0, left: 0, right: 0, bottom: 0 };
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   wrap: { marginTop: spacing.md },
   etiqueta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.sm },
   etiquetaTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
@@ -75,4 +76,4 @@ const s = StyleSheet.create({
     width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(0,0,0,0.55)',
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)', justifyContent: 'center', alignItems: 'center', paddingLeft: 3,
   },
-});
+}));

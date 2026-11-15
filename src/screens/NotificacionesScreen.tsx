@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator,
+  View, Text, FlatList, Pressable, ActivityIndicator,
   Animated, Easing, AccessibilityInfo,
 } from 'react-native';
 import {
@@ -14,6 +14,7 @@ import { tokens } from '../lib/tokens';
 import {
   fetchNotificaciones, marcarLeida, marcarTodasLeidas, type Notificacion,
 } from '../lib/notificacionesApp';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -192,7 +193,7 @@ export default function NotificacionesScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -223,14 +224,14 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: colors.bgSurface,
     padding: spacing.md,
   },
-  cardUnread: { borderColor: 'rgba(72,151,90,0.35)' },
+  cardUnread: { borderColor: colors.accentBorde },
 
   iconWrap: {
     width: 38, height: 38, borderRadius: radius.md,
     backgroundColor: colors.bgSurface,
     justifyContent: 'center', alignItems: 'center',
   },
-  iconWrapUnread: { backgroundColor: 'rgba(72,151,90,0.15)' },
+  iconWrapUnread: { backgroundColor: colors.accentTenue },
 
   cardBody: { flex: 1, gap: 3 },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
@@ -250,4 +251,4 @@ const s = StyleSheet.create({
   emptySubtitle: {
     fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, textAlign: 'center',
   },
-});
+}));

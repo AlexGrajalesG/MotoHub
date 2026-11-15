@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
+  View, Text, ScrollView, Pressable,
   TextInput, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform, TouchableOpacity,
 } from 'react-native';
@@ -11,6 +11,7 @@ import {
 import { supabase } from '../../lib/supabase';
 import { elegirImagen } from '../../lib/imagenes';
 import { tokens } from '../../lib/tokens';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -344,7 +345,7 @@ export default function EditarNegocioScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   header: {
@@ -374,7 +375,7 @@ const s = StyleSheet.create({
   foto:        { width: 96, height: 96, borderRadius: radius.lg },
   fotoPlaceholder: {
     width: 96, height: 96, borderRadius: radius.lg,
-    backgroundColor: 'rgba(72,151,90,0.12)',
+    backgroundColor: colors.accentTenue,
     justifyContent: 'center', alignItems: 'center',
   },
   cameraBadge: {
@@ -435,4 +436,4 @@ const s = StyleSheet.create({
   },
   horarioDash: { color: colors.textTertiary },
   horarioCerrado: { fontFamily: fonts.body, fontSize: 13, color: colors.textTertiary },
-});
+}));

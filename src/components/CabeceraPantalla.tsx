@@ -1,6 +1,7 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { IconArrowLeft } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -22,7 +23,7 @@ export default function CabeceraPantalla({ titulo, onBack }: { titulo: string; o
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   header: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md,
     paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: spacing.md,
@@ -33,4 +34,4 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   titulo: { flex: 1, fontFamily: fonts.display, fontSize: 22, color: colors.textPrimary, letterSpacing: -0.4 },
-});
+}));

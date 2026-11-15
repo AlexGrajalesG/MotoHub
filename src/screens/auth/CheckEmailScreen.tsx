@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { IconMailCheck, IconAlertCircle } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
 import { mensajeErrorAuth } from '../../lib/errores';
 import FondoAuth from '../../components/FondoAuth';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -102,13 +103,13 @@ export default function CheckEmailScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1 },
   centro: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xl },
 
   icono: {
     width: 88, height: 88, borderRadius: radius.xl, backgroundColor: colors.accentDark,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
+    borderWidth: 1, borderColor: colors.accentBorde,
     justifyContent: 'center', alignItems: 'center', marginBottom: spacing.xl,
   },
   titulo: { fontFamily: fonts.display, fontSize: 28, color: colors.textPrimary, letterSpacing: -0.5 },
@@ -134,7 +135,7 @@ const s = StyleSheet.create({
 
   footer: {
     paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.sm,
-    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)', backgroundColor: 'rgba(2,2,2,0.55)',
+    borderTopWidth: 1, borderTopColor: colors.veloLeve, backgroundColor: colors.sombra,
   },
   boton: {
     backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54,
@@ -148,4 +149,4 @@ const s = StyleSheet.create({
   secundarioTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.textPrimary },
   enlaceWrap: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   enlace: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary },
-});
+}));

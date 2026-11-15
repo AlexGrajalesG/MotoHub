@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, ActivityIndicator, KeyboardAvoidingView,
+  View, Text, Pressable, ActivityIndicator, KeyboardAvoidingView,
   Platform, ScrollView, type TextInput,
 } from 'react-native';
 import { IconMail, IconLock, IconAlertCircle } from '@tabler/icons-react-native';
@@ -10,6 +10,7 @@ import { mensajeErrorAuth, type ErrorAuth } from '../../lib/errores';
 import RodixLogo from '../../components/RodixLogo';
 import FondoAuth from '../../components/FondoAuth';
 import { Campo, Entrada } from '../../components/FormField';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -157,7 +158,7 @@ export default function LoginScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1 },
   content: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: spacing.xl, paddingTop: 60, paddingBottom: spacing.xl },
 
@@ -178,7 +179,7 @@ const s = StyleSheet.create({
 
   footer: {
     paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.md,
-    backgroundColor: 'rgba(2,2,2,0.55)', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: colors.sombra, borderTopWidth: 1, borderTopColor: colors.veloLeve,
   },
   olvide: { alignSelf: 'flex-end', minHeight: 44, justifyContent: 'center' },
   olvideTexto: { fontFamily: fonts.bold, fontSize: 14, color: colors.accent },
@@ -191,4 +192,4 @@ const s = StyleSheet.create({
   enlaceWrap: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   enlace: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary },
   enlaceFuerte: { fontFamily: fonts.bold, color: colors.accent },
-});
+}));

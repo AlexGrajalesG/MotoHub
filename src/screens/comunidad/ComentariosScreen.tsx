@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, TextInput,
+  View, Text, FlatList, Pressable, TextInput,
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -9,6 +9,7 @@ import { IconArrowLeft, IconSend, IconTrash } from '@tabler/icons-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { fetchComentarios, crearComentario, eliminarComentario, type Comentario } from '../../lib/comunidad';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -132,7 +133,7 @@ export default function ComentariosScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -177,4 +178,4 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center',
   },
   sendBtnDisabled: { opacity: 0.4 },
-});
+}));

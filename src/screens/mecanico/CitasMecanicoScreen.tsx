@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert,
+  View, Text, FlatList, Pressable, ActivityIndicator, Alert,
 } from 'react-native';
 import {
   IconCalendar, IconClock, IconBike, IconMessageCircle, IconCheck, IconUserPlus, IconStar,
@@ -14,6 +14,7 @@ import { fetchCitasNoLeidas } from '../../lib/lecturas';
 import { tokens } from '../../lib/tokens';
 import { useRealtimeRefresh } from '../../lib/useRealtimeRefresh';
 import { finalizarOPedirKm } from '../../lib/cierreCita';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -233,7 +234,7 @@ export default function CitasMecanicoScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -284,11 +285,11 @@ const s = StyleSheet.create({
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     borderRadius: radius.md, minHeight: 42, borderWidth: 1,
   },
-  actionBtnOutline: { backgroundColor: 'transparent', borderColor: 'rgba(72,151,90,0.35)' },
+  actionBtnOutline: { backgroundColor: 'transparent', borderColor: colors.accentBorde },
   actionTextOutline: { fontFamily: fonts.bold, fontSize: 12, color: colors.accent },
   actionBtnPrimary: { backgroundColor: colors.accent, borderColor: colors.accent },
   actionTextPrimary: { fontFamily: fonts.bold, fontSize: 12, color: colors.onAccent },
 
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing.sm },
   emptyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, marginTop: spacing.sm },
-});
+}));

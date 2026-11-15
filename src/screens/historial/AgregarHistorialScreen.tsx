@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Alert,
+  View, Text, ScrollView, Pressable, ActivityIndicator, Alert,
   KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { IconArrowLeft, IconBellRinging, IconLock } from '@tabler/icons-react-native';
@@ -13,6 +13,7 @@ import { Seccion, SelectorTipo, SelectorFecha, FotosServicio } from '../../compo
 import {
   metaTipo, fechaAISO, fechaLarga, isoAFecha, conMiles, soloDigitos,
 } from '../../lib/historialTipos';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, fonts, spacing, radius } = tokens;
 
@@ -269,7 +270,7 @@ export default function AgregarHistorialScreen({ route, navigation }: any) {
                 onValueChange={setRecordar}
                 disabled={!puedeRecordar}
                 trackColor={{ false: colors.bgSurface, true: colors.accent }}
-                thumbColor="#fff"
+                thumbColor={colors.blancoFijo}
                 accessibilityLabel="Programar recordatorio"
               />
             </View>
@@ -291,7 +292,7 @@ export default function AgregarHistorialScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   header: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingTop: 56, paddingHorizontal: spacing.xl, paddingBottom: spacing.md },
   back: {
@@ -319,7 +320,7 @@ const s = StyleSheet.create({
 
   recordatorio: {
     flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md,
-    backgroundColor: colors.accentDark, borderRadius: radius.lg, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
+    backgroundColor: colors.accentDark, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.accentBorde,
   },
   recordatorioTitulo: { fontFamily: fonts.heading, fontSize: 14, color: colors.textPrimary },
   recordatorioTexto: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary, marginTop: 2 },
@@ -327,4 +328,4 @@ const s = StyleSheet.create({
   footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, borderTopWidth: 1, borderTopColor: colors.bgSurface, backgroundColor: colors.bgPrimary },
   guardar: { minHeight: 54, borderRadius: radius.md, backgroundColor: colors.accent, justifyContent: 'center', alignItems: 'center' },
   guardarTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
-});
+}));

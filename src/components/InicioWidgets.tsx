@@ -1,10 +1,11 @@
-import { View, Text, Pressable, Modal, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
 import {
   IconAlertTriangle, IconClock, IconChevronRight, IconCircleCheck, IconCircle,
   IconGauge, IconBellPlus, IconTool, IconX, IconCheck,
 } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
 import type { Alerta, PasoInicial } from '../lib/inicio';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -179,12 +180,12 @@ export function SelectorVehiculo({ visible, titulo, vehiculos, onElegir, onCerra
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   card: {
     backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface,
     padding: spacing.lg,
   },
-  cardOk: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.accentDark, borderColor: 'rgba(72,151,90,0.35)' },
+  cardOk: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, backgroundColor: colors.accentDark, borderColor: colors.accentBorde },
   cardCritica: { borderColor: colors.dangerActionBorder },
   cardAviso: { borderColor: 'rgba(163,209,174,0.35)' },
 
@@ -221,12 +222,12 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   accionIcono: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(72,151,90,0.15)',
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentTenue,
     justifyContent: 'center', alignItems: 'center',
   },
   accionTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.textPrimary, textAlign: 'center' },
 
-  fondoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', paddingHorizontal: spacing.xl },
+  fondoModal: { flex: 1, backgroundColor: colors.sombraFuerte, justifyContent: 'center', paddingHorizontal: spacing.xl },
   hoja: { backgroundColor: colors.bgCard, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.bgSurface, padding: spacing.lg },
   hojaCabecera: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
   hojaTitulo: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary },
@@ -237,4 +238,4 @@ const s = StyleSheet.create({
   opcionNombre: { flex: 1, fontFamily: fonts.bold, fontSize: 15, color: colors.textPrimary },
   placa: { backgroundColor: colors.bgSurface, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 4 },
   placaTexto: { fontFamily: fonts.bold, fontSize: 12, color: colors.textPrimary, letterSpacing: 1 },
-});
+}));

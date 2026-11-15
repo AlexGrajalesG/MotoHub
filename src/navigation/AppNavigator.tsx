@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import {
@@ -25,6 +25,10 @@ import SeguridadScreen from '../screens/cuenta/SeguridadScreen';
 import EliminarCuentaScreen from '../screens/cuenta/EliminarCuentaScreen';
 import PrivacidadScreen from '../screens/cuenta/PrivacidadScreen';
 import AyudaScreen from '../screens/cuenta/AyudaScreen';
+import AparienciaScreen from '../screens/cuenta/AparienciaScreen';
+import TutorialModal from '../components/TutorialModal';
+import { useTutorial } from '../lib/tutorial';
+import { modoEfectivo } from '../lib/modoEfectivo';
 import CuentaGate from '../components/CuentaGate';
 import CheckEmailScreen       from '../screens/auth/CheckEmailScreen';
 import RecuperarClaveScreen   from '../screens/auth/RecuperarClaveScreen';
@@ -77,6 +81,7 @@ import ComunidadScreen    from '../screens/comunidad/ComunidadScreen';
 import CrearPostScreen    from '../screens/comunidad/CrearPostScreen';
 import ModeracionScreen   from '../screens/comunidad/ModeracionScreen';
 import ComentariosScreen  from '../screens/comunidad/ComentariosScreen';
+import { estilosTema } from '../lib/estilosTema';
 
 const Tab          = createBottomTabNavigator();
 const GarageNav    = createNativeStackNavigator();
@@ -222,20 +227,21 @@ function PerfilStack() {
       <PerfilNav.Screen name="EliminarCuenta"  component={EliminarCuentaScreen} />
       <PerfilNav.Screen name="Privacidad"      component={PrivacidadScreen} />
       <PerfilNav.Screen name="Ayuda"           component={AyudaScreen} />
+      <PerfilNav.Screen name="Apariencia"      component={AparienciaScreen} />
       <PerfilNav.Screen name="Legal"           component={LegalScreen} />
     </PerfilNav.Navigator>
   );
 }
 
-const tabBarOptions = {
+const tabBarOptions = () => ({
   headerShown: false,
   tabBarStyle: {
-    backgroundColor: '#0f1110',
-    borderTopColor: '#3e4140',
+    backgroundColor: colors.bgCard,
+    borderTopColor: colors.bgSurface,
   },
   tabBarActiveTintColor:   colors.accent,
   tabBarInactiveTintColor: colors.iconInactive,
-} as const;
+}) as const;
 
 function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
   const { session } = useAuth();
@@ -317,7 +323,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
       options={{
         tabBarIcon: ({ color, size }) => <IconMessageCircle size={size} color={color} />,
         tabBarBadge: mensajesBadge,
-        tabBarBadgeStyle: { backgroundColor: '#48975a', fontSize: 10 },
+        tabBarBadgeStyle: { backgroundColor: colors.accent, fontSize: 10 },
       }}
     />
   );
@@ -340,7 +346,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
             tabBarLabel: 'Citas',
             tabBarIcon: ({ color, size }) => <IconClipboardText size={size} color={color} />,
             tabBarBadge: citasBadge,
-            tabBarBadgeStyle: { backgroundColor: '#48975a', fontSize: 10 },
+            tabBarBadgeStyle: { backgroundColor: colors.accent, fontSize: 10 },
           }}
         />
         {pestanaMensajes}
@@ -390,7 +396,7 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
         options={{
           tabBarIcon: ({ color, size }) => <IconBike size={size} color={color} />,
           tabBarBadge: (recordBadge ?? 0) + docBadge > 0 ? (recordBadge ?? 0) + docBadge : undefined,
-          tabBarBadgeStyle: { backgroundColor: docBadge > 0 ? colors.danger : '#48975a', fontSize: 10 },
+          tabBarBadgeStyle: { backgroundColor: docBadge > 0 ? colors.danger : colors.accent, fontSize: 10 },
         }}
       />
       <Tab.Screen
@@ -413,12 +419,18 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
   );
 }
 
+/** Tutorial que se abre solo la primera vez que el usuario entra a cada modo. */
+function TutorialPrimerIngreso() {
+  const { session } = useAuth();
+  const { tieneNegocio, modoTaller, esMecanico, modoMecanico, esNegocioPuro } = useModo();
+  const modo = modoEfectivo({ tieneNegocio, modoTaller, esMecanico, modoMecanico, esNegocioPuro });
+  const { visible, cerrar } = useTutorial(session?.user.id, modo);
+  return <TutorialModal visible={visible} modo={modo} onClose={cerrar} />;
+}
+
 function ModeAwareTabs() {
   const { tieneNegocio, modoTaller, esMecanico, modoMecanico, esNegocioPuro } = useModo();
-  // Cuenta de negocio independiente: siempre Taller, no hay "modo personal" al que volver.
-  const efectivo: 'cliente' | 'taller' | 'mecanico' = esNegocioPuro
-    ? 'taller'
-    : tieneNegocio && modoTaller ? 'taller' : esMecanico && modoMecanico ? 'mecanico' : 'cliente';
+  const efectivo = modoEfectivo({ tieneNegocio, modoTaller, esMecanico, modoMecanico, esNegocioPuro });
 
   const [displayModo, setDisplayModo] = useState(efectivo);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -492,6 +504,23 @@ function AuthStack() {
   );
 }
 
+/** Colores del contenedor de navegación según el tema vigente (evita destellos blancos entre pantallas). */
+function temaNavegacion() {
+  return {
+    ...DefaultTheme,
+    dark: colors.barraEstado === 'light',
+    colors: {
+      ...DefaultTheme.colors,
+      primary: colors.accent,
+      background: colors.bgPrimary,
+      card: colors.bgCard,
+      text: colors.textPrimary,
+      border: colors.bgSurface,
+      notification: colors.accent,
+    },
+  };
+}
+
 export default function AppNavigator() {
   const { session, loading } = useAuth();
   const { loadingModo } = useModo();
@@ -505,13 +534,13 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer>
-      {session ? <CuentaGate><ModeAwareTabs /></CuentaGate> : <AuthStack />}
+    <NavigationContainer theme={temaNavegacion()}>
+      {session ? <CuentaGate><ModeAwareTabs /><TutorialPrimerIngreso /></CuentaGate> : <AuthStack />}
     </NavigationContainer>
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   overlay: { backgroundColor: colors.bgPrimary },
   badge: {
     position: 'absolute',
@@ -519,9 +548,9 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: colors.bgCard,
     borderRadius: radius.pill,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
+    borderWidth: 1, borderColor: colors.accentBorde,
     paddingHorizontal: 10, paddingVertical: 5,
     zIndex: 50,
   },
   badgeText: { fontFamily: fonts.heading, fontSize: 11, color: colors.accent, letterSpacing: 0.2 },
-});
+}));

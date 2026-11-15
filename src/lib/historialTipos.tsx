@@ -2,6 +2,7 @@ import {
   IconDroplet, IconCircleDot, IconLink, IconWheel, IconBattery, IconClipboardCheck,
   IconShieldCheck, IconSparkles, IconTool,
 } from '@tabler/icons-react-native';
+import { tokens } from './tokens';
 
 export type TipoServicio = {
   key: string;
@@ -15,7 +16,7 @@ export type TipoServicio = {
 };
 
 export const TIPOS_SERVICIO: TipoServicio[] = [
-  { key: 'aceite', label: 'Cambio de aceite', corto: 'Aceite', color: '#48975a', Icon: IconDroplet, intervalo: { tipo: 'km', valor: 2500, etiqueta: 'cambio de aceite' } },
+  { key: 'aceite', label: 'Cambio de aceite', corto: 'Aceite', get color() { return tokens.colors.accent; }, Icon: IconDroplet, intervalo: { tipo: 'km', valor: 2500, etiqueta: 'cambio de aceite' } },
   { key: 'frenos', label: 'Frenos', corto: 'Frenos', color: '#e05555', Icon: IconCircleDot, intervalo: { tipo: 'km', valor: 10000, etiqueta: 'revisión de frenos' } },
   { key: 'cadena', label: 'Cadena', corto: 'Cadena', color: '#d48b24', Icon: IconLink, intervalo: { tipo: 'km', valor: 2000, etiqueta: 'servicio de cadena' } },
   { key: 'llantas', label: 'Llantas', corto: 'Llantas', color: '#5b8dd9', Icon: IconWheel, intervalo: { tipo: 'km', valor: 20000, etiqueta: 'cambio de llantas' } },

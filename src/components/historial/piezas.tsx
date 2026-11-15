@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Modal, Image, Platform } from 'react-native';
+import { View, Text, Pressable, Modal, Image, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { IconCalendar, IconCamera, IconX, IconPlus } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { TIPOS_SERVICIO, fechaLarga, fechaAISO, isoAFecha } from '../../lib/historialTipos';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -106,7 +107,7 @@ export function FotosServicio({ uris, max, onAgregar, onQuitar }: {
         <View key={uri + i} style={s.fotoSlot}>
           <Image source={{ uri }} style={s.foto} resizeMode="cover" />
           <Pressable style={s.fotoQuitar} onPress={() => onQuitar(i)} hitSlop={10} accessibilityRole="button" accessibilityLabel="Quitar foto">
-            <IconX size={14} color="#fff" />
+            <IconX size={14} color={colors.blancoFijo} />
           </Pressable>
         </View>
       ))}
@@ -120,7 +121,7 @@ export function FotosServicio({ uris, max, onAgregar, onQuitar }: {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   seccion: { gap: spacing.md },
   seccionCabecera: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   numero: { width: 26, height: 26, borderRadius: 13, backgroundColor: colors.accentDark, borderWidth: 1, borderColor: 'rgba(72,151,90,0.4)', justifyContent: 'center', alignItems: 'center' },
@@ -141,7 +142,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
   },
   fechaTexto: { fontFamily: fonts.body, fontSize: 16, color: colors.textPrimary },
-  velo: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', paddingHorizontal: spacing.xl },
+  velo: { flex: 1, backgroundColor: colors.sombraFuerte, justifyContent: 'center', paddingHorizontal: spacing.xl },
   hoja: { backgroundColor: colors.bgCard, borderRadius: radius.xl, borderWidth: 1, borderColor: colors.bgSurface, padding: spacing.lg, gap: spacing.md },
   hojaTitulo: { fontFamily: fonts.bold, fontSize: 17, color: colors.textPrimary, textAlign: 'center' },
   hojaBotones: { flexDirection: 'row', gap: spacing.md },
@@ -162,4 +163,4 @@ const s = StyleSheet.create({
     borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center', gap: 4,
   },
   fotoAgregarTexto: { fontFamily: fonts.body, fontSize: 11, color: colors.textTertiary },
-});
+}));

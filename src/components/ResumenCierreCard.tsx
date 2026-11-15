@@ -1,10 +1,11 @@
-import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Image, Pressable } from 'react-native';
 import { IconCircleCheck, IconCircleX, IconFileText } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
 import { formatCOP } from '../lib/precio';
 import { openUrl } from '../lib/openUrl';
 import { metaTipo, fechaLarga } from '../lib/historialTipos';
 import { separarAnexos, tituloCierre, type ResumenCierre } from '../lib/cierreCitaTexto';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -94,7 +95,7 @@ export default function ResumenCierreCard({ resumen, onAbrirFotos, incrustado = 
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   card: {
     backgroundColor: colors.bgCard, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.bgSurface,
     padding: spacing.lg, gap: spacing.md, marginHorizontal: spacing.xl, marginVertical: spacing.md,
@@ -117,4 +118,4 @@ const s = StyleSheet.create({
   doc: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: 4 },
   docTexto: { fontFamily: fonts.body, fontSize: 14, color: colors.textPrimary },
   pie: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary },
-});
+}));

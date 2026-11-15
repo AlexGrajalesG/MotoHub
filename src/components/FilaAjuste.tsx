@@ -1,6 +1,7 @@
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { IconChevronRight } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -49,7 +50,7 @@ export function GrupoAjustes({ titulo, children }: { titulo?: string; children: 
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   grupo: { gap: spacing.sm },
   grupoTitulo: {
     fontFamily: fonts.heading, fontSize: 12, color: colors.textSecondary,
@@ -61,11 +62,11 @@ const s = StyleSheet.create({
   divisor: { borderTopWidth: 1, borderTopColor: colors.bgSurface },
   fila: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 64, paddingHorizontal: spacing.lg, paddingVertical: spacing.md },
   icono: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(72,151,90,0.15)',
+    width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentTenue,
     justifyContent: 'center', alignItems: 'center',
   },
   iconoPeligro: { backgroundColor: colors.dangerActionBg },
   titulo: { fontFamily: fonts.heading, fontSize: 15, color: colors.textPrimary },
   tituloPeligro: { color: colors.dangerAction },
   detalle: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: 2, lineHeight: 18 },
-});
+}));

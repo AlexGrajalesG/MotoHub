@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, FlatList, type LayoutChangeEvent } from 'react-native';
+import { View, Text, Pressable, FlatList, type LayoutChangeEvent } from 'react-native';
 import { Image } from 'expo-image';
 import { tokens } from '../../lib/tokens';
 import { useVisorImagenes } from '../VisorImagenes';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -46,11 +47,11 @@ export default function FotosPost({ urls }: { urls: string[] }) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   caja: { marginTop: spacing.md, borderRadius: radius.lg, overflow: 'hidden', backgroundColor: colors.bgSurface },
-  contador: { position: 'absolute', top: spacing.md, right: spacing.md, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: 'rgba(0,0,0,0.6)' },
-  contadorTexto: { fontFamily: fonts.bold, fontSize: 12, color: '#fff' },
+  contador: { position: 'absolute', top: spacing.md, right: spacing.md, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: colors.sombra },
+  contadorTexto: { fontFamily: fonts.bold, fontSize: 12, color: colors.blancoFijo },
   puntos: { position: 'absolute', bottom: spacing.sm, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   punto: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.45)' },
-  puntoOn: { backgroundColor: '#fff' },
-});
+  puntoOn: { backgroundColor: colors.blancoFijo },
+}));

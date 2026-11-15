@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator, Share, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator, Share, KeyboardAvoidingView, Platform } from 'react-native';
 import { IconShieldCheck, IconEngine, IconId, IconFileCertificate, IconShare, IconCircleCheck, IconAlertCircle } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { fetchFichaSeguridad, guardarFichaSeguridad, formatFichaParaDenuncia, type FichaSeguridad } from '../../lib/seguridadVehiculo';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
 import { Campo, Entrada } from '../../components/FormField';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -146,14 +147,14 @@ export default function FichaSeguridadScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
   content: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.xl },
 
   intro: {
     flexDirection: 'row', gap: spacing.md, alignItems: 'flex-start',
-    backgroundColor: colors.accentDark, borderRadius: radius.lg, borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)',
+    backgroundColor: colors.accentDark, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.accentBorde,
     padding: spacing.lg,
   },
   introIcono: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(2,2,2,0.35)', justifyContent: 'center', alignItems: 'center' },
@@ -177,4 +178,4 @@ const s = StyleSheet.create({
   },
   boton: { backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54, justifyContent: 'center', alignItems: 'center' },
   botonTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
-});
+}));

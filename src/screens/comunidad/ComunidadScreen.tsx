@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, Modal, TextInput,
+  View, Text, FlatList, Pressable, Modal, TextInput,
   Alert, RefreshControl, AccessibilityInfo, Animated,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -22,6 +22,7 @@ import TopBar from '../../components/TopBar';
 import PressableCard from '../../components/PressableCard';
 import FotosPost from '../../components/comunidad/FotosPost';
 import VideoPost from '../../components/comunidad/VideoPost';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -384,7 +385,7 @@ export default function ComunidadScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   busquedaRow: {
@@ -404,7 +405,7 @@ const s = StyleSheet.create({
   hashtagTexto: { fontFamily: fonts.heading, fontSize: 12, color: colors.accent },
   moderarBtn: {
     width: 40, height: 40, borderRadius: 20, backgroundColor: colors.accentDark,
-    borderWidth: 1, borderColor: 'rgba(72,151,90,0.35)', justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: colors.accentBorde, justifyContent: 'center', alignItems: 'center',
   },
 
   list: { paddingHorizontal: spacing.xl, paddingBottom: 100, gap: spacing.md },
@@ -447,8 +448,8 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
   },
 
-  fondoModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
+  fondoModal: { flex: 1, backgroundColor: colors.sombraFuerte, justifyContent: 'flex-end' },
   hoja: { backgroundColor: colors.bgCard, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, borderWidth: 1, borderColor: colors.bgSurface, paddingVertical: spacing.md, paddingBottom: spacing.xxl },
   opcion: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 56, paddingHorizontal: spacing.xl },
   opcionTexto: { fontFamily: fonts.heading, fontSize: 15, color: colors.textPrimary },
-});
+}));

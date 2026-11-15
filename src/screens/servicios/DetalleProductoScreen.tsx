@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { IconArrowLeft, IconPackage, IconMessageCircle, IconBuildingStore } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
@@ -7,6 +7,7 @@ import { useVisorImagenes } from '../../components/VisorImagenes';
 import { openTel } from '../../lib/openUrl';
 import { formatCOP } from '../../lib/precio';
 import type { Producto } from '../../lib/productos';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -86,7 +87,7 @@ export default function DetalleProductoScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   header: {
@@ -124,4 +125,4 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, borderRadius: radius.lg, minHeight: 50, marginTop: spacing.xl,
   },
   contactarText: { fontFamily: fonts.bold, fontSize: 15, color: colors.onAccent },
-});
+}));

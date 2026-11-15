@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { IconCheck } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { programarNotificacionFecha } from '../../lib/notificaciones';
@@ -7,6 +7,7 @@ import { tokens } from '../../lib/tokens';
 import { TIPOS_INFO } from './RecordatoriosScreen';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
 import { Campo, Entrada } from '../../components/FormField';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -184,7 +185,7 @@ export default function CrearRecordatorioScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content: { paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.lg },
   subtitulo: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, marginTop: -spacing.sm },
@@ -222,4 +223,4 @@ const s = StyleSheet.create({
     backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54,
   },
   botonTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
-});
+}));

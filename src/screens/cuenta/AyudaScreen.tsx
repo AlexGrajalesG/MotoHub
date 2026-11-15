@@ -1,11 +1,15 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Linking } from 'react-native';
-import { IconChevronDown, IconChevronUp, IconBrandWhatsapp, IconMail, IconFileText, IconShieldCheck } from '@tabler/icons-react-native';
+import { View, Text, Pressable, ScrollView, Linking } from 'react-native';
+import { IconChevronDown, IconChevronUp, IconBrandWhatsapp, IconMail, IconFileText, IconShieldCheck, IconPlayerPlay } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { SOPORTE } from '../../lib/soporte';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
+import TutorialModal from '../../components/TutorialModal';
+import { useModo } from '../../context/ModoContext';
+import { modoEfectivo } from '../../lib/modoEfectivo';
 import { FilaAjuste, GrupoAjustes } from '../../components/FilaAjuste';
 import app from '../../../app.json';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -38,6 +42,9 @@ const PREGUNTAS = [
 
 export default function AyudaScreen({ navigation }: any) {
   const [abierta, setAbierta] = useState<number | null>(null);
+  const [verTutorial, setVerTutorial] = useState(false);
+  const { tieneNegocio, modoTaller, esMecanico, modoMecanico, esNegocioPuro } = useModo();
+  const modo = modoEfectivo({ tieneNegocio, modoTaller, esMecanico, modoMecanico, esNegocioPuro });
   const version = (app as { expo: { version: string } }).expo.version;
   const hayContacto = !!SOPORTE.whatsapp || !!SOPORTE.correo;
 
@@ -70,6 +77,15 @@ export default function AyudaScreen({ navigation }: any) {
             })}
           </View>
         </View>
+
+        <GrupoAjustes titulo="Conoce la app">
+          <FilaAjuste
+            icono={<IconPlayerPlay size={20} color={colors.accent} />}
+            titulo="Ver el tutorial"
+            detalle="Un recorrido corto por lo que puedes hacer en Rodix"
+            onPress={() => setVerTutorial(true)}
+          />
+        </GrupoAjustes>
 
         {hayContacto && (
           <GrupoAjustes titulo="¿Necesitas hablar con alguien?">
@@ -106,11 +122,12 @@ export default function AyudaScreen({ navigation }: any) {
 
         <Text style={s.version}>Rodix · versión {version}</Text>
       </ScrollView>
+      <TutorialModal visible={verTutorial} modo={modo} onClose={() => setVerTutorial(false)} />
     </View>
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content: { paddingHorizontal: spacing.xl, paddingBottom: 40, gap: spacing.xl },
 
@@ -126,4 +143,4 @@ const s = StyleSheet.create({
   respuesta: { fontFamily: fonts.body, fontSize: 15, color: colors.textSecondary, lineHeight: 22, paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
 
   version: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, textAlign: 'center' },
-});
+}));

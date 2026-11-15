@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator,
+  View, Text, FlatList, Pressable, ActivityIndicator,
 } from 'react-native';
 import {
   IconArrowLeft, IconPlus, IconClock, IconChevronRight,
@@ -11,6 +11,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { formatPrecioServicio, type TipoPrecio } from '../../lib/precio';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -153,7 +154,7 @@ export default function ServiciosNegocioScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -216,4 +217,4 @@ const s = StyleSheet.create({
     minHeight: 52, justifyContent: 'center',
   },
   ctaBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
-});
+}));

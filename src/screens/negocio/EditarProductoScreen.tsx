@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
+  View, Text, ScrollView, Pressable,
   TextInput, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import { elegirImagen } from '../../lib/imagenes';
@@ -9,6 +9,7 @@ import { tokens } from '../../lib/tokens';
 import {
   uploadFotoProducto, crearProducto, actualizarProducto, type Producto,
 } from '../../lib/productos';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, fonts, spacing, radius } = tokens;
 
@@ -134,13 +135,13 @@ export default function EditarProductoScreen({ route, navigation }: any) {
           {fotosExistentes.map((uri, idx) => (
             <View key={'ex' + idx} style={s.fotoSlot}>
               <Image source={{ uri }} style={s.fotoThumb} resizeMode="cover" />
-              <Pressable style={s.fotoRemove} onPress={() => removeFotoExistente(idx)} hitSlop={10} accessibilityLabel="Quitar foto"><IconX size={14} color="#fff" /></Pressable>
+              <Pressable style={s.fotoRemove} onPress={() => removeFotoExistente(idx)} hitSlop={10} accessibilityLabel="Quitar foto"><IconX size={14} color={colors.blancoFijo} /></Pressable>
             </View>
           ))}
           {fotosNuevas.map((uri, idx) => (
             <View key={'nu' + idx} style={s.fotoSlot}>
               <Image source={{ uri }} style={s.fotoThumb} resizeMode="cover" />
-              <Pressable style={s.fotoRemove} onPress={() => removeFotoNueva(idx)} hitSlop={10} accessibilityLabel="Quitar foto"><IconX size={14} color="#fff" /></Pressable>
+              <Pressable style={s.fotoRemove} onPress={() => removeFotoNueva(idx)} hitSlop={10} accessibilityLabel="Quitar foto"><IconX size={14} color={colors.blancoFijo} /></Pressable>
             </View>
           ))}
           {totalFotos < 3 && (
@@ -159,7 +160,7 @@ export default function EditarProductoScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   header: {
@@ -202,7 +203,7 @@ const s = StyleSheet.create({
     backgroundColor: colors.bgCard, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
     paddingVertical: 10, paddingHorizontal: spacing.md,
   },
-  chipActive: { borderColor: colors.accent, backgroundColor: 'rgba(72,151,90,0.12)' },
+  chipActive: { borderColor: colors.accent, backgroundColor: colors.accentTenue },
   chipLabel: { color: colors.textSecondary, fontSize: 13, fontFamily: fonts.body },
   chipLabelActive: { color: colors.accent, fontFamily: fonts.heading },
 
@@ -224,4 +225,4 @@ const s = StyleSheet.create({
   guardarBtn: { backgroundColor: colors.accent, borderRadius: radius.lg, paddingVertical: 16, alignItems: 'center', marginTop: spacing.xl },
   guardarBtnDisabled: { opacity: 0.5 },
   guardarBtnText: { color: colors.onAccent, fontFamily: fonts.bold, fontSize: 16 },
-});
+}));

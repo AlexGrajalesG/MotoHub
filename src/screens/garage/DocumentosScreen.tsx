@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, ScrollView, Linking } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Alert, ScrollView, Linking } from 'react-native';
 import { Image } from 'expo-image';
 import * as DocumentPicker from 'expo-document-picker';
 import { useFocusEffect } from '@react-navigation/native';
@@ -12,6 +12,7 @@ import { capturarImagen, TEXTOS_IMAGEN, type OrigenImagen } from '../../lib/imag
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -218,7 +219,7 @@ export default function DocumentosScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bgPrimary },
   content: { paddingHorizontal: spacing.xl, paddingBottom: 40 },
@@ -247,4 +248,4 @@ const s = StyleSheet.create({
   docNombre: { fontFamily: fonts.body, fontSize: 14, color: colors.textPrimary },
   docFecha: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: 2 },
   eliminarBtn: { padding: spacing.xs },
-});
+}));

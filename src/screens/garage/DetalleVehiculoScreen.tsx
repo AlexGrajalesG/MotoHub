@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, Modal, Pressable, Dimensions, Linking,
   Animated, AccessibilityInfo, TextInput,
 } from 'react-native';
@@ -24,6 +24,7 @@ import { IconShieldCheck } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { getDocStatus, formatFechaCorta } from '../../lib/documentos';
 import { TIPO_LABEL, formatFecha } from '../../lib/historial';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 const { width: SW } = Dimensions.get('window');
@@ -730,7 +731,7 @@ function HistorialPreview({ registros, onVerTodo }: {
 }
 
 /* ─── Estilos pantalla ─── */
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content:   { paddingBottom: 48 },
 
@@ -750,14 +751,14 @@ const s = StyleSheet.create({
   heroActiveBadge: {
     position: 'absolute', top: spacing.md, right: spacing.md,
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: radius.pill,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: colors.velo, borderRadius: radius.pill,
+    borderWidth: 1, borderColor: colors.velo,
     paddingHorizontal: 10, paddingVertical: 5,
   },
   heroActiveDot:  { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.success },
   heroActiveText: {
     fontFamily: fonts.bold, fontSize: 11, letterSpacing: 0.5,
-    color: '#fff', textTransform: 'uppercase',
+    color: colors.blancoFijo, textTransform: 'uppercase',
   },
   heroPlacaChip: {
     position: 'absolute', bottom: spacing.md, left: spacing.md,
@@ -835,7 +836,7 @@ const s = StyleSheet.create({
   modalClose: {
     position: 'absolute', top: 56, right: spacing.xl,
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: colors.velo,
     justifyContent: 'center', alignItems: 'center',
   },
 
@@ -866,10 +867,10 @@ const s = StyleSheet.create({
     alignItems: 'center', backgroundColor: colors.accent,
   },
   fechaBtnGuardarText: { fontFamily: fonts.heading, color: colors.onAccent, fontSize: 14 },
-});
+}));
 
 /* ─── Estilos documentos inline ─── */
-const ds = StyleSheet.create({
+const ds = estilosTema(() => ({
   container:    { marginHorizontal: spacing.xl, marginBottom: spacing.xl },
   sectionTitle: {
     fontFamily: fonts.display, fontSize: 20, color: colors.accent,
@@ -879,7 +880,7 @@ const ds = StyleSheet.create({
 
   tipoCard: {
     backgroundColor: colors.bgCard, borderRadius: radius.lg,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1, borderColor: colors.veloSutil,
     padding: spacing.lg, marginBottom: spacing.md,
   },
   tipoHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: spacing.md },
@@ -909,7 +910,7 @@ const ds = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', minHeight: 40,
   },
   ctaPrimary:   { backgroundColor: colors.accent },
-  ctaSecondary: { backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  ctaSecondary: { backgroundColor: colors.bgSurface, borderWidth: 1, borderColor: colors.velo },
   ctaDisabled:  { opacity: 0.6 },
   ctaText:        { fontFamily: fonts.bold, fontSize: 12, letterSpacing: 1, textTransform: 'uppercase' },
   ctaTextPrimary:   { color: colors.onAccent },
@@ -924,7 +925,7 @@ const ds = StyleSheet.create({
   imgThumb: { width: 52, height: 52, borderRadius: radius.md, backgroundColor: colors.bgPrimary },
   pdfThumb: {
     width: 52, height: 52, borderRadius: radius.md,
-    backgroundColor: 'rgba(72,151,90,0.12)',
+    backgroundColor: colors.accentTenue,
     justifyContent: 'center', alignItems: 'center',
   },
   pdfLabel: { fontFamily: fonts.bold, color: colors.accent, fontSize: 11 },
@@ -932,10 +933,10 @@ const ds = StyleSheet.create({
   docTipo:  { fontFamily: fonts.heading, color: colors.textPrimary, fontSize: 14 },
   docFecha: { fontFamily: fonts.body, color: colors.textSecondary, fontSize: 12, marginTop: 2 },
   deleteBtn:{ padding: spacing.xs, minWidth: 36, minHeight: 36, justifyContent: 'center', alignItems: 'center' },
-});
+}));
 
 /* ─── Estilos historial (preview) ─── */
-const hs = StyleSheet.create({
+const hs = estilosTema(() => ({
   container: { marginHorizontal: spacing.xl, marginBottom: spacing.xl },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -972,4 +973,4 @@ const hs = StyleSheet.create({
   itemFechaActivo:   { color: colors.accent },
   itemFechaInactivo: { color: colors.textTertiary },
   itemSub: { fontFamily: fonts.body, fontSize: 12, color: colors.textSecondary, marginTop: 4 },
-});
+}));

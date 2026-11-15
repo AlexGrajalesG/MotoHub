@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { IconLock, IconDevices, IconTrash, IconAlertCircle, IconCircleCheck, IconMail } from '@tabler/icons-react-native';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
@@ -7,6 +7,7 @@ import { cambiarContrasena, cerrarSesionEnTodos } from '../../lib/cuenta';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
 import { FilaAjuste, GrupoAjustes } from '../../components/FilaAjuste';
 import { Campo, Entrada } from '../../components/FormField';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -126,7 +127,7 @@ export default function SeguridadScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   content: { paddingHorizontal: spacing.xl, paddingBottom: 40, gap: spacing.xl },
 
@@ -146,4 +147,4 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   botonTexto: { fontFamily: fonts.bold, fontSize: 15, color: colors.onAccent },
-});
+}));

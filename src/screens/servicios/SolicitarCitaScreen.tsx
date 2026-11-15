@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
+  View, Text, ScrollView, Pressable,
   TextInput, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { tokens } from '../../lib/tokens';
 import { formatPrecioServicio, type TipoPrecio } from '../../lib/precio';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -341,7 +342,7 @@ export default function SolicitarCitaScreen({ route, navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   /* ── Header ── */
@@ -462,4 +463,4 @@ const s = StyleSheet.create({
     minHeight: 52, justifyContent: 'center', alignSelf: 'stretch', alignItems: 'center',
   },
   successBtnText: { fontFamily: fonts.heading, fontSize: 15, color: colors.textSecondary },
-});
+}));

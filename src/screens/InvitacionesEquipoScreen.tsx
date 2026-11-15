@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { IconArrowLeft, IconBuildingStore, IconMailOff } from '@tabler/icons-react-native';
 import { useAuth } from '../context/AuthContext';
 import { useModo } from '../context/ModoContext';
@@ -8,6 +8,7 @@ import { tokens } from '../lib/tokens';
 import {
   fetchInvitacionesRecibidas, responderInvitacion, type InvitacionRecibida,
 } from '../lib/invitaciones';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -105,7 +106,7 @@ export default function InvitacionesEquipoScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
   center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
@@ -149,4 +150,4 @@ const s = StyleSheet.create({
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: spacing.xxl, gap: spacing.sm },
   emptyTitle: { fontFamily: fonts.display, fontSize: 18, color: colors.textPrimary, letterSpacing: -0.3, textAlign: 'center', marginTop: spacing.sm },
   emptySubtitle: { fontFamily: fonts.body, fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
-});
+}));

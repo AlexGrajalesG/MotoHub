@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { IconBell, IconCalendarEvent } from '@tabler/icons-react-native';
 import { tokens } from '../lib/tokens';
 import IconButton from './IconButton';
+import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -35,7 +36,7 @@ export default function TopBar({ title = 'RODIX', unreadCount, onPressBell, onPr
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   topBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: spacing.xl, paddingTop: 56, paddingBottom: spacing.md,
@@ -55,4 +56,4 @@ const s = StyleSheet.create({
     paddingHorizontal: 4, borderWidth: 2, borderColor: colors.bgPrimary,
   },
   bellBadgeText: { fontFamily: fonts.bold, color: colors.onAccent, fontSize: 10 },
-});
+}));

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable,
+  View, Text, ScrollView, Pressable,
   TextInput, Alert, ActivityIndicator,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
@@ -9,6 +9,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useModo } from '../../context/ModoContext';
 import { tokens } from '../../lib/tokens';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -246,7 +247,7 @@ export default function RegistrarNegocioScreen({ navigation }: any) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   container: { flex: 1, backgroundColor: colors.bgPrimary },
 
   header: {
@@ -298,4 +299,4 @@ const s = StyleSheet.create({
   },
   sendBtnOff:  { opacity: 0.45 },
   sendBtnText: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
-});
+}));

@@ -1,9 +1,10 @@
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Image } from 'react-native';
 import { IconCheck, IconX, IconClock, IconCircleCheck, IconCircleX, IconReceipt } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { formatCOP } from '../../lib/precio';
 import { openUrl } from '../../lib/openUrl';
 import { metaTipo, fechaLarga } from '../../lib/historialTipos';
+import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
 
@@ -28,7 +29,7 @@ export default function RegistroCard({ h, esCliente, busy, onResolver, onVerFoto
   const aceptado = h.aprobado_propietario === true;
 
   const estado = pendiente
-    ? { Icono: IconClock, texto: esCliente ? 'Falta tu respuesta' : 'Esperando al cliente', color: '#f5a623' }
+    ? { Icono: IconClock, texto: esCliente ? 'Falta tu respuesta' : 'Esperando al cliente', color: colors.aviso }
     : aceptado
       ? { Icono: IconCircleCheck, texto: 'Aceptado', color: colors.success }
       : { Icono: IconCircleX, texto: 'Rechazado', color: colors.dangerAction };
@@ -119,7 +120,7 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
   );
 }
 
-const s = StyleSheet.create({
+const s = estilosTema(() => ({
   card: {
     gap: spacing.md, padding: spacing.lg, backgroundColor: colors.bgCard,
     borderRadius: radius.xl, borderWidth: 1, borderColor: colors.bgSurface,
@@ -149,4 +150,4 @@ const s = StyleSheet.create({
   aceptarTexto: { fontFamily: fonts.bold, fontSize: 14, color: colors.onAccent },
   rechazar: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 48, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface },
   rechazarTexto: { fontFamily: fonts.bold, fontSize: 14, color: colors.textSecondary },
-});
+}));
