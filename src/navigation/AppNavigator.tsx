@@ -15,6 +15,11 @@ import { supabase } from '../lib/supabase';
 import { getDocStatus } from '../lib/documentos';
 import { fetchBandeja } from '../lib/bandeja';
 import { comoSegunModo, contarNoLeidas } from '../lib/bandejaTexto';
+import { fetchBandejaChats } from '../lib/conversaciones';
+import { contarNoLeidasChats } from '../lib/conversacionesTexto';
+import ChatConversacionScreen from '../screens/mensajes/ChatConversacionScreen';
+import BuscarCuentaScreen from '../screens/mensajes/BuscarCuentaScreen';
+import SumarMecanicoScreen from '../screens/mensajes/SumarMecanicoScreen';
 import { useRealtimeRefresh } from '../lib/useRealtimeRefresh';
 
 import LoginScreen            from '../screens/auth/LoginScreen';
@@ -111,6 +116,9 @@ function MensajesStack({ route }: any) {
       <MensajesNav.Screen name="ChatCita"          component={ChatCitaScreen} />
       <MensajesNav.Screen name="RegistrarServicio" component={RegistrarServicioScreen} />
       <MensajesNav.Screen name="CalificarCita"     component={CalificarCitaScreen} />
+      <MensajesNav.Screen name="ChatConversacion"  component={ChatConversacionScreen} />
+      <MensajesNav.Screen name="BuscarCuenta"      component={BuscarCuentaScreen} />
+      <MensajesNav.Screen name="SumarMecanico"     component={SumarMecanicoScreen} />
     </MensajesNav.Navigator>
   );
 }
@@ -257,10 +265,12 @@ function AppTabs({ modo }: { modo: 'cliente' | 'taller' | 'mecanico' }) {
   const refreshMensajes = useCallback(async () => {
     if (!session?.user.id) return;
     ultimaRevision.current = Date.now();
-    setNoLeidos(contarNoLeidas(await fetchBandeja(como)));
+    const [citas, chats] = await Promise.all([fetchBandeja(como), fetchBandejaChats(como)]);
+    setNoLeidos(contarNoLeidas(citas) + contarNoLeidasChats(chats));
   }, [session?.user.id, como]);
   useEffect(() => { refreshMensajes(); }, [refreshMensajes]);
   useRealtimeRefresh('mensajes_cita', session?.user.id ? '' : null, refreshMensajes);
+  useRealtimeRefresh('mensajes_conversacion', session?.user.id ? '' : null, refreshMensajes);
   const mensajesBadge = noLeidos > 0 ? noLeidos : undefined;
   // Al navegar (p. ej. al volver de un chat ya leído) se actualiza el contador, como máximo cada 2 s
   const screenListeners = {

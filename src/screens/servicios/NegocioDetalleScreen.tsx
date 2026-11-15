@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  ActivityIndicator, Linking, StyleSheet as RN,
+  ActivityIndicator, Linking, StyleSheet as RN, Alert,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  IconArrowLeft, IconMapPin, IconPhone, IconCalendar, IconBell, IconTools, IconPackage,
+  IconArrowLeft, IconMapPin, IconPhone, IconCalendar, IconBell, IconTools, IconPackage, IconMessageCircle,
 } from '@tabler/icons-react-native';
+import { iniciarConsultaNegocio } from '../../lib/conversaciones';
 import { supabase } from '../../lib/supabase';
 import { openTel } from '../../lib/openUrl';
 import { useNotificaciones } from '../../context/NotificacionesContext';
@@ -70,6 +71,16 @@ export default function NegocioDetalleScreen({ route, navigation }: any) {
   const [servicios, setServicios] = useState<Servicio[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
   const [loading,   setLoading]   = useState(true);
+  const [abriendoConsulta, setAbriendoConsulta] = useState(false);
+
+  async function hacerConsulta() {
+    if (abriendoConsulta) return;
+    setAbriendoConsulta(true);
+    const r = await iniciarConsultaNegocio(negocio.id);
+    setAbriendoConsulta(false);
+    if (!r.ok) { Alert.alert('No se pudo abrir la consulta', r.mensaje); return; }
+    navigation.navigate('Mensajes', { screen: 'ChatConversacion', params: { conversacionId: r.data } });
+  }
   const [promedio,  setPromedio]  = useState<Promedio>({ promedio: 0, total: 0 });
   const [tab, setTab] = useState<'servicios' | 'productos'>(negocio.tipo === 'tienda' ? 'productos' : 'servicios');
 
@@ -339,7 +350,7 @@ export default function NegocioDetalleScreen({ route, navigation }: any) {
         )}
 
         {/* Espacio para el CTA fijo */}
-        <View style={{ height: 96 }} />
+        <View style={{ height: 160 }} />
       </ScrollView>
 
       {/* ── CTA fija: Agendar Cita ── */}
@@ -349,6 +360,18 @@ export default function NegocioDetalleScreen({ route, navigation }: any) {
           style={s.ctaGradient}
           pointerEvents="none"
         />
+        <Pressable
+          style={({ pressed }) => [s.consultaBtn, abriendoConsulta && { opacity: 0.5 }, pressed && { opacity: 0.85 }]}
+          onPress={hacerConsulta}
+          disabled={abriendoConsulta}
+          accessibilityRole="button"
+          accessibilityLabel="Hacer una consulta a este negocio"
+        >
+          {abriendoConsulta
+            ? <ActivityIndicator size="small" color={colors.accent} />
+            : <IconMessageCircle size={18} color={colors.accent} />}
+          <Text style={s.consultaBtnText}>Hacer una consulta</Text>
+        </Pressable>
         <Pressable
           style={({ pressed }) => [s.ctaBtn, pressed && { opacity: 0.88 }]}
           onPress={() => navigation.navigate('SolicitarCita', { negocio, servicios })}
@@ -534,6 +557,12 @@ const s = estilosTema(() => ({
   ctaGradient: {
     position: 'absolute', top: -32, left: 0, right: 0, bottom: 0,
   },
+  consultaBtn: {
+    minHeight: 48, marginBottom: spacing.sm, borderRadius: radius.md, backgroundColor: colors.bgCard,
+    borderWidth: 1, borderColor: colors.accentBorde,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm,
+  },
+  consultaBtnText: { fontFamily: fonts.heading, fontSize: 15, color: colors.accent },
   ctaBtn: {
     backgroundColor: colors.accent, borderRadius: radius.md,
     paddingVertical: spacing.lg,
