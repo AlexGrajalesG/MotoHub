@@ -12,13 +12,23 @@ export const CATEGORIAS: { key: Categoria; label: string }[] = [
   { key: 'evento', label: 'Evento' },
 ];
 
-const REGEX_TIKTOK = /^https:\/\/(www\.|vm\.|vt\.)?tiktok\.com\//i;
-const REGEX_INSTAGRAM = /^https:\/\/(www\.)?instagram\.com\/(reel|p)\//i;
+// Solo enlaces con forma de video, nunca otras rutas del dominio (por ejemplo páginas de redirección).
+// Estas mismas reglas están en la restricción posts_video_dominio_check de la base de datos.
+const FIN = String.raw`/?([?#].*)?$`;
+const REGEX_TIKTOK = [
+  new RegExp(String.raw`^https://(www\.)?tiktok\.com/@[A-Za-z0-9._-]+/video/[0-9]+` + FIN, 'i'),
+  new RegExp(String.raw`^https://(vm|vt)\.tiktok\.com/[A-Za-z0-9_-]+` + FIN, 'i'),
+  new RegExp(String.raw`^https://(www\.)?tiktok\.com/t/[A-Za-z0-9_-]+` + FIN, 'i'),
+];
+const REGEX_INSTAGRAM = new RegExp(String.raw`^https://(www\.)?instagram\.com/(reel|p)/[A-Za-z0-9_-]+` + FIN, 'i');
 
-/** Detecta la plataforma de un enlace pegado, o null si no es un enlace admitido. */
+export const LARGO_MAXIMO_ENLACE_VIDEO = 300;
+
+/** Detecta la plataforma de un enlace pegado, o null si no es un enlace de video admitido. */
 export function detectarPlataforma(url: string): VideoPlataforma | null {
   const limpio = url.trim();
-  if (REGEX_TIKTOK.test(limpio)) return 'tiktok';
+  if (limpio.length > LARGO_MAXIMO_ENLACE_VIDEO || /\s/.test(limpio)) return null;
+  if (REGEX_TIKTOK.some(r => r.test(limpio))) return 'tiktok';
   if (REGEX_INSTAGRAM.test(limpio)) return 'instagram';
   return null;
 }

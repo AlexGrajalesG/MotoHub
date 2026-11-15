@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 
 export type TipoNotificacion =
   | 'cita_nueva' | 'cita_estado' | 'registro_servicio_nuevo' | 'registro_servicio_resuelto'
-  | 'invitacion_equipo' | 'invitacion_respuesta';
+  | 'invitacion_equipo' | 'invitacion_respuesta' | 'mensaje_chat' | 'solicitud_chat';
 
 export type Notificacion = {
   id: string;
@@ -11,6 +11,7 @@ export type Notificacion = {
   titulo: string;
   cuerpo: string;
   cita_id: string | null;
+  conversacion_id: string | null;
   leida: boolean;
   created_at: string;
 };

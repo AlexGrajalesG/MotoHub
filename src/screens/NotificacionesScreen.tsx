@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import {
   IconArrowLeft, IconCalendarPlus, IconCalendarCheck, IconChecks, IconBellOff, IconTool, IconUserPlus,
+  IconMessageCircle,
 } from '@tabler/icons-react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -58,6 +59,8 @@ const NotificacionCard = memo(function NotificacionCard({
             ? <IconTool size={18} color={colors.accent} />
             : item.tipo === 'invitacion_equipo' || item.tipo === 'invitacion_respuesta'
             ? <IconUserPlus size={18} color={colors.accent} />
+            : item.tipo === 'mensaje_chat' || item.tipo === 'solicitud_chat'
+            ? <IconMessageCircle size={18} color={colors.accent} />
             : <IconCalendarCheck size={18} color={colors.accent} />
           }
         </View>
@@ -124,6 +127,11 @@ export default function NotificacionesScreen({ navigation }: any) {
         .eq('propietario_id', session!.user.id)
         .maybeSingle();
       if (miNegocio) navigation.navigate('MiEquipo', { negocioId: miNegocio.id });
+      return;
+    }
+
+    if ((item.tipo === 'mensaje_chat' || item.tipo === 'solicitud_chat') && item.conversacion_id) {
+      navigation.navigate('Mensajes', { screen: 'ChatConversacion', params: { conversacionId: item.conversacion_id } });
       return;
     }
 

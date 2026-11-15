@@ -1,4 +1,25 @@
-import { hostPermitido, resolverVideo } from '../videoEmbed';
+import { hostPermitido, resolverVideo, urlPermitidaOnull, limpiarAutor } from '../videoEmbed';
+
+describe('urlPermitidaOnull', () => {
+  it('deja pasar solo direcciones de las redes permitidas', () => {
+    expect(urlPermitidaOnull('https://p16-sign.tiktokcdn.com/x.jpg')).toBe('https://p16-sign.tiktokcdn.com/x.jpg');
+    expect(urlPermitidaOnull('https://evil.com/portada.jpg')).toBeNull();
+    expect(urlPermitidaOnull('http://p16.tiktokcdn.com/x.jpg')).toBeNull();
+    expect(urlPermitidaOnull(null)).toBeNull();
+    expect(urlPermitidaOnull(123)).toBeNull();
+  });
+});
+
+describe('limpiarAutor', () => {
+  it('quita la arroba y rechaza valores raros', () => {
+    expect(limpiarAutor('@moto.rodix')).toBe('moto.rodix');
+    expect(limpiarAutor('  rodix  ')).toBe('rodix');
+    expect(limpiarAutor('dos palabras')).toBeNull();
+    expect(limpiarAutor('')).toBeNull();
+    expect(limpiarAutor('a'.repeat(41))).toBeNull();
+    expect(limpiarAutor(undefined)).toBeNull();
+  });
+});
 
 describe('hostPermitido', () => {
   it('acepta TikTok e Instagram y sus subdominios por https', () => {
@@ -23,5 +44,19 @@ describe('resolverVideo', () => {
 
   it('devuelve null si el enlace no es de una plataforma admitida', async () => {
     expect(await resolverVideo('https://youtube.com/watch?v=1')).toBeNull();
+  });
+
+  it('devuelve null si la plataforma guardada no coincide con el enlace', async () => {
+    expect(await resolverVideo('https://www.instagram.com/reel/Cabc123/', 'tiktok')).toBeNull();
+  });
+
+  it('devuelve null para rutas que no son un video aunque sean del dominio', async () => {
+    expect(await resolverVideo('https://www.tiktok.com/link/v2?target=https%3A%2F%2Fevil.com')).toBeNull();
+  });
+
+  it('en Instagram no inventa portada ni autor', async () => {
+    const v = await resolverVideo('https://www.instagram.com/p/Cxyz789/');
+    expect(v?.miniatura).toBeNull();
+    expect(v?.autor).toBeNull();
   });
 });

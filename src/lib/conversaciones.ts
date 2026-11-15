@@ -129,6 +129,32 @@ export const reportarMensaje = (mensajeId: string, motivo: string) =>
 export const agregarMecanicoAConsulta = (conversacionId: string, usuarioId: string) =>
   llamar<null>('agregar_mecanico_a_consulta', { p_conversacion: conversacionId, p_usuario_id: usuarioId }, null);
 
+// ─── Moderación de mensajes reportados ──────────────────────────────────────
+
+export type MensajeReportado = {
+  mensaje_id: string;
+  texto: string;
+  autor_nombre: string | null;
+  autor_usuario: string | null;
+  tipo_conversacion: TipoConversacion;
+  created_at: string;
+  total_reportes: number;
+  motivos: string[];
+};
+
+/** Solo devuelve los mensajes reportados, nunca la conversación completa. */
+export async function fetchColaChat(): Promise<MensajeReportado[]> {
+  const { data, error } = await supabase.rpc('cola_moderacion_chat');
+  if (error) {
+    console.error(error.message);
+    return [];
+  }
+  return (data ?? []) as MensajeReportado[];
+}
+
+export const moderarMensaje = (mensajeId: string, accion: 'descartar' | 'eliminar') =>
+  llamar<null>('moderar_mensaje', { p_mensaje_id: mensajeId, p_accion: accion }, null);
+
 // ─── Bandeja ────────────────────────────────────────────────────────────────
 
 export async function fetchBandejaChats(como: ComoBandeja): Promise<ConversacionBandeja[]> {

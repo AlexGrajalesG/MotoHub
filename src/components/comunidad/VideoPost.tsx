@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { IconPlayerPlay, IconBrandTiktok, IconBrandInstagram } from '@tabler/icons-react-native';
+import { IconPlayerPlay, IconBrandTiktok, IconBrandInstagram, IconAlertTriangle } from '@tabler/icons-react-native';
 import { tokens } from '../../lib/tokens';
 import { openUrl } from '../../lib/openUrl';
 import { resolverVideo, type VideoResuelto } from '../../lib/videoEmbed';
-import type { VideoPlataforma } from '../../lib/comunidadTexto';
+import { detectarPlataforma, type VideoPlataforma } from '../../lib/comunidadTexto';
 import { estilosTema } from '../../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
@@ -18,7 +18,10 @@ const RATIO_ALTO = 0.75;
  * Video de TikTok o Instagram: tarjeta con miniatura y botón de reproducir, como en el diseño de Stitch.
  * Se renunció a reproducirlo dentro de la app (WebView de TikTok poco confiable: se quedaba cargando,
  * mostraba la página completa en vez del video, o sacaba de la app sola). Al tocar, se abre en la app
- * nativa o el navegador — siempre funciona, y ahí sí se ve con sonido, likes y comentarios reales.
+ * nativa o el navegador, siempre funciona, y ahí sí se ve con sonido, likes y comentarios reales.
+ *
+ * Solo se abre un enlace que pase la validación de forma y de dominio; si la plataforma no pudo confirmarlo,
+ * se avisa y se pide confirmación antes de salir de la app.
  */
 export default function VideoPost({ url, plataforma }: { url: string; plataforma: VideoPlataforma }) {
   const [video, setVideo] = useState<VideoResuelto | null | undefined>(undefined);
@@ -33,19 +36,33 @@ export default function VideoPost({ url, plataforma }: { url: string; plataforma
   const Marca = plataforma === 'instagram' ? IconBrandInstagram : IconBrandTiktok;
   const nombre = plataforma === 'instagram' ? 'Instagram' : 'TikTok';
   const cargando = video === undefined;
+  const sinConfirmar = video === null;
+  const enlaceValido = detectarPlataforma(url) === plataforma;
+
+  function abrir() {
+    if (!enlaceValido) return;
+    if (!sinConfirmar) { openUrl(url); return; }
+    Alert.alert(
+      'No pudimos comprobar este enlace',
+      `No se pudo confirmar que el video exista en ${nombre}. Puede ser que esté privado, que lo hayan borrado o que no tengas conexión. ¿Quieres abrirlo de todos modos?`,
+      [{ text: 'Cancelar', style: 'cancel' }, { text: 'Abrir', onPress: () => openUrl(url) }],
+    );
+  }
 
   return (
     <View style={s.wrap}>
       <View style={s.etiqueta}>
         <Marca size={14} color={colors.textSecondary} />
-        <Text style={s.etiquetaTexto}>Video de {nombre}</Text>
+        <Text style={s.etiquetaTexto} numberOfLines={1}>
+          Video de {nombre}{video?.autor ? ` · @${video.autor}` : ''}
+        </Text>
       </View>
 
       <Pressable
-        onPress={() => openUrl(url)}
+        onPress={abrir}
         onLayout={e => setAncho(Math.round(e.nativeEvent.layout.width))}
         accessibilityRole="button"
-        accessibilityLabel={`Ver video de ${nombre}`}
+        accessibilityLabel={sinConfirmar ? `Enlace de ${nombre} sin comprobar. Toca para abrirlo con confirmación` : `Ver video de ${nombre}`}
       >
         <View style={[s.caja, { height: ancho > 0 ? ancho * RATIO_ALTO : 220 }]}>
           {video?.miniatura
@@ -53,12 +70,21 @@ export default function VideoPost({ url, plataforma }: { url: string; plataforma
             : <LinearGradient colors={['#133210', '#0b1c0a', '#020202']} style={StyleSheet.absoluteFill} />}
           <View style={s.velo} />
           <View style={s.centro}>
-            {cargando
-              ? <ActivityIndicator color={colors.blancoFijo} />
-              : <View style={s.play}><IconPlayerPlay size={28} color={colors.blancoFijo} fill={colors.blancoFijo} /></View>}
+            {cargando ? <ActivityIndicator color={colors.blancoFijo} /> : sinConfirmar ? (
+              <View style={s.sinConfirmar}>
+                <IconAlertTriangle size={26} color={colors.aviso} />
+                <Text style={s.sinConfirmarTexto}>No pudimos comprobar este enlace</Text>
+              </View>
+            ) : (
+              <View style={s.play}><IconPlayerPlay size={28} color={colors.blancoFijo} fill={colors.blancoFijo} /></View>
+            )}
           </View>
         </View>
       </Pressable>
+
+      {!cargando && (
+        <Text style={s.pie}>{sinConfirmar ? 'Toca para abrirlo con confirmación.' : `Se abre en ${nombre}.`}</Text>
+      )}
     </View>
   );
 }
@@ -68,7 +94,7 @@ const RELLENO = { position: 'absolute' as const, top: 0, left: 0, right: 0, bott
 const s = estilosTema(() => ({
   wrap: { marginTop: spacing.md },
   etiqueta: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.sm },
-  etiquetaTexto: { fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
+  etiquetaTexto: { flex: 1, fontFamily: fonts.heading, fontSize: 13, color: colors.textSecondary },
   caja: { borderRadius: radius.lg, overflow: 'hidden', backgroundColor: '#000' },
   velo: { ...RELLENO, backgroundColor: 'rgba(0,0,0,0.28)' },
   centro: { ...RELLENO, justifyContent: 'center', alignItems: 'center' },
@@ -76,4 +102,7 @@ const s = estilosTema(() => ({
     width: 60, height: 60, borderRadius: 30, backgroundColor: 'rgba(0,0,0,0.55)',
     borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)', justifyContent: 'center', alignItems: 'center', paddingLeft: 3,
   },
+  sinConfirmar: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.xl },
+  sinConfirmarTexto: { fontFamily: fonts.heading, fontSize: 14, color: '#ffffff', textAlign: 'center' },
+  pie: { fontFamily: fonts.body, fontSize: 12, color: colors.textTertiary, marginTop: spacing.xs },
 }));
