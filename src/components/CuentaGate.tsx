@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { IconClock } from '@tabler/icons-react-native';
-import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { tokens } from '../lib/tokens';
-import { fechaDeBorrado, cancelarEliminacion, formatearFecha } from '../lib/cuenta';
+import { fechaDeBorrado, cancelarEliminacion, formatearFecha, salir } from '../lib/cuenta';
 import { estilosTema } from '../lib/estilosTema';
 
 const { colors, spacing, radius, fonts } = tokens;
@@ -68,7 +67,7 @@ export default function CuentaGate({ children }: { children: React.ReactNode }) 
         </Pressable>
         <Pressable
           style={({ pressed }) => [s.secundario, pressed && { opacity: 0.8 }]}
-          onPress={() => supabase.auth.signOut()}
+          onPress={() => salir()}
           accessibilityRole="button"
         >
           <Text style={s.secundarioTexto}>Cerrar sesión</Text>

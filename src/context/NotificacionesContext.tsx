@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { contarNoLeidas, type Notificacion } from '../lib/notificacionesApp';
 import { notificarKm } from '../lib/notificaciones';
+import { pushActivo, registrarPush } from '../lib/push';
 
 type NotificacionesContextType = {
   unreadCount: number;
@@ -28,6 +29,10 @@ export function NotificacionesProvider({ children }: { children: React.ReactNode
   }, [refreshUnreadCount]);
 
   useEffect(() => {
+    if (session?.user.id) registrarPush();
+  }, [session?.user.id]);
+
+  useEffect(() => {
     if (!session?.user.id) return;
 
     const channel = supabase
@@ -43,7 +48,8 @@ export function NotificacionesProvider({ children }: { children: React.ReactNode
         (payload) => {
           const n = payload.new as Notificacion;
           setUnreadCount(c => c + 1);
-          notificarKm(n.titulo, n.cuerpo);
+          // Con push activo el aviso ya llega por el sistema; mostrarlo aquí lo duplicaría.
+          if (!pushActivo()) notificarKm(n.titulo, n.cuerpo);
         }
       )
       .subscribe();

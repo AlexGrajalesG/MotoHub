@@ -51,6 +51,13 @@ describe('textos legales', () => {
     expect(texto).toMatch(/no los de otras personas/);
   });
 
+  it('la política declara a Expo y Google como quienes entregan las notificaciones', () => {
+    const texto = LEGAL.datos.parrafos.join(' ');
+    expect(texto).toMatch(/Expo y Google, con su servicio Firebase Cloud Messaging/);
+    expect(texto).toMatch(/pasan por los servidores de Expo y de Google/);
+    expect(texto).toMatch(/desactiva las notificaciones de Rodix/);
+  });
+
   it('los términos regulan los mensajes y las consultas', () => {
     const texto = LEGAL.terminos.parrafos.join(' ');
     expect(subtitulos('terminos').some(t => /Mensajes entre usuarios/.test(t))).toBe(true);

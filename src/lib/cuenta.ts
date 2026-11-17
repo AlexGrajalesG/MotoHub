@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { mensajeErrorAuth } from './errores';
+import { quitarPush } from './push';
 
 export const FORMATO_USUARIO = /^[a-z0-9_]{3,20}$/;
 export const DIAS_DE_GRACIA = 30;
@@ -11,8 +12,15 @@ export async function cambiarContrasena(nueva: string): Promise<Resultado> {
   return error ? { ok: false, mensaje: mensajeErrorAuth(error).mensaje } : { ok: true, valor: undefined };
 }
 
+/** Cierra la sesion de este dispositivo; antes lo desvincula de los avisos push de la cuenta. */
+export async function salir(): Promise<void> {
+  await quitarPush();
+  await supabase.auth.signOut();
+}
+
 /** Cierra la sesion en este y en todos los demas dispositivos. */
 export async function cerrarSesionEnTodos(): Promise<Resultado> {
+  await quitarPush();
   const { error } = await supabase.auth.signOut({ scope: 'global' });
   return error ? { ok: false, mensaje: mensajeErrorAuth(error).mensaje } : { ok: true, valor: undefined };
 }

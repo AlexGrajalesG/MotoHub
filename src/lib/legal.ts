@@ -4,7 +4,7 @@
  * Al cambiar el contenido, subir `VERSION_LEGAL`: la version aceptada se guarda con cada registro.
  * Las lineas que empiezan con '## ' se muestran como subtitulo.
  */
-export const VERSION_LEGAL = '2026-11-15';
+export const VERSION_LEGAL = '2026-11-17';
 
 export type DocumentoLegal = 'datos' | 'terminos';
 
@@ -49,14 +49,14 @@ export const LEGAL: Record<DocumentoLegal, { titulo: string; parrafos: string[] 
       '• Solicitudes: si dos personas no se siguen entre sí, quien escribe primero puede enviar un solo mensaje, que llega como solicitud. La otra persona decide si la acepta o la rechaza, o si bloquea a quien escribió. Si la rechaza, no recibirá más mensajes de esa persona.',
       '• Bloqueos y reportes: al bloquear a alguien, dejan de seguirse y ya no pueden escribirse ni encontrarse. Quien participa en una conversación puede reportar un mensaje. El equipo de moderación de Rodix ve el mensaje reportado y quién lo escribió, no el resto de la conversación.',
       '• Rodix no revisa tus conversaciones de forma rutinaria. Solo accedemos a un mensaje cuando alguien lo reporta o cuando una autoridad competente lo exige conforme a la ley.',
-      '• Avisos: te avisamos de los mensajes y solicitudes nuevos dentro de la app y, si lo permitiste, con una notificación del teléfono. Esos avisos muestran el nombre de quien escribe y el comienzo del mensaje.',
+      '• Avisos: te avisamos de los mensajes y solicitudes nuevos dentro de la app y, si lo permitiste, con una notificación del teléfono. Esos avisos muestran el nombre de quien escribe y el comienzo del mensaje, y para llegar a tu teléfono pasan por los servidores de Expo y de Google. Si no quieres recibirlos, desactiva las notificaciones de Rodix en los ajustes de tu teléfono.',
       '• Para evitar abusos limitamos cuántas conversaciones nuevas puede iniciar una persona por día.',
 
       '## 6. Tu autorización',
       'Tratamos tus datos únicamente con tu autorización previa, expresa e informada, que te pedimos al crear tu cuenta. Guardamos prueba de ella, incluida la versión de esta política que aceptaste. Puedes revocarla en cualquier momento escribiendo a rodixmotors@gmail.com, salvo que exista un deber legal o contractual que nos obligue a conservar el dato.',
 
       '## 7. Quién más accede a tus datos',
-      'Usamos proveedores que tratan datos por nuestra cuenta: Supabase (base de datos, autenticación y archivos, con servidores en Brasil), Vercel (alojamiento del sitio web) y Resend (envío de correos). Pueden procesar información fuera de Colombia, entre otros países Brasil y Estados Unidos. Al aceptar esta política autorizas de forma expresa esa transferencia internacional.',
+      'Usamos proveedores que tratan datos por nuestra cuenta: Supabase (base de datos, autenticación y archivos, con servidores en Brasil), Vercel (alojamiento del sitio web), Resend (envío de correos) y Expo y Google, con su servicio Firebase Cloud Messaging (entrega de notificaciones al teléfono; reciben el token de tu dispositivo y el texto del aviso). Pueden procesar información fuera de Colombia, entre otros países Brasil y Estados Unidos. Al aceptar esta política autorizas de forma expresa esa transferencia internacional.',
       'Tus publicaciones y tu perfil son visibles para otros usuarios. Cuando pides una cita, el taller o mecánico que elijas ve los datos necesarios para atenderte, como tu nombre, contacto y vehículo. Tus mensajes los ven solo las personas que participan en la conversación, como se explica en la sección 5. También podemos entregar información a una autoridad competente cuando una ley o una orden judicial lo exija.',
 
       '## 8. Cookies y analítica',
@@ -84,7 +84,7 @@ export const LEGAL: Record<DocumentoLegal, { titulo: string; parrafos: string[] 
       'Solo puedes presentar una queja ante la SIC después de haber agotado la consulta o el reclamo con nosotros.',
 
       '## 13. Cambios y vigencia',
-      'Podemos actualizar esta política cuando Rodix evolucione. Si el cambio es sustancial, te lo comunicaremos antes de aplicarlo. Esta versión incorpora los mensajes entre usuarios, los seguidores y las consultas a negocios, y rige desde el 15 de noviembre de 2026.',
+      'Podemos actualizar esta política cuando Rodix evolucione. Si el cambio es sustancial, te lo comunicaremos antes de aplicarlo. Esta versión incorpora los mensajes entre usuarios, los seguidores, las consultas a negocios y las notificaciones push, y rige desde el 17 de noviembre de 2026.',
     ],
   },
   terminos: {
@@ -128,7 +128,7 @@ export const LEGAL: Record<DocumentoLegal, { titulo: string; parrafos: string[] 
       'Hacemos lo posible para que el servicio funcione sin interrupciones, pero puede haber fallas o cambios. Los recordatorios son una ayuda y no reemplazan tu responsabilidad de mantener al día los documentos y el mantenimiento de tu vehículo.',
 
       '## 11. Cambios, ley aplicable y contacto',
-      'Podemos actualizar estos términos y te avisaremos de los cambios sustanciales. Se rigen por las leyes de Colombia. Para dudas escribe a rodixmotors@gmail.com. Versión del 15 de noviembre de 2026.',
+      'Podemos actualizar estos términos y te avisaremos de los cambios sustanciales. Se rigen por las leyes de Colombia. Para dudas escribe a rodixmotors@gmail.com. Versión del 17 de noviembre de 2026.',
     ],
   },
 };

@@ -15,7 +15,7 @@ import { elegirImagen } from '../lib/imagenes';
 import { contarInvitacionesRecibidas } from '../lib/invitaciones';
 import { fetchPromedio, type Promedio } from '../lib/calificaciones';
 import { salirDelEquipo } from '../lib/mecanicos';
-import { FORMATO_USUARIO, usuarioDisponible } from '../lib/cuenta';
+import { FORMATO_USUARIO, usuarioDisponible, salir } from '../lib/cuenta';
 import { CATEGORIAS } from '../lib/comunidadTexto';
 import { useAuth } from '../context/AuthContext';
 import { useModo } from '../context/ModoContext';
@@ -173,7 +173,7 @@ export default function PerfilScreen({ navigation }: any) {
     setAjustesAbierto(false);
     Alert.alert('Cerrar sesión', '¿Seguro que quieres salir?', [
       { text: 'Cancelar', style: 'cancel' },
-      { text: 'Salir', style: 'destructive', onPress: () => supabase.auth.signOut() },
+      { text: 'Salir', style: 'destructive', onPress: () => salir() },
     ]);
   }
 

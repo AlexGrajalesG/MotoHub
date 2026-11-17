@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "305963716846",
+    "project_id": "rodix-9125e",
+    "storage_bucket": "rodix-9125e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:305963716846:android:6c763340e095449825a3ff",
+        "android_client_info": {
+          "package_name": "com.rodix.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXbqjtQVlmsjk8MoDti2IqrpTwL4q8zGg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

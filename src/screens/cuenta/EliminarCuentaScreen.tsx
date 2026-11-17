@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { IconTrash, IconCheck, IconAlertCircle, IconCircleCheck } from '@tabler/icons-react-native';
-import { supabase } from '../../lib/supabase';
 import { useModo } from '../../context/ModoContext';
 import { tokens } from '../../lib/tokens';
-import { solicitarEliminacion, formatearFecha, DIAS_DE_GRACIA } from '../../lib/cuenta';
+import { solicitarEliminacion, formatearFecha, DIAS_DE_GRACIA, salir } from '../../lib/cuenta';
 import CabeceraPantalla from '../../components/CabeceraPantalla';
 import { estilosTema } from '../../lib/estilosTema';
 
@@ -48,7 +47,7 @@ export default function EliminarCuentaScreen({ navigation }: any) {
         <View style={s.footer}>
           <Pressable
             style={({ pressed }) => [s.botonPrimario, pressed && { opacity: 0.85 }]}
-            onPress={() => supabase.auth.signOut()}
+            onPress={() => salir()}
             accessibilityRole="button"
           >
             <Text style={s.botonPrimarioTexto}>Entendido</Text>
