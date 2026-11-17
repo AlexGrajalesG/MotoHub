@@ -8,7 +8,7 @@ import {
   IconArrowLeft, IconCalendarPlus, IconCalendarCheck, IconChecks, IconBellOff, IconTool, IconUserPlus,
   IconMessageCircle,
 } from '@tabler/icons-react-native';
-import { supabase } from '../lib/supabase';
+import { abrirAviso } from '../lib/destinoAviso';
 import { useAuth } from '../context/AuthContext';
 import { useNotificaciones } from '../context/NotificacionesContext';
 import { tokens } from '../lib/tokens';
@@ -110,47 +110,7 @@ export default function NotificacionesScreen({ navigation }: any) {
       refreshUnreadCount();
     }
 
-    if (item.tipo === 'cita_estado') {
-      navigation.navigate('Servicios', { screen: 'MisCitas' });
-      return;
-    }
-
-    if (item.tipo === 'invitacion_equipo') {
-      navigation.navigate('Perfil', { screen: 'InvitacionesEquipo' });
-      return;
-    }
-
-    if (item.tipo === 'invitacion_respuesta') {
-      const { data: miNegocio } = await supabase
-        .from('negocios')
-        .select('id')
-        .eq('propietario_id', session!.user.id)
-        .maybeSingle();
-      if (miNegocio) navigation.navigate('MiEquipo', { negocioId: miNegocio.id });
-      return;
-    }
-
-    if ((item.tipo === 'mensaje_chat' || item.tipo === 'solicitud_chat') && item.conversacion_id) {
-      navigation.navigate('Mensajes', { screen: 'ChatConversacion', params: { conversacionId: item.conversacion_id } });
-      return;
-    }
-
-    if (item.tipo === 'registro_servicio_nuevo' && item.cita_id) {
-      navigation.navigate('Servicios', { screen: 'ChatCita', params: { citaId: item.cita_id } });
-      return;
-    }
-
-    if (item.tipo === 'registro_servicio_resuelto' && item.cita_id) {
-      navigation.navigate('ChatCita', { citaId: item.cita_id });
-      return;
-    }
-
-    const { data: negocio } = await supabase
-      .from('negocios')
-      .select('id')
-      .eq('propietario_id', session!.user.id)
-      .maybeSingle();
-    if (negocio) navigation.navigate('CitasNegocio', { negocioId: negocio.id });
+    await abrirAviso((nombre, params) => navigation.navigate(nombre, params), session!.user.id, item);
   }
 
   const hayNoLeidas = notis.some(n => !n.leida);

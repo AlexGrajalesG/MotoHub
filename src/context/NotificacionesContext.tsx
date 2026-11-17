@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { contarNoLeidas, type Notificacion } from '../lib/notificacionesApp';
 import { notificarKm } from '../lib/notificaciones';
-import { pushActivo, registrarPush } from '../lib/push';
+import { pushActivo, registrarPush, escucharToquesDePush } from '../lib/push';
 
 type NotificacionesContextType = {
   unreadCount: number;
@@ -29,7 +29,9 @@ export function NotificacionesProvider({ children }: { children: React.ReactNode
   }, [refreshUnreadCount]);
 
   useEffect(() => {
-    if (session?.user.id) registrarPush();
+    if (!session?.user.id) return;
+    registrarPush();
+    return escucharToquesDePush(session.user.id);
   }, [session?.user.id]);
 
   useEffect(() => {

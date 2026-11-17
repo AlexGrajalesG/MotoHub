@@ -9,6 +9,7 @@ import {
   IconBike, IconClipboardText, IconBuildingStore, IconUsers, IconUser, IconTools, IconTool, IconMessageCircle,
 } from '@tabler/icons-react-native';
 import { useAuth } from '../context/AuthContext';
+import { navigationRef } from '../lib/navegacionRaiz';
 import { useModo } from '../context/ModoContext';
 import { tokens } from '../lib/tokens';
 import { supabase } from '../lib/supabase';
@@ -544,7 +545,7 @@ export default function AppNavigator() {
   }
 
   return (
-    <NavigationContainer theme={temaNavegacion()}>
+    <NavigationContainer ref={navigationRef} theme={temaNavegacion()}>
       {session ? <CuentaGate><ModeAwareTabs /><TutorialPrimerIngreso /></CuentaGate> : <AuthStack />}
     </NavigationContainer>
   );
