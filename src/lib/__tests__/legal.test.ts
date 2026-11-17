@@ -56,6 +56,7 @@ describe('textos legales', () => {
     expect(texto).toMatch(/Expo y Google, con su servicio Firebase Cloud Messaging/);
     expect(texto).toMatch(/pasan por los servidores de Expo y de Google/);
     expect(texto).toMatch(/desactiva las notificaciones de Rodix/);
+    expect(texto).toMatch(/Token de tu dispositivo/);
   });
 
   it('los términos regulan los mensajes y las consultas', () => {

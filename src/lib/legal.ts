@@ -31,6 +31,7 @@ export const LEGAL: Record<DocumentoLegal, { titulo: string; parrafos: string[] 
       '• Mensajes y relaciones entre usuarios: los mensajes que envías a otras cuentas y las consultas a negocios, a quién sigues y quién te sigue, las solicitudes de mensaje, los bloqueos y los reportes de mensajes.',
       '• Negocios y mecánicos: nombre comercial, NIT, dirección, horario, servicios, productos, especialidades y experiencia.',
       '• Notificaciones de la app y su estado de lectura.',
+      '• Token de tu dispositivo, un código que identifica tu teléfono y que usamos solo para enviarte notificaciones. Se borra al cerrar sesión o al eliminar tu cuenta.',
       'No te pedimos datos sensibles (salud, origen racial, orientación política o religiosa, datos biométricos u otros similares). Si decides compartir alguno en una publicación o mensaje, lo haces de forma voluntaria.',
 
       '## 4. Para qué usamos tus datos',
