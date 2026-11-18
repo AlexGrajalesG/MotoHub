@@ -1,68 +1,82 @@
-import { View, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { obtenerTemaActual } from '../lib/tokens';
+import { useEffect, useRef } from 'react';
+import { View, Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
+import Svg, { Polygon, Line } from 'react-native-svg';
+import { tokens, obtenerTemaActual } from '../lib/tokens';
 import type { NombreTema } from '../lib/paletas';
+import { alturaHero, geometriaHero, type VarianteFondo } from '../lib/animacionAuth';
+import { useMovimientoReducido } from './auth/useMovimientoReducido';
 
-type Degradados = {
-  fondo: [string, string, string, string];
-  resplandor: string;
-  arco: [string, string, string];
-  esquina: [string, string];
+type Capas = { asfalto: string; verde: string; borde: string; carril: string; tinta: string };
+
+// Colores planos y de bordes definidos: la profundidad sale de las capas, no de difuminados.
+const POR_TEMA: Record<NombreTema, Capas> = {
+  rodix:  { asfalto: '#0c1a0e', verde: '#133210', borde: '#48975a', carril: '#ffffff', tinta: '#ffffff' },
+  oscuro: { asfalto: '#16241a', verde: '#1f3d26', borde: '#5fb374', carril: '#ffffff', tinta: '#ffffff' },
+  claro:  { asfalto: '#2f7a42', verde: '#cfe6d5', borde: '#ffffff', carril: '#ffffff', tinta: '#111412' },
 };
 
-const POR_TEMA: Record<NombreTema, Degradados> = {
-  rodix: {
-    fondo: ['#050805', '#0c1f0b', '#133210', '#0a1a09'],
-    resplandor: 'rgba(72,151,90,0.18)',
-    arco: ['rgba(72,151,90,0.55)', 'rgba(72,151,90,0.12)', 'rgba(72,151,90,0)'],
-    esquina: ['rgba(2,2,2,0)', 'rgba(0,0,0,0.6)'],
-  },
-  oscuro: {
-    fondo: ['#0c0c0d', '#141516', '#1a1d1b', '#0f1010'],
-    resplandor: 'rgba(95,179,116,0.12)',
-    arco: ['rgba(95,179,116,0.4)', 'rgba(95,179,116,0.1)', 'rgba(95,179,116,0)'],
-    esquina: ['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)'],
-  },
-  claro: {
-    fondo: ['#f7f8f6', '#eef4ef', '#e1eee4', '#f4f4f2'],
-    resplandor: 'rgba(47,122,66,0.10)',
-    arco: ['rgba(47,122,66,0.28)', 'rgba(47,122,66,0.08)', 'rgba(47,122,66,0)'],
-    esquina: ['rgba(255,255,255,0)', 'rgba(255,255,255,0.7)'],
-  },
-};
+/** Color del texto y del logo que van sobre el hero (blanco en los temas oscuros, oscuro en el claro). */
+export function tintaHero(): string {
+  return POR_TEMA[obtenerTemaActual()].tinta;
+}
 
-/** Fondo de la marca hecho con degradados nativos: se dibuja a la resolución real de cualquier pantalla. */
-export default function FondoAuth({ children }: { children: React.ReactNode }) {
-  const g = POR_TEMA[obtenerTemaActual()];
-  const transparente = g.resplandor.replace(/[\d.]+\)$/, '0)');
+/** Una capa del hero que entra deslizándose desde la izquierda. Con "reducir animaciones" queda fija. */
+function CapaEntrante({ retraso, ancho, alto, children }: { retraso: number; ancho: number; alto: number; children: React.ReactNode }) {
+  const reducido = useMovimientoReducido();
+  const x = useRef(new Animated.Value(-ancho)).current;
+
+  useEffect(() => {
+    if (reducido === null) return;
+    if (reducido) { x.setValue(0); return; }
+    const animacion = Animated.timing(x, {
+      toValue: 0, duration: 520, delay: retraso, easing: Easing.out(Easing.cubic), useNativeDriver: true,
+    });
+    animacion.start();
+    return () => animacion.stop();
+  }, [reducido, retraso, x]);
+
   return (
-    <View style={{ flex: 1, backgroundColor: g.fondo[0] }}>
-      {/* Base: tono oscuro (o claro) que se abre al verde de la marca */}
-      <LinearGradient colors={g.fondo} locations={[0, 0.35, 0.65, 1]} style={StyleSheet.absoluteFill} />
-      {/* Resplandor central suave */}
-      <LinearGradient
-        colors={[transparente, g.resplandor, transparente]}
-        locations={[0.15, 0.55, 0.95]}
-        start={{ x: 0.2, y: 0 }}
-        end={{ x: 0.8, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
-      {/* Arco brillante inferior izquierdo */}
-      <LinearGradient
-        colors={g.arco}
-        locations={[0, 0.45, 1]}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 0.85, y: 0.55 }}
-        style={StyleSheet.absoluteFill}
-      />
-      {/* Esquina inferior derecha para dar profundidad */}
-      <LinearGradient
-        colors={g.esquina}
-        start={{ x: 0.3, y: 0.6 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+    <Animated.View pointerEvents="none" style={[styles.capa, { width: ancho, height: alto, transform: [{ translateX: x }] }]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+/**
+ * Fondo de las pantallas de entrada.
+ * - `hero`: bloque grande arriba, para el inicio de sesión.
+ * - `compacta`: franja baja con la barra de volver, para formularios largos.
+ * - `liso`: solo el color de fondo.
+ */
+export default function FondoAuth({ children, variante = 'liso' }: { children: React.ReactNode; variante?: VarianteFondo }) {
+  const { width, height } = useWindowDimensions();
+  const c = POR_TEMA[obtenerTemaActual()];
+  const alto = alturaHero(variante, height);
+  const g = geometriaHero(width, alto);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: tokens.colors.bgPrimary }}>
+      {alto > 0 && (
+        <>
+          <CapaEntrante retraso={0} ancho={width} alto={alto}>
+            <Svg width={width} height={alto}>
+              <Polygon points={g.asfalto} fill={c.asfalto} />
+              <Line {...g.borde} stroke={c.borde} strokeWidth={3} />
+            </Svg>
+          </CapaEntrante>
+          <CapaEntrante retraso={110} ancho={width} alto={alto}>
+            <Svg width={width} height={alto}>
+              <Polygon points={g.verde} fill={c.verde} />
+              <Line {...g.carril} stroke={c.carril} strokeWidth={2.5} strokeDasharray="14 10" />
+            </Svg>
+          </CapaEntrante>
+        </>
+      )}
       {children}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  capa: { position: 'absolute', top: 0, left: 0 },
+});

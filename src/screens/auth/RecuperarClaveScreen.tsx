@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, Pressable, ActivityIndicator, KeyboardAvoidingView,
+  View, Text, Pressable, Animated, KeyboardAvoidingView,
   Platform, ScrollView, type TextInput,
 } from 'react-native';
 import { IconArrowLeft, IconAlertCircle, IconMail } from '@tabler/icons-react-native';
@@ -8,7 +8,10 @@ import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
 import { mensajeErrorAuth } from '../../lib/errores';
 import RodixLogo from '../../components/RodixLogo';
-import FondoAuth from '../../components/FondoAuth';
+import FondoAuth, { tintaHero } from '../../components/FondoAuth';
+import Aparece from '../../components/auth/Aparece';
+import BotonAuth from '../../components/auth/BotonAuth';
+import { useSacudida } from '../../components/auth/useSacudida';
 import { Campo, Entrada } from '../../components/FormField';
 import { estilosTema } from '../../lib/estilosTema';
 
@@ -29,6 +32,7 @@ export default function RecuperarClaveScreen({ route, navigation }: any) {
   const [error, setError] = useState<string | null>(null);
   const codigoRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
+  const sacudida = useSacudida();
 
   useEffect(() => {
     if (espera <= 0) return;
@@ -42,12 +46,12 @@ export default function RecuperarClaveScreen({ route, navigation }: any) {
 
   async function enviarCodigo() {
     setIntento(true);
-    if (errEmail) return;
+    if (errEmail) { sacudida.sacudir(); return; }
     setLoading(true);
     setError(null);
     const { error: e } = await supabase.auth.resetPasswordForEmail(email.trim());
     setLoading(false);
-    if (e) { setError(mensajeErrorAuth(e).mensaje); return; }
+    if (e) { setError(mensajeErrorAuth(e).mensaje); sacudida.sacudir(); return; }
     setIntento(false);
     setEspera(ESPERA_REENVIO);
     setPaso('codigo');
@@ -55,23 +59,24 @@ export default function RecuperarClaveScreen({ route, navigation }: any) {
 
   async function cambiarClave() {
     setIntento(true);
-    if (errCodigo) { codigoRef.current?.focus(); return; }
-    if (errPassword) { passwordRef.current?.focus(); return; }
+    if (errCodigo) { sacudida.sacudir(); codigoRef.current?.focus(); return; }
+    if (errPassword) { sacudida.sacudir(); passwordRef.current?.focus(); return; }
     setLoading(true);
     setError(null);
     const { error: eCodigo } = await supabase.auth.verifyOtp({ email: email.trim(), token: codigo.trim(), type: 'recovery' });
-    if (eCodigo) { setLoading(false); setError(mensajeErrorAuth(eCodigo).mensaje); return; }
+    if (eCodigo) { setLoading(false); setError(mensajeErrorAuth(eCodigo).mensaje); sacudida.sacudir(); return; }
     // Al verificar el codigo Supabase abre sesion; se cambia la clave de inmediato y la app entra sola.
     const { error: eClave } = await supabase.auth.updateUser({ password });
     if (eClave) {
       await supabase.auth.signOut();
       setLoading(false);
       setError(mensajeErrorAuth(eClave).mensaje);
+      sacudida.sacudir();
     }
   }
 
   return (
-    <FondoAuth>
+    <FondoAuth variante="compacta">
       <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={s.header}>
           <Pressable
@@ -83,17 +88,19 @@ export default function RecuperarClaveScreen({ route, navigation }: any) {
           >
             <IconArrowLeft size={22} color={colors.textPrimary} />
           </Pressable>
-          <RodixLogo variante="completo" alto={28} />
+          <RodixLogo variante="completo" alto={28} color={tintaHero()} />
           <View style={{ width: 44 }} />
         </View>
 
         <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Text style={s.titulo}>{paso === 'correo' ? 'Recupera tu contraseña' : 'Revisa tu correo'}</Text>
-          <Text style={s.sub}>
-            {paso === 'correo'
-              ? 'Te enviamos un código para crear una contraseña nueva'
-              : `Enviamos un código a ${email.trim()}. Revisa también Spam.`}
-          </Text>
+          <Aparece indice={0}>
+            <Text style={s.titulo}>{paso === 'correo' ? 'Recupera tu contraseña' : 'Revisa tu correo'}</Text>
+            <Text style={s.sub}>
+              {paso === 'correo'
+                ? 'Te enviamos un código para crear una contraseña nueva'
+                : `Enviamos un código a ${email.trim()}. Revisa también Spam.`}
+            </Text>
+          </Aparece>
 
           {error && (
             <View style={s.banner} accessibilityLiveRegion="polite">
@@ -102,6 +109,7 @@ export default function RecuperarClaveScreen({ route, navigation }: any) {
             </View>
           )}
 
+          <Animated.View style={sacudida.estilo}>
           {paso === 'correo' ? (
             <Campo label="Correo electrónico" sinMarca error={intento ? errEmail : undefined}>
               <Entrada
@@ -154,19 +162,15 @@ export default function RecuperarClaveScreen({ route, navigation }: any) {
               </Campo>
             </View>
           )}
+          </Animated.View>
         </ScrollView>
 
         <View style={s.footer}>
-          <Pressable
-            style={({ pressed }) => [s.boton, loading && s.botonOcupado, pressed && { opacity: 0.85 }]}
+          <BotonAuth
+            texto={paso === 'correo' ? 'Enviar código' : 'Cambiar contraseña'}
+            cargando={loading}
             onPress={paso === 'correo' ? enviarCodigo : cambiarClave}
-            disabled={loading}
-            accessibilityRole="button"
-          >
-            {loading
-              ? <ActivityIndicator color={colors.onAccent} />
-              : <Text style={s.botonTexto}>{paso === 'correo' ? 'Enviar código' : 'Cambiar contraseña'}</Text>}
-          </Pressable>
+          />
 
           {paso === 'codigo' && (
             <Pressable
@@ -217,14 +221,8 @@ const s = estilosTema(() => ({
 
   footer: {
     paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.sm,
-    backgroundColor: colors.sombra, borderTopWidth: 1, borderTopColor: colors.veloLeve,
+    backgroundColor: colors.bgPrimary, borderTopWidth: 1, borderTopColor: colors.veloLeve,
   },
-  boton: {
-    backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  botonOcupado: { opacity: 0.6 },
-  botonTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
   secundario: {
     minHeight: 50, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
     justifyContent: 'center', alignItems: 'center',
