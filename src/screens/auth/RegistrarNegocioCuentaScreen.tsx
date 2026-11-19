@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import {
-  View, Text, Pressable, ActivityIndicator, KeyboardAvoidingView,
+  View, Text, Pressable, Animated, KeyboardAvoidingView,
   Platform, ScrollView, type TextInput,
 } from 'react-native';
 import { IconArrowLeft, IconAlertCircle, IconCheck, IconBike, IconCar } from '@tabler/icons-react-native';
@@ -9,7 +9,10 @@ import { tokens } from '../../lib/tokens';
 import { mensajeErrorAuth, type ErrorAuth } from '../../lib/errores';
 import { VERSION_LEGAL } from '../../lib/legal';
 import RodixLogo from '../../components/RodixLogo';
-import FondoAuth from '../../components/FondoAuth';
+import FondoAuth, { tintaHero } from '../../components/FondoAuth';
+import Aparece from '../../components/auth/Aparece';
+import BotonAuth from '../../components/auth/BotonAuth';
+import { useSacudida } from '../../components/auth/useSacudida';
 import { Campo, Entrada } from '../../components/FormField';
 import { estilosTema } from '../../lib/estilosTema';
 
@@ -51,6 +54,7 @@ export default function RegistrarNegocioCuentaScreen({ navigation }: any) {
   const nombreRef = useRef<TextInput>(null);
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
+  const sacudida = useSacudida();
 
   const errores: Partial<Record<Campos, string>> = {};
   if (nombre.trim().length < 2) errores.nombre = 'Escribe el nombre de tu taller o tienda';
@@ -71,11 +75,11 @@ export default function RegistrarNegocioCuentaScreen({ navigation }: any) {
 
   async function handleRegistrar() {
     setIntento(true);
-    if (errores.nombre) { nombreRef.current?.focus(); return; }
-    if (errores.atiende) return;
-    if (errores.email) { emailRef.current?.focus(); return; }
-    if (errores.password) { passwordRef.current?.focus(); return; }
-    if (errores.acepto) return;
+    if (errores.nombre) { sacudida.sacudir(); nombreRef.current?.focus(); return; }
+    if (errores.atiende) { sacudida.sacudir(); return; }
+    if (errores.email) { sacudida.sacudir(); emailRef.current?.focus(); return; }
+    if (errores.password) { sacudida.sacudir(); passwordRef.current?.focus(); return; }
+    if (errores.acepto) { sacudida.sacudir(); return; }
 
     setLoading(true);
     setErrorServidor(null);
@@ -99,12 +103,12 @@ export default function RegistrarNegocioCuentaScreen({ navigation }: any) {
     });
     setLoading(false);
 
-    if (error) { setErrorServidor(mensajeErrorAuth(error)); return; }
+    if (error) { setErrorServidor(mensajeErrorAuth(error)); sacudida.sacudir(); return; }
     navigation.navigate('CheckEmail', { email: email.trim() });
   }
 
   return (
-    <FondoAuth>
+    <FondoAuth variante="compacta">
       <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={s.header}>
           <Pressable
@@ -116,13 +120,15 @@ export default function RegistrarNegocioCuentaScreen({ navigation }: any) {
           >
             <IconArrowLeft size={22} color={colors.textPrimary} />
           </Pressable>
-          <RodixLogo variante="completo" alto={28} />
+          <RodixLogo variante="completo" alto={28} color={tintaHero()} />
           <View style={{ width: 44 }} />
         </View>
 
         <ScrollView contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Text style={s.titulo}>Crea tu cuenta de negocio</Text>
-          <Text style={s.sub}>Una cuenta propia para tu taller o tienda, separada de tu cuenta personal</Text>
+          <Aparece indice={0}>
+            <Text style={s.titulo}>Crea tu cuenta de negocio</Text>
+            <Text style={s.sub}>Una cuenta propia para tu taller o tienda, separada de tu cuenta personal</Text>
+          </Aparece>
 
           {errorServidor && (
             <View style={s.banner} accessibilityLiveRegion="polite">
@@ -138,7 +144,7 @@ export default function RegistrarNegocioCuentaScreen({ navigation }: any) {
             </View>
           )}
 
-          <View style={s.form}>
+          <Animated.View style={[s.form, sacudida.estilo]}>
             <Campo label="Nombre del negocio" sinMarca error={ver('nombre')}>
               <Entrada
                 inputRef={nombreRef}
@@ -277,19 +283,11 @@ export default function RegistrarNegocioCuentaScreen({ navigation }: any) {
                 </View>
               )}
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
 
         <View style={s.footer}>
-          <Pressable
-            style={({ pressed }) => [s.boton, loading && s.botonOcupado, pressed && { opacity: 0.85 }]}
-            onPress={handleRegistrar}
-            disabled={loading}
-            accessibilityRole="button"
-            accessibilityLabel="Crear cuenta de negocio"
-          >
-            {loading ? <ActivityIndicator color={colors.onAccent} /> : <Text style={s.botonTexto}>Crear cuenta de negocio</Text>}
-          </Pressable>
+          <BotonAuth texto="Crear cuenta de negocio" cargando={loading} onPress={handleRegistrar} />
           <Pressable onPress={() => navigation.navigate('Login')} hitSlop={8} style={s.enlaceWrap} accessibilityRole="link">
             <Text style={s.enlace}>
               ¿Ya tienes cuenta de negocio? <Text style={s.enlaceFuerte}>Inicia sesión</Text>
@@ -352,14 +350,8 @@ const s = estilosTema(() => ({
 
   footer: {
     paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.sm,
-    backgroundColor: colors.sombra, borderTopWidth: 1, borderTopColor: colors.veloLeve,
+    backgroundColor: colors.bgPrimary, borderTopWidth: 1, borderTopColor: colors.veloLeve,
   },
-  boton: {
-    backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  botonOcupado: { opacity: 0.6 },
-  botonTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
   enlaceWrap: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   enlace: { fontFamily: fonts.body, fontSize: 14, color: colors.textSecondary },
   enlaceFuerte: { fontFamily: fonts.bold, color: colors.accent },

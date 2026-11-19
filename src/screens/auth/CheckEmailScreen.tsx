@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
+import Aparece from '../../components/auth/Aparece';
+import BotonAuth from '../../components/auth/BotonAuth';
 import { IconMailCheck, IconAlertCircle } from '@tabler/icons-react-native';
 import { supabase } from '../../lib/supabase';
 import { tokens } from '../../lib/tokens';
@@ -44,22 +46,28 @@ export default function CheckEmailScreen({ route, navigation }: any) {
     <FondoAuth>
     <View style={s.container}>
       <View style={s.centro}>
-        <View style={s.icono}>
-          <IconMailCheck size={40} color={colors.accent} />
-        </View>
+        <Aparece indice={0} desde={16}>
+          <View style={s.icono}>
+            <IconMailCheck size={40} color={colors.accent} />
+          </View>
+        </Aparece>
 
-        <Text style={s.titulo}>Revisa tu correo</Text>
-        <Text style={s.sub}>Enviamos un enlace de confirmación a</Text>
-        <View style={s.emailPill}>
-          <Text style={s.email} numberOfLines={1}>{email}</Text>
-        </View>
+        <Aparece indice={1} style={s.bloque}>
+          <Text style={s.titulo}>Revisa tu correo</Text>
+          <Text style={s.sub}>Enviamos un enlace de confirmación a</Text>
+          <View style={s.emailPill}>
+            <Text style={s.email} numberOfLines={1}>{email}</Text>
+          </View>
+        </Aparece>
 
         <View style={s.pasos}>
           {PASOS.map((p, i) => (
-            <View key={p} style={s.paso}>
-              <View style={s.pasoNum}><Text style={s.pasoNumTexto}>{i + 1}</Text></View>
-              <Text style={s.pasoTexto}>{p}</Text>
-            </View>
+            <Aparece key={p} indice={i + 2}>
+              <View style={s.paso}>
+                <View style={s.pasoNum}><Text style={s.pasoNumTexto}>{i + 1}</Text></View>
+                <Text style={s.pasoTexto}>{p}</Text>
+              </View>
+            </Aparece>
           ))}
         </View>
 
@@ -74,13 +82,7 @@ export default function CheckEmailScreen({ route, navigation }: any) {
       </View>
 
       <View style={s.footer}>
-        <Pressable
-          style={({ pressed }) => [s.boton, pressed && { opacity: 0.85 }]}
-          onPress={() => navigation.navigate('Login')}
-          accessibilityRole="button"
-        >
-          <Text style={s.botonTexto}>Ya confirmé, iniciar sesión</Text>
-        </Pressable>
+        <BotonAuth texto="Ya confirmé, iniciar sesión" onPress={() => navigation.navigate('Login')} />
 
         <Pressable
           style={({ pressed }) => [s.secundario, (espera > 0 || enviando) && { opacity: 0.5 }, pressed && { opacity: 0.7 }]}
@@ -135,13 +137,9 @@ const s = estilosTema(() => ({
 
   footer: {
     paddingHorizontal: spacing.xl, paddingTop: spacing.md, paddingBottom: spacing.xl, gap: spacing.sm,
-    borderTopWidth: 1, borderTopColor: colors.veloLeve, backgroundColor: colors.sombra,
+    borderTopWidth: 1, borderTopColor: colors.veloLeve, backgroundColor: colors.bgPrimary,
   },
-  boton: {
-    backgroundColor: colors.accent, borderRadius: radius.md, minHeight: 54,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  botonTexto: { fontFamily: fonts.bold, fontSize: 16, color: colors.onAccent },
+  bloque: { alignItems: 'center' },
   secundario: {
     minHeight: 50, borderRadius: radius.md, borderWidth: 1, borderColor: colors.bgSurface,
     justifyContent: 'center', alignItems: 'center',
